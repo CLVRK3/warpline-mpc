@@ -1,0 +1,21 @@
+{
+  "includeDirs": [
+    "vital/synthesis",
+    "vital/synthesis/effects",
+    "vital/synthesis/filters",
+    "vital/synthesis/framework",
+    "vital/synthesis/lookups",
+    "vital/synthesis/modulators",
+    "vital/synthesis/modules",
+    "vital/synthesis/producers",
+    "vital/synthesis/synth_engine",
+    "vital/synthesis/utilities",
+    "vital/common",
+    "vital/common/wavetable",
+    "vital/third_party",
+    "shim"
+  ],
+  "armLinkFlags": [
+    "-lpthread"
+  ]
+}

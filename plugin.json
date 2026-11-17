@@ -1,0 +1,17 @@
+{
+  "name": "Vitalium",
+  "manufacturer": "CLVRKE",
+  "version": "1.0.0",
+  "format": "vst2",
+  "kind": "instrument",
+  "uid": "CvVm",
+  "numInputs": 0,
+  "numOutputs": 2,
+  "category": "Synth",
+  "file32": "VST/vitalium-arm32.so",
+  "file64": "VST/vitalium-arm64.so",
+  "description": "Vitalium: the Vital spectral-warping wavetable synth engine on MPC standalone. 3 wavetable oscillators, 2 filters, envelopes, LFOs, mod matrix and FX. Loads .vital patches.",
+  "author": "CLVRKE",
+  "url": "https://github.com/mtytel/vital",
+  "license": "GPL-3.0-or-later"
+}
