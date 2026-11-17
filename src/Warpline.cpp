@@ -1,6 +1,6 @@
-// Vitalium.cpp - the MPC plugin: wraps the Vital sound engine (VitalCore) in the SDK's mpc::Plugin.
+// Warpline.cpp - the MPC plugin: wraps the Vital sound engine (VitalCore) in the SDK's mpc::Plugin.
 //
-// Vitalium MPC edition. GPLv3 (see LICENSE). Engine: Vital by Matt Tytel (https://github.com/mtytel/vital).
+// Warpline (MPC). GPLv3 (see LICENSE). Engine: Vital by Matt Tytel (https://github.com/mtytel/vital).
 //
 // How it fits together
 //   * VitalCore owns one Vital SoundEngine. Every Vital control has a name ("filter_1_cutoff").
@@ -8,7 +8,7 @@
 //     out over six pages. The rest of a patch (modulation matrix, wavetables, LFO shapes, other
 //     effects) comes from the loaded .vital patch and is kept as-is.
 //   * Parameter 0 "Patch" picks a .vital file. Patches are found in Content/Patches (factory) and in
-//     a "Vitalium/Patches" folder at the root of the drive the plugin is on (your own). Every patch is
+//     a "Warpline/Patches" folder at the root of the drive the plugin is on (your own). Every patch is
 //     also a built-in program, so the MPC's own preset list works as a browser.
 //   * Loading a patch takes 50-900 ms, so it never happens on the audio thread. A worker thread
 //     pauses the audio (process() outputs silence while paused, exactly like Vital pauses its own
@@ -390,11 +390,11 @@ int decimalsFor(double v) {
 
 }  // namespace
 
-class Vitalium : public mpc::Plugin {
+class Warpline : public mpc::Plugin {
   public:
     static mpc::PluginInfo makeInfo() {
       mpc::PluginInfo info;
-      info.name = "Vitalium";
+      info.name = "Warpline";
       info.vendor = "CLVRKE";
       info.uniqueId = MPC_FOURCC('C', 'v', 'V', 'm');
       info.version = 1000;
@@ -405,7 +405,7 @@ class Vitalium : public mpc::Plugin {
       return info;
     }
 
-    Vitalium() : mpc::Plugin(makeInfo()) {
+    Warpline() : mpc::Plugin(makeInfo()) {
       scanPatches();
 
       std::vector<std::string> names;
@@ -553,7 +553,7 @@ class Vitalium : public mpc::Plugin {
       worker_ = std::thread([this] { workerLoop(); });
     }
 
-    ~Vitalium() override {
+    ~Warpline() override {
       {
         std::lock_guard<std::mutex> lock(worker_mutex_);
         quit_ = true;
@@ -907,12 +907,13 @@ class Vitalium : public mpc::Plugin {
       scan(fs::path(mpc::contentFolder()) / "Patches");
       factory_count_ = static_cast<int>(patches_.size());
 
-      // <drive>/Vitalium/Patches, where <drive> holds the "VST2 Plugins" folder this plugin is in.
+      // <drive>/Warpline/Patches, where <drive> holds the folder this plugin is in: "VST2 Plugins"
+      // (copied by hand) or "Synths" (installed by the Open MPC installer / Plugin Manager, e.g. /nvme/Synths).
       fs::path plugin_folder(mpc::pluginFolder());
       fs::path parent = plugin_folder.parent_path();
-      if (parent.filename() == "VST2 Plugins")
-        scan(parent.parent_path() / "Vitalium" / "Patches");
-      if (const char* env = std::getenv("VITALIUM_USER_PATCHES"))
+      if (parent.filename() == "VST2 Plugins" || parent.filename() == "Synths")
+        scan(parent.parent_path() / "Warpline" / "Patches");
+      if (const char* env = std::getenv("WARPLINE_USER_PATCHES"))
         scan(fs::path(env));
     }
 
@@ -1281,4 +1282,4 @@ class Vitalium : public mpc::Plugin {
     bool quit_ = false;
 };
 
-MPC_PLUGIN_ENTRY(Vitalium)
+MPC_PLUGIN_ENTRY(Warpline)

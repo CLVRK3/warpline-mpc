@@ -1,10 +1,10 @@
-// make_factory.cpp - builds Vitalium's factory .vital patches with the engine itself.
+// make_factory.cpp - builds Warpline's factory .vital patches with the engine itself.
 //
-// Part of Vitalium MPC (GPLv3). Not part of the plugin binary (it lives outside src/).
+// Part of Warpline (GPLv3). Not part of the plugin binary (it lives outside src/).
 // Wavetables come from atsushieno/open-vital-resources (CC0 Public Domain dedication; Kimura Taro free
-// wavetables, converted to .vitaltable). Every patch also opens in desktop Vital/Vitalium.
+// wavetables, converted to .vitaltable). Every patch also opens in desktop Vital.
 //
-// Build (from plugins/Vitalium):  see tools/README.md
+// Build (from the plugin folder):  see tools/README.md
 // Run:  make_factory <open-vital-resources folder> <output Content/Patches folder>
 
 #include "VitalCore.h"
@@ -1118,7 +1118,7 @@ int main(int argc, char** argv) {
 
     // Every patch name starts with its two-letter type code (LD lead, PD pad, KY keys, PL pluck, ...).
     // The plugin applies the same codes to your own patches, so keep this table in step with
-    // kTypeCodes in src/Vitalium.cpp.
+    // kTypeCodes in src/Warpline.cpp.
     static const std::map<std::string, std::string> kCodes = {
       { "Arp", "AR" }, { "Bass", "BS" }, { "Bell", "BL" }, { "Brass", "BR" }, { "Dreamy", "DY" }, { "FX", "FX" },
       { "Keys", "KY" }, { "Lead", "LD" }, { "Pad", "PD" }, { "Perc", "PC" }, { "Pluck", "PL" }, { "Rhodes", "RH" },
@@ -1126,7 +1126,7 @@ int main(int argc, char** argv) {
     if (!kCodes.count(def.style)) { std::fprintf(stderr, "%s: no type code for style %s\n", def.name.c_str(), def.style.c_str()); return 1; }
     const std::string full_name = kCodes.at(def.style) + " " + def.name;
     std::string text = core.savePatch(full_name, "CLVRKE", def.style,
-                                      "Vitalium factory patch. Wavetables: Kimura Taro free wavetables (CC0) via open-vital-resources.",
+                                      "Warpline factory patch. Wavetables: Kimura Taro free wavetables (CC0) via open-vital-resources.",
                                       { "TONE", "MOTION", "GRIT", "SPACE" });
     // Vital always stores its default noise sample (~120 KB). Leave it out when the sample
     // oscillator is off: the plugin (and Vital) fall back to the same default.

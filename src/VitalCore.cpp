@@ -1,4 +1,4 @@
-// VitalCore.cpp - see VitalCore.h. Part of Vitalium MPC (GPLv3).
+// VitalCore.cpp - see VitalCore.h. Part of Warpline (GPLv3).
 
 #include "QuietVital.h"
 #include "VitalCore.h"

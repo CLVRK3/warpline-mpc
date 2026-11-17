@@ -1,7 +1,11 @@
-# Vitalium: notes for further development
+# Warpline: notes for further development
 
 Read this first in a new chat. It covers what the code does and what was learnt on the MPC. `README.md` is for users;
 `RELEASING.md` covers releases.
+
+The plugin was called Vitalium during development and was renamed Warpline before the first release (the name clashed
+with DISTRHO's Vital fork, and "Vital" is a trademark). The uid `CvVm` was kept, so projects saved with the old test
+builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` to `<drive>\Warpline\Patches`.
 
 ## Layout
 
@@ -16,7 +20,7 @@ Read this first in a new chat. It covers what the code does and what was learnt 
 - `src/VitalEngine.cpp`: unity build of the engine files.
 - `src/VitalCore.*`: engine wrapper. It handles patch loading (JSON, version upgrade, modulations, wavetables, LFOs),
   rendering in chunks, unison/voice/oversampling limits, warm-up, saving, and `liveNormalised()` (modulated value for Live View).
-- `src/Vitalium.cpp`: the MPC plugin.
+- `src/Warpline.cpp`: the MPC plugin.
   - Parameters, and the patch scan with two-letter type codes.
   - A worker thread for patch loads, which stops audio briefly during each load.
   - State saving, Live View, and the scrollable patch list/browser.
@@ -41,7 +45,7 @@ Read this first in a new chat. It covers what the code does and what was learnt 
 
 ## What the MPC does (learnt on hardware)
 
-- The MPC's own double-tap / Enter menu shows plugin lists with NO text. Vitalium therefore opens no MPC menus.
+- The MPC's own double-tap / Enter menu shows plugin lists with NO text. Warpline therefore opens no MPC menus.
   - The PATCH/TYPE boxes use plain Q-Link focus (data wheel) instead.
   - The browser and the PATCH-page list are built from:
     - row parameters whose display text is a patch name (rows 1-12), tapped as momentary buttons;
@@ -56,7 +60,7 @@ Read this first in a new chat. It covers what the code does and what was learnt 
 
 ## Testing
 
-- Native build: `python tools/build.py plugins/Vitalium --target native --toolchain gcc` (on the PC, `BUILD.bat`
+- Native build: `python tools/build.py plugins/Warpline --target native --toolchain gcc` (on the PC, `BUILD.bat`
   builds both ARM targets with zig).
 - Host checks: `.sdk-tools/host_sim <so> test --notes 60,64,67 --block 32|128|512`.
   - Expect PASS.
@@ -65,10 +69,9 @@ Read this first in a new chat. It covers what the code does and what was learnt 
 
 ## User patches
 
-- `<drive>\Vitalium\Patches` on the same drive as `VST2 Plugins` (or the VITALIUM_USER_PATCHES env var).
-  - Only when the plugin folder's parent is named `VST2 Plugins`. Installs made by the Open MPC release installer / Plugin Manager
-    sit in a `Synths` folder (e.g. `/nvme/Synths` on a Live III), so this folder is not scanned there. Until that is fixed (e.g. also
-    scan `<parent of Synths>/Vitalium/Patches`), README tells those users to put banks in `Content/Patches/<bank>/`, which is scanned recursively.
+- `<drive>\Warpline\Patches`, where `<drive>` is the parent of the folder holding the plugin: `VST2 Plugins` (hand install)
+  or `Synths` (Open MPC installer / Plugin Manager, e.g. `/nvme/Synths` -> `/nvme/Warpline/Patches`). Also the
+  WARPLINE_USER_PATCHES env var. The `Synths` case was added in 1.0.0 and still needs a hardware check.
 - Scanned recursively; up to 6000 patches in total.
 - Type code from the name's own label (BA, PD, SEQ, PLK...), then Vital's preset_style, then keywords.
 - The plugin writes the full patch list into `Plugin Skins/TUI.json` on load (harmless leftover from the menu attempt).

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds Vitalium's hand-designed MPC skin (the look of the Vitalium mockup) into skins/.
+"""Builds Warpline's hand-designed MPC skin (the look of the original mockup) into skins/.
 
 usage:  python3 tools_build_skin.py [--out DIR]
 needs:  Python 3 with Pillow and numpy, and build/params.json (written by tools/build.py).
@@ -45,7 +45,7 @@ ACC = {"mint": (94, 230, 184), "blue": (127, 178, 255), "amber": (255, 179, 92),
        "violet": (181, 156, 255), "white": (242, 245, 248), "coral": (255, 138, 155), "teal": (102, 214, 230)}
 OSC_ACC = ["mint", "blue", "amber"]
 
-# Choice lists the plugin uses (must match src/Vitalium.cpp exactly: they become replacementStrings).
+# Choice lists the plugin uses (must match src/Warpline.cpp exactly: they become replacementStrings).
 FILTER_MODELS = ["Analog", "Dirty", "Ladder", "Digital", "Diode", "Formant", "Comb", "Phaser"]
 DIST_TYPES = ["Soft Clip", "Hard Clip", "Linear Fold", "Sine Fold", "Bit Crush", "Down Sample"]
 DELAY_TIMES = ["4/1", "2/1", "1/1", "1/2", "1/4", "1/8", "1/16", "1/32", "1/64"]
@@ -546,7 +546,7 @@ class Page:
     def header(self):
         d = self.d
         d.line((0, 64, W, 64), fill=(34, 38, 45), width=1)
-        spaced(d, (16, 12), "VITALIUM", font(26, "Bold", display=True), (242, 245, 248), spacing=6)
+        spaced(d, (16, 12), "WARPLINE", font(26, "Bold", display=True), (242, 245, 248), spacing=6)
         spaced(d, (17, 44), "WAVETABLE SYNTH · MPC EDITION · GPLv3", font(10, "Medium"), MUTED, spacing=2)
         cx = 520   # page name pill, left of the patch bar
         f = font(14, "SemiBold")
@@ -883,7 +883,7 @@ p = Page("PATCH", "PATCHES", 5)
 # left: sources
 p.panel((16, 76, 296, 612))
 spaced(p.d, (30, 90), "SOURCES", font(11, "SemiBold"), LABEL, spacing=2)
-for i, (nm, path, on) in enumerate([("Factory", "%d patches + Init · Content/Patches" % (sum(len([f for f in fs if f.endswith(".vital")]) for _, _, fs in os.walk(os.path.join(HERE, "Content", "Patches")))), True), ("Your patches", "<drive>/Vitalium/Patches", False),
+for i, (nm, path, on) in enumerate([("Factory", "%d patches + Init · Content/Patches" % (sum(len([f for f in fs if f.endswith(".vital")]) for _, _, fs in os.walk(os.path.join(HERE, "Content", "Patches")))), True), ("Your patches", "<drive>/Warpline/Patches", False),
                                     ("MPC preset list", "every patch is a program", False)]):
     y = 118 + i * 66
     p.d.rounded_rectangle((28, y, 284, y + 54), 8, fill=(31, 42, 39) if on else (19, 22, 26), outline=ACC["mint"] if on else (42, 48, 56))
@@ -897,7 +897,7 @@ for i, (c, n) in enumerate(zip(TYPE_CODES, TYPE_NAMES)):
     col_x = 30 + (i % 3) * 86; row_y = 392 + (i // 3) * 18
     spaced(p.d, (col_x, row_y), c, font(11, "Bold", display=True), ACC["mint"], spacing=1)
     p.note(col_x + 24, row_y + 1, n, MUTED, 11)
-p.note(28, 490, "Your .vital files go in Vitalium/Patches", MUTED, 11)
+p.note(28, 490, "Your .vital files go in Warpline/Patches", MUTED, 11)
 p.note(28, 506, "at the root of the drive. They get a type", MUTED, 11)
 p.note(28, 522, "code from their Vital style or name.", MUTED, 11)
 p.note(28, 546, "Banks (.vitalbank) are zip files: rename to", TEXT, 11)

@@ -1,4 +1,4 @@
-# Vitalium for MPC (by CLVRKE)
+# Warpline for MPC (by CLVRKE)
 
 The **Vital** spectral-warping wavetable synth engine, running as a plugin on MPC standalone, built with the MPC Plugin SDK.
 It runs Vital's real engine, not a copy of it: the same oscillators, warps, filters, envelopes, LFOs, modulation matrix
@@ -7,31 +7,31 @@ spread over six custom-designed MPC pages that match the 16 Q-Links.
 
 Designed for the **MPC Live III / MPC XL** (64-bit). It also builds for the 32-bit MPCs, but those CPUs are much slower, so expect only light patches and a few voices there.
 
-![Vitalium on the MPC](docs/screenshots/vitalium.png)
+![Warpline on the MPC](docs/screenshots/warpline.png)
 
-**Download:** the [Releases](https://github.com/CLVRK3/vitalium-mpc/releases) page, or install it from the
+**Download:** the [Releases](https://github.com/CLVRK3/warpline-mpc/releases) page, or install it from the
 [Open MPC catalog](https://open-mpc.github.io/) with the OpenMPC Plugin Manager.
 
 ## Install a release
-Download the zip for your MPC from the [Releases](https://github.com/CLVRK3/vitalium-mpc/releases) page:
-`Vitalium-X.Y.Z-mpc-aarch64.zip` for the MPC Live III / MPC XL, `Vitalium-X.Y.Z-mpc-armv7.zip` for the older (Gen1) MPCs.
-Unzip it and follow its `INSTALL.md`, or install Vitalium from the Open MPC catalog with the Plugin Manager.
+Download the zip for your MPC from the [Releases](https://github.com/CLVRK3/warpline-mpc/releases) page:
+`Warpline-X.Y.Z-mpc-aarch64.zip` for the MPC Live III / MPC XL, `Warpline-X.Y.Z-mpc-armv7.zip` for the older (Gen1) MPCs.
+Unzip it and follow its `INSTALL.md`, or install Warpline from the Open MPC catalog with the Plugin Manager.
 The 300 factory patches are included in the plugin folder. To add your own patches or banks, see
 [Installing preset banks](#installing-preset-banks-vitalbank-and-vital) below.
 
 ## Build and install from source
-1. Double-click **`BUILD.bat`** in this folder. It runs `python tools\build.py "plugins\Vitalium"` and then packages the result.
+1. Double-click **`BUILD.bat`** in this folder. It runs `python tools\build.py "plugins\Warpline"` and then packages the result.
    The engine is large, so the first build takes a few minutes per target.
-   Output: `plugins\Vitalium\build\CLVRKE - VST - Vitalium\`, zip in `plugins\Vitalium\dist\`.
-2. Copy the folder **`CLVRKE - VST - Vitalium`** into **`VST2 Plugins`** at the root of a USB drive or SD card.
+   Output: `plugins\Warpline\build\CLVRKE - VST - Warpline\`, zip in `plugins\Warpline\dist\`.
+2. Copy the folder **`CLVRKE - VST - Warpline`** into **`VST2 Plugins`** at the root of a USB drive or SD card.
 3. On the MPC (MPC OS 3.10.1 or later), go to **Preferences → Enhancements (Beta)** and turn on **Enable Enhancements** and **External Plugin Support**.
-   Restart the MPC so it rescans plugins, then load **Vitalium** on a plugin track.
+   Restart the MPC so it rescans plugins, then load **Warpline** on a plugin track.
 
 ## Your own .vital patches
-Put `.vital` files in a folder called **`Vitalium/Patches`** at the root of the **same drive** as the `VST2 Plugins` folder
+Put `.vital` files in a folder called **`Warpline/Patches`** at the root of the **same drive** as the `VST2 Plugins` folder
 (subfolders are fine). Restart the plugin, and they appear after the factory patches, each with a two-letter type code (see below), both in the **Patch** control
-and in the MPC's own preset list. If you installed with the release installer or the Plugin Manager, the folder is different:
-see [Installing preset banks](#installing-preset-banks-vitalbank-and-vital).
+and in the MPC's own preset list. Installed with the release installer or the Plugin Manager? See
+[Installing preset banks](#installing-preset-banks-vitalbank-and-vital) for where the folder goes.
 
 - Wavetables, LFO shapes, the modulation matrix, macros, effects and tuning stored in the patch are all loaded.
 - The patch is saved inside your MPC project, so the project still sounds right if the file is removed later.
@@ -40,7 +40,7 @@ see [Installing preset banks](#installing-preset-banks-vitalbank-and-vital).
 - Loading takes about 0.05–0.9 s. The plugin goes silent for that moment, just as Vital does.
 
 ## Screen (custom skin) and pages
-The screen is a hand-built skin in the style of the Vitalium mockup: dark panels, colour-coded sections (mint, blue and amber
+The screen is a hand-built skin in the style of the original mockup: dark panels, colour-coded sections (mint, blue and amber
 for oscillators 1-3, pink and violet for the filters), 3D wavetable displays, live filter curves and the MPC's own touch envelope
 editors. Every page has four panels side by side, one per column of Q-Links. The patch bar (with ‹ › arrows and load status) is at
 the top of every page.
@@ -81,7 +81,7 @@ Every patch name starts with a two-letter code for its type, so lists sort and r
 
 - **Factory patches** have the code in their file name, and new ones get it automatically: `tools/make_factory.cpp` adds it from the patch's style.
 - **Your own .vital files** get a code when the list is built. If the file name already starts with a code (`LD My Lead.vital`), that one is used.
-  Otherwise Vitalium looks for the label preset packs put in their names (`BA Hastings`, `Pack Name - PD Lifeline`, `FR2 - PLK - Fuhu`,
+  Otherwise Warpline looks for the label preset packs put in their names (`BA Hastings`, `Pack Name - PD Lifeline`, `FR2 - PLK - Fuhu`,
   `GS_BASS_Free_Chewer`, `Keys - Riot`, `SEQ`, `SFX`, `DRN` and so on) and shows the name without the pack prefix (`PD Lifeline`). Next it uses the
   patch's Vital style (Bass, Lead, Keys, Pad, Percussion, Sequence, SFX), then keywords in the file or folder name
   (pad, pluck, bass, rhodes, bell, choir and so on). If none of those match, it uses **SY**. Rename a file with a code to override the guess.
@@ -112,11 +112,15 @@ the screen feels slow on your MPC, switch it off.
 
 ## Patch browser and list
 
+![The patch browser](docs/screenshots/warpline-browser.png)
+
+![The PATCH page with its list](docs/screenshots/warpline-patch.png)
+
 - **Browser:** tap **TYPE** or **PATCH** in the bar at the top of any page. A full-screen browser opens: types on the left
   (tap one to filter), patches on the right (tap one to load it, drag the bar on the right to scroll). The playing patch is
   outlined. Tap **CLOSE** to go back to the page.
 - **PATCH page list:** the same list, nine rows at a time, with its own scroll bar (drag it, or select it and turn the data wheel).
-- The MPC's own double-tap menus show plugin lists without any text, so Vitalium does not use them. The arrows, the data wheel
+- The MPC's own double-tap menus show plugin lists without any text, so Warpline does not use them. The arrows, the data wheel
   on the big PATCH box, Q-Link 1 and the MPC's preset list (every patch is a program) also change patches.
 
 ## Factory patches (300)
@@ -145,33 +149,28 @@ They were made with the engine itself (`tools/make_factory.cpp`) and also open i
 from atsushieno/open-vital-resources. The patch folder is about 210 MB because every patch carries its own wavetables, as Vital patches do.
 
 ## Installing preset banks (.vitalbank and .vital)
-Where your patches go depends on how you installed Vitalium.
+Your own patches and banks go in a folder called **`Warpline/Patches`** at the root of the drive that holds the plugin.
+Create it if it isn't there yet. It sits outside the plugin folder, so your banks survive plugin updates untouched.
 
-**Installed in a `VST2 Plugins` folder** (copied by hand, MPC OS 3.10.1+ with External Plugin Support): use a folder called
-**`Vitalium/Patches`** at the root of the **same drive** as that `VST2 Plugins` folder (USB drive, SD card or the MPC's internal
-drive). Create it if it isn't there yet. Your banks then survive plugin updates untouched.
-
-```
-<drive>/VST2 Plugins/CLVRKE - VST - Vitalium/   (the plugin)
-<drive>/Vitalium/Patches/                       (your patches and banks)
-```
-
-**Installed with the release installer or the Open MPC Plugin Manager** (into the MPC's `Synths` folder, for example
-`/nvme/Synths` on a Live III): `Vitalium/Patches` is not read in this case. Put your banks in a folder of their own inside the
-plugin's patch folder instead, for example `<your Synths folder>/CLVRKE - VST - Vitalium/Content/Patches/My Bank/`.
-They are listed together with the factory patches, sorted by type. Reinstalling or upgrading keeps files you added, but keep a copy of your banks anyway.
-This location follows from the code and has not been tried on an MPC yet.
+- **Copied by hand into `VST2 Plugins`** (MPC OS 3.10.1+ with External Plugin Support): the root of the same drive
+  (USB drive, SD card or the MPC's internal drive).
+  ```
+  <drive>/VST2 Plugins/CLVRKE - VST - Warpline/   (the plugin)
+  <drive>/Warpline/Patches/                       (your patches and banks)
+  ```
+- **Installed with the release installer or the Open MPC Plugin Manager** (into the MPC's `Synths` folder): the drive that
+  holds `Synths`, for example `/nvme/Warpline/Patches/` next to `/nvme/Synths` on a Live III (the root of the internal drive). (Not yet tested on an MPC.)
 
 **A `.vitalbank` file** is an ordinary zip file. Vital itself unpacks it into a folder with `Presets`, `Wavetables`, `LFOs` and `Samples` inside.
 1. On your computer, rename `MyBank.vitalbank` to `MyBank.zip` (or open it with 7-Zip) and extract it.
-2. Copy the extracted folder into your patch folder from above (for example `Vitalium/Patches/MyBank/Presets/...`).
+2. Copy the extracted folder into `Warpline/Patches` (for example `Warpline/Patches/MyBank/Presets/...`).
    Subfolders are fine, and only the `.vital` files are used. The wavetables are stored inside each patch, so the separate
    `Wavetables` folder is not needed (you can leave it there or delete it).
-3. Reload Vitalium on the MPC: remove it from the track and load it again, or reopen the project. The list is read when the
-   plugin loads. The bank's patches appear with their two-letter type codes in the Patch control, the browser and the MPC preset list
-   (after the factory patches in `Vitalium/Patches`, mixed in by type in the plugin's own folder).
+3. Reload Warpline on the MPC: remove it from the track and load it again, or reopen the project. The list is read when the
+   plugin loads. The bank's patches appear after the factory ones, each with its two-letter type code, in the Patch control,
+   the browser and the MPC preset list.
 
-**Single `.vital` files** go straight into the same patch folder or any subfolder of it. If you have Vital on your computer,
+**Single `.vital` files** go straight into `Warpline/Patches` or any subfolder of it. If you have Vital on your computer,
 your own presets are usually in `Documents/Vital/User/Presets` (Windows) and can be copied across the same way.
 
 Good to know:
@@ -183,7 +182,7 @@ Good to know:
 
 ## Files
 - `skins/`: the custom screen (built by `tools_build_skin.py`) · `tools_preview_skin.py`: page previews
-- `src/Vitalium.cpp`: the MPC plugin (parameters, pages, patch browser, threading) · `src/VitalCore.*`: drives one Vital engine, loads and saves .vital
+- `src/Warpline.cpp`: the MPC plugin (parameters, pages, patch browser, threading) · `src/VitalCore.*`: drives one Vital engine, loads and saves .vital
 - `src/VitalEngine.cpp`: unity build of the engine · `vital/`: Vital's engine sources (synthesis + the parts of common/ it needs)
 - `shim/JuceHeader.h`: tiny stand-in for the few JUCE bits the engine used (macros, Base64). No JUCE is needed.
 - `Content/Patches/`: factory patches · `tools/make_factory.cpp`: rebuilds them (see `tools/README.md`)
@@ -202,5 +201,5 @@ patch upgrader was split out of `load_save.cpp`, kissfft is included outside the
 
 ## Licence
 **GPL-3.0-or-later** (see `LICENSE`). Vital is © Matt Tytel and released under GPLv3 (https://github.com/mtytel/vital).
-If you share this plugin, share its source too (this folder). "Vital" is Matt Tytel's trademark, so this edition is called Vitalium.
+If you share this plugin, share its source too (this folder). "Vital" is Matt Tytel's trademark, so this edition has its own name, Warpline. It is not made or endorsed by Vital Audio.
 The MPC Plugin SDK framework (`framework/`, MIT) is linked unchanged. kissfft is BSD-3-Clause and nlohmann/json is MIT.

@@ -1,6 +1,6 @@
 // VitalCore.h - owns one Vital sound engine and drives it in fixed-size chunks.
 //
-// Part of Vitalium MPC. GPLv3 (see LICENSE): the engine is Vital by Matt Tytel.
+// Part of Warpline. GPLv3 (see LICENSE): the engine is Vital by Matt Tytel.
 //
 // Threading: everything except process()/note/controller calls must run off the audio thread
 // (constructor, init(), the patch loader). The plugin wrapper swaps whole VitalCore instances

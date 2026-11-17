@@ -4,7 +4,7 @@
 It is a desktop tool (not part of the plugin).
 
 1. Get the CC0 wavetables: `git clone https://github.com/atsushieno/open-vital-resources`
-2. From `plugins/Vitalium`, build with any C++17 compiler. Linux/macOS example (paths from `build-extra.json`):
+2. From the plugin folder (`plugins/Warpline`), build with any C++17 compiler. Linux/macOS example (paths from `build-extra.json`):
 
 ```
 INC=$(python3 -c "import json;print(' '.join('-I'+d for d in json.load(open('build-extra.json'))['includeDirs']))")

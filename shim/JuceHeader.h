@@ -1,6 +1,6 @@
 // JuceHeader.h - minimal stand-in for the parts of JUCE that Vital's sound engine touches.
 //
-// Part of Vitalium MPC (GPLv3, see LICENSE). The MPC edition does not use JUCE: the engine only needs
+// Part of Warpline (GPLv3, see LICENSE). The MPC edition does not use JUCE: the engine only needs
 // a few macros plus small String / Base64 / MemoryOutputStream helpers used when wavetables stored
 // inside .vital patches are decoded. Everything here is plain C++17.
 
