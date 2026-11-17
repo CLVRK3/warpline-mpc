@@ -13,9 +13,14 @@ Designed for the **MPC Live III / MPC XL** (64-bit). It also builds for the 32-b
 [Open MPC catalog](https://open-mpc.github.io/) with the OpenMPC Plugin Manager.
 
 ## Install a release
-Download the zip for your MPC from the [Releases](https://github.com/CLVRK3/warpline-mpc/releases) page:
-`Warpline-X.Y.Z-mpc-aarch64.zip` for the MPC Live III / MPC XL, `Warpline-X.Y.Z-mpc-armv7.zip` for the older (Gen1) MPCs.
-Unzip it and follow its `INSTALL.md`, or install Warpline from the Open MPC catalog with the Plugin Manager.
+Download from the [Releases](https://github.com/CLVRK3/warpline-mpc/releases) page:
+- **MPC OS 3.10.1 and later (any MPC):** `warpline-X.Y.Z-mpc.zip`. Unzip it, copy the folder **`CLVRKE - VST - Warpline`** into
+  **`VST2 Plugins`** at the root of a USB drive, SD card or the internal drive, and turn on **Preferences → Enhancements (Beta) →
+  External Plugin Support**. `INSTALL.txt` inside has the steps.
+- **Open MPC Plugin Manager / older firmware:** `Warpline-X.Y.Z-mpc-aarch64.zip` (MPC Live III / MPC XL) or
+  `Warpline-X.Y.Z-mpc-armv7.zip` (older Gen1 MPCs), each with its own `INSTALL.md`; or install Warpline from the
+  [Open MPC catalog](https://open-mpc.github.io/).
+
 The 300 factory patches are included in the plugin folder. To add your own patches or banks, see
 [Installing preset banks](#installing-preset-banks-vitalbank-and-vital) below.
 
