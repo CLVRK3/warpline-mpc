@@ -33,6 +33,51 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   - When `skins/` exists the SDK copies it as-is; `ui.json` is not used.
 - `tools_preview_skin.py <state.json> <outdir>`: renders PNG previews of every page.
 
+## 1.1.0 additions
+
+- All new parameters come after `Browser` (index 113), in this order:
+  - favourites/search: Favourite, Fav State, Fav Filter, Search, 29 keys;
+  - Panel, the three chip texts;
+  - arp: 9 settings, 16 steps, 16 step taps, Arp Position;
+  - 16 x mod source/dest/amount, 4 LFO shapes, 16 Vital LFO 5-8 controls;
+  - 14 GRAINZ parameters;
+  - List Touch, List Drag, List Drag Page.
+  275 + 3 = 278 in total.
+  `first_v11_index_` splits `parameterChanged`/`formatValue`.
+- **Panels:** one choice parameter `Panel` (Closed, Arp, Granulator, Mod 1-8, Mod 9-16, LFOs).
+  - Each overlay is shown with `IndexedEnabling/<k>/6/Parameter <Panel>`.
+  - It starts with a see-through blocker button that sets Panel to its own value, like the browser's.
+  - Opening a panel closes the browser and the other way round (in `parameterChanged`).
+  - `tools/skin_check.py` reports every page control under a blocker as TOUCH. It doesn't model invalidating handles,
+    so that is expected.
+- **Arp** (`Arp.h`): runs on the audio thread and feeds Warpline's engine directly.
+  - The render loop splits at MIDI events and at `samplesToNextEvent()`.
+  - With the transport playing it resyncs to `ppqPos` (only when drift > 32 samples).
+- **GRAINZ** (`Granulator.h`): after the engine, on the full block.
+  - 1.5 s ring buffer, 40 grains, 6 allpasses for SPACE.
+  - Grains that are pitched up are shortened, so they never pass the write head.
+- **Mod matrix:**
+  - Slot s is Vital modulation `48 + s` (0-based). Patches only get 0-47; a patch's own modulations at 48+ are dropped and counted in the status.
+  - `VitalCore` keeps the routings across patch loads and Init.
+  - Routing changes happen on the worker with audio paused. Amounts are set on the audio thread (`modulation_49_amount` ...).
+  - **Gotcha:** Vital's `disableUnnecessaryModSources()` switches *every* LFO/envelope/random source off, and connecting switches a source on.
+    After disconnecting, `setUserModulation` switches on again the source of every connection that is still there. Without that,
+    changing a slot silenced the patch's own LFOs.
+  - The matrix LFOs are Vital LFO 5-8. A patch's LFO 5-8 settings (4 controls, shape) are saved when a slot first uses one
+    and given back when none does (`syncMatrixLocked`).
+- **Search/favourites:**
+  - `passesFilter()` checks type, query (lower case, without the type code) and favourites, under `filter_mutex_`.
+  - Favourites are file stems ("Init" for Init), in `<drive>/Warpline/Favourites.txt` or the plugin folder (env `WARPLINE_FAVOURITES` for tests).
+    The worker writes them as `.new`, then renames.
+- **Drag scrolling (needs a device check):**
+  - An invisible vertical slider over the rows (`List Drag`, `List Drag Page`), shown while `List Touch` = Drag.
+  - Events less than 250 ms apart are one gesture: the list follows the value change. A gesture with a single event is a tap at
+    that position and loads the row (worker, `checkListTap`).
+  - This assumes MPC sends the absolute touch position on touch-down (the scroll bar's slider seems to). If not, switch to TAP.
+  - The SDK's state loader restores every parameter by id *before* `loadExtraState`, which looks like a one-event gesture.
+    `loadExtraState` therefore clears the gesture, or each project load would "tap" a row and change the patch
+    (found offline, 2026-11-18).
+
 ## Rules that must not break
 
 - Never change the uid `CvVm`, the .so names or parameter ids. Only add new parameters at the END of the list (older ones
@@ -66,6 +111,9 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   - Expect PASS.
   - At block 512 the parameter sweep sometimes warns about denormals inside Vital's engine; that warning is harmless.
 - Always try a build on the MPC before releasing: every page, the Q-Links, the browser, save and reload a project.
+
+- 1.1 feature test: `tools/test_v11.cpp` (build line at the top) is a small VST2 host. It drives the arp, GRAINZ, the matrix,
+  search, favourites, drag and a state reload through `setParameter` and prints what it measures. Run it under ASan.
 
 ## User patches
 

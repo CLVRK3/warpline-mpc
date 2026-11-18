@@ -9,6 +9,10 @@ Designed for the **MPC Live III / MPC XL** (64-bit). It also builds for the 32-b
 
 ![Warpline on the MPC](docs/screenshots/warpline.png)
 
+**New in 1.1.0:** an arpeggiator with a 16-step pattern, the GRAINZ granular effect, a 16-slot mod matrix with four LFOs of its
+own, preset search, favourites, outlined list rows, and lists you can scroll by dragging. Each of the three new sections has a chip in the header that shows
+its state and opens its panel.
+
 **Download:** the [Releases](https://github.com/CLVRK3/warpline-mpc/releases) page, or install it from the
 [Open MPC catalog](https://open-mpc.github.io/) with the OpenMPC Plugin Manager.
 
@@ -115,16 +119,60 @@ notes play (about 12 updates a second), instead of only the knob positions. It i
 display-only parameters that cannot be automated, so recording automation never picks them up. If the pictures stutter or
 the screen feels slow on your MPC, switch it off.
 
+## Header chips: ARP, GRAINZ, MOD
+The three chips at the top of every page show what each section is doing (for example `UP/DN 1/8`, `MIX 50%`, `3 SLOTS`).
+Tap a chip to open its full-screen panel and tap **CLOSE** to go back. Only one panel (or the browser) is open at a time.
+
+### Arpeggiator (ARP)
+![The arpeggiator](docs/screenshots/warpline-arp.png)
+
+- **ON** and **LATCH** (keeps playing after you let go; a new chord replaces the old one).
+- **Mode:** Up, Down, Up/Down, Down/Up, Random, As played, Chord (all held notes on every step).
+- **Rate** 1/4 to 1/32, with dotted and triplet values. **Octaves** 1-4, **Gate**, **Swing**, **Accent** (how much louder an accented step is) and **Length** (1-16 steps).
+- **Step pattern:** 16 steps. Tap a step to change it: On > Accent > Tie (holds the note into the next step) > Off. The bar after the last step shows the length, and a marker
+  under the steps shows the one that is playing.
+- With the MPC's sequencer playing, the steps lock to the song position. Otherwise they start on the first note you play.
+- The arp plays Warpline's own voices. MPC doesn't pass plugin MIDI on, so it can't drive other tracks.
+
+### GRAINZ (granular effect)
+![GRAINZ](docs/screenshots/warpline-grainz.png)
+
+GRAINZ is a granular effect on Warpline's output. It keeps the last 1.5 seconds of sound and plays it back as up to 40 overlapping grains.
+- **GRAIN:** grain length (10-500 ms). **SCATTER:** how randomly grains are placed in time. **SPACE:** diffusion (a smeared, roomy tail). **MIX:** dry/wet.
+  Drag across a column, or select it and turn the data wheel. The pictures change with the value.
+- **Detail:** density (grains per second), position (how far back grains start), pitch (±24 semitones), pitch random, stereo spread, reverse
+  (chance that a grain plays backwards), feedback, and **SYNC** (grains on 1/4 to 1/16T instead of the density knob).
+- **FREEZE** holds the buffer, so the grains keep playing what is already in it.
+
+### Mod matrix (MOD)
+![The mod matrix](docs/screenshots/warpline-mod.png)
+
+- **16 slots** on two pages (1-8, 9-16). Each slot has a source, a destination and an amount (-100 to +100 %).
+- **Sources:** Env 1-3, the matrix's LFO 1-4, velocity, mod wheel, aftertouch, random (a new value per note), macros 1-4.
+- **Destinations:** wavetable position, level, detune, warp, morph, pitch and pan of each oscillator, cutoff, reso, drive, blend and mix of both filters,
+  distortion, chorus, phaser, delay and reverb amounts, the matrix LFO rates, and volume.
+- **LFOs page:** shape (sine, triangle, saw up, saw down, square), sync (seconds, tempo, dotted, triplets, keytrack), tempo, mode (trigger, sync, envelope ...)
+  and rate (used when sync is set to Seconds).
+- The matrix comes on top of the patch's own modulation and stays the same when you change patches. Inside the engine, its LFOs are Vital's LFO 5-8.
+  While a slot uses one of them, that LFO follows the matrix. When no slot uses it, it goes back to what the patch set.
+
 ## Patch browser and list
 
 ![The patch browser](docs/screenshots/warpline-browser.png)
 
 ![The PATCH page with its list](docs/screenshots/warpline-patch.png)
 
-- **Browser:** tap **TYPE** or **PATCH** in the bar at the top of any page. A full-screen browser opens: types on the left
-  (tap one to filter), patches on the right (tap one to load it, drag the bar on the right to scroll). The playing patch is
-  outlined. Tap **CLOSE** to go back to the page.
-- **PATCH page list:** the same list, nine rows at a time, with its own scroll bar (drag it, or select it and turn the data wheel).
+- **Browser:** tap **TYPE** or **PATCH** in the bar at the top of any page. A full-screen browser opens with types on the left
+  (tap one to filter), patches in the middle and search on the right. Each patch sits in its own rounded outline, and the playing patch's
+  row is filled. Tap **CLOSE** to go back to the page.
+- **Scrolling:** drag the list up or down, or use the bar on its right. With **LIST TOUCH: DRAG**, a quick tap on a row loads that patch.
+  If tapping picks the wrong row on your MPC, switch to **TAP**: dragging the list then stops, and each row works as a plain button.
+- **Search:** type on the on-screen keyboard (A-Z, SPACE, DEL, CLR). The list shows the patches whose names contain the text,
+  inside the chosen type. The arrows also step through those patches only.
+- **Favourites:** tap the **star** next to the patch name in the header to add or remove the patch. In the browser,
+  **SHOW: FAVOURITES** lists only those. Favourites are saved to `<drive>/Warpline/Favourites.txt` (one patch file name per
+  line), so they survive updates and work in every project.
+- **PATCH page list:** the same list, nine rows at a time, with its own scroll bar and DRAG/TAP switch.
 - The MPC's own double-tap menus show plugin lists without any text, so Warpline does not use them. The arrows, the data wheel
   on the big PATCH box, Q-Link 1 and the MPC's preset list (every patch is a program) also change patches.
 
@@ -187,7 +235,8 @@ Good to know:
 
 ## Files
 - `skins/`: the custom screen (built by `tools_build_skin.py`) · `tools_preview_skin.py`: page previews
-- `src/Warpline.cpp`: the MPC plugin (parameters, pages, patch browser, threading) · `src/VitalCore.*`: drives one Vital engine, loads and saves .vital
+- `src/Warpline.cpp`: the MPC plugin (parameters, pages, patch browser, search, favourites, mod matrix, threading)
+- `src/Arp.h`: the arpeggiator · `src/Granulator.h`: GRAINZ · `src/VitalCore.*`: drives one Vital engine, loads and saves .vital
 - `src/VitalEngine.cpp`: unity build of the engine · `vital/`: Vital's engine sources (synthesis + the parts of common/ it needs)
 - `shim/JuceHeader.h`: tiny stand-in for the few JUCE bits the engine used (macros, Base64). No JUCE is needed.
 - `Content/Patches/`: factory patches · `tools/make_factory.cpp`: rebuilds them (see `tools/README.md`)
@@ -201,7 +250,10 @@ patch upgrader was split out of `load_save.cpp`, kissfft is included outside the
 - Tested here: the native build passes every SDK host-simulator check at 32-, 128- and 512-frame blocks (state save/restore, parameter sweep, all-notes-off).
   150 real-world .vital patches loaded and played with no errors, no NaNs and none silent. Fast patch switching was stress-tested under ThreadSanitizer with no data races.
   The code also compiles cleanly for 32-bit ARM.
-- **Tested on an MPC Live III** (64-bit build). The 32-bit build for older MPCs has not been run on hardware.
+- **Tested on an MPC Live III** (64-bit build, 1.0.0). The 32-bit build for older MPCs has not been run on hardware.
+- 1.1.0 was tested offline here with a test host and ASan. It covers arp timing (free and synced), latch, the step pattern,
+  GRAINZ freeze and extremes, mod matrix routing with LFOs, patch changes with the matrix on, search, favourites, drag/tap, and state reload.
+  The new panels and drag scrolling still need checking on the MPC.
 - The skin is checked with the SDK's `validate.py` (versions, indices, images) and rendered as previews here. Check it on the MPC's screen too.
 
 ## Licence
