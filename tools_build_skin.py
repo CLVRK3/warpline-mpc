@@ -10,7 +10,7 @@ panels side by side, one per column of Q-Links, like the mockup. Wavetable displ
 oscillator's WT POS, filter displays follow cutoff and filter model, envelope displays are the MPC's
 live envelope editor.
 """
-import json, math, os, sys
+import json, math, os, random, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
@@ -32,6 +32,11 @@ PI = {p["name"]: p["index"] for p in PARAMS}
 NUM_LIST_ROWS = 12
 BROWSER_OPEN = "IndexedEnabling/1/2/Parameter %d" % PI["Browser"]   # visible while the browser is open
 LIVE_ON = "IndexedEnabling/1/2/Parameter %d" % PI["Live View"]   # visible while Live View is On
+TOUCH_DRAG = "IndexedEnabling/0/2/Parameter %d" % PI["List Touch"]   # list drag strips, while List Touch = Drag
+NUM_PANELS = 6
+PANEL_ARP, PANEL_GRAIN, PANEL_MOD1, PANEL_MOD2, PANEL_LFO = 1, 2, 3, 4, 5
+def panel_on(k):
+    return "IndexedEnabling/%d/%d/Parameter %d" % (k, NUM_PANELS, PI["Panel"])
 PK = {p["name"]: p for p in PARAMS}
 
 W, H = 1280, 628
@@ -425,13 +430,14 @@ def clear_img(w, h):
 
 
 def row_mark_img(w, h):
-    """Background of the list row that holds the playing patch."""
+    """Background of the list row that holds the playing patch (same squircle, filled and lit)."""
     name = f"rowmark_{w}x{h}.png"
     if name in ASSETS:
         return name
-    S = 2
+    S = 3
     im = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0))
-    ImageDraw.Draw(im).rounded_rectangle((S, S, w * S - S, h * S - S), 8 * S, fill=(22, 46, 40, 255), outline=ACC["mint"] + (255,), width=S)
+    ImageDraw.Draw(im).rounded_rectangle((S, S, w * S - S, h * S - S), min(h // 2 - 2, 14) * S, fill=(22, 46, 40, 255),
+                                         outline=ACC["mint"] + (255,), width=int(1.6 * S))
     return save(im.resize((w, h), Image.LANCZOS), name)
 
 
@@ -463,44 +469,113 @@ def comp_vscroll(w, h):
     return key
 
 
-def patch_list(p, x, y, w, row_h, rows, size, inv=None):
-    """Rows of patch names with a scroll bar on the right; the playing patch's row is marked."""
+def row_outline_img(w, h):
+    """A squircle outline around one list row."""
+    name = f"rowline_{w}x{h}.png"
+    if name in ASSETS:
+        return name
+    S = 3
+    im = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0))
+    ImageDraw.Draw(im).rounded_rectangle((S, S, w * S - S, h * S - S), min(h // 2 - 2, 14) * S, fill=(19, 22, 26, 255),
+                                         outline=(52, 59, 69, 255), width=int(1.4 * S))
+    return save(im.resize((w, h), Image.LANCZOS), name)
+
+
+def patch_list(p, x, y, w, row_h, rows, size, inv=None, drag="List Drag"):
+    """Rows of patch names, each in its own squircle, with a scroll bar on the right; the playing patch's row is
+    filled. A see-through strip over the rows (Touch = Drag) scrolls by dragging and loads on a quick tap."""
     sb_w = 34
     rw = w - sb_w - 8
     cur = PI["List Current"]
+    gap = 3 if row_h < 44 else 4
     for r in range(rows):
         ry = y + r * row_h
-        p.entries.append(G.entry(f"mark {r}", "Image", G.obj(("version", 2), ("imageType", "Regular"), ("colour", "0"), ("image", row_mark_img(rw, row_h - 4))),
-                                 f"{x} {ry + 2} {rw} {row_h - 4}", "No", "Hide", "Always",
+        p.entries.append(G.entry(f"outline {r}", "Image", G.obj(("version", 2), ("imageType", "Regular"), ("colour", "0"), ("image", row_outline_img(rw, row_h - 2 * gap))),
+                                 f"{x} {ry + gap} {rw} {row_h - 2 * gap}", "No", "Hide" if inv else "Show", "Always", invalidating=inv))
+        p.entries.append(G.entry(f"mark {r}", "Image", G.obj(("version", 2), ("imageType", "Regular"), ("colour", "0"), ("image", row_mark_img(rw, row_h - 2 * gap))),
+                                 f"{x} {ry + gap} {rw} {row_h - 2 * gap}", "No", "Hide", "Always",
                                  invalidating=(inv or []) + ["IndexedEnabling/%d/%d/Parameter %d" % (r, NUM_LIST_ROWS + 1, cur)]))
-        p.add(comp_row(rw, row_h - 4, argb(TEXT), size), "List %d" % (r + 1), f"{x} {ry + 2} {rw} {row_h - 4}", focusable=False, inv=inv)
+        p.add(comp_row(rw, row_h - 2 * gap, argb(TEXT), size), "List %d" % (r + 1), f"{x} {ry + gap} {rw} {row_h - 2 * gap}", focusable=False, inv=inv)
     h = rows * row_h
+    # Drag strip over the rows, on top of them, only while List Touch = Drag (Tap hides it: the rows take the touch).
+    p.add(comp_vscroll(rw, h), drag, f"{x} {y} {rw} {h}", focusable=False, inv=(inv or []) + [TOUCH_DRAG])
     p.entries.append(G.entry("scroll thumb", "Image", G.obj(("version", 2), ("imageType", "FilmStrip"), ("colour", "0"), ("image", scroll_strip(sb_w, h)),
                                                              ("numFrames", 48), ("handleName", "Parameter %d" % PI["List Scroll"])),
                              f"{x + w - sb_w} {y} {sb_w} {h}", "No", "Hide", "Always", invalidating=inv))
     p.add(comp_vscroll(sb_w + 12, h), "List Scroll", f"{x + w - sb_w - 6} {y} {sb_w + 12} {h}", focusable=True, inv=inv)
 
 
+def key_img(w, h, label, on):
+    name = "key_%dx%d_%s_%s.png" % (w, h, "".join(c for c in label.lower() if c.isalnum()), "on" if on else "off")
+    if name in ASSETS:
+        return name
+    S = 3
+    im = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    d.rounded_rectangle((S, S, w * S - S, h * S - S), 9 * S, fill=(40, 70, 60, 255) if on else (21, 24, 28, 255),
+                        outline=ACC["mint"] + (255,) if on else (52, 59, 69, 255), width=int(1.3 * S))
+    d.text((w * S / 2, h * S / 2), label, font=font(int((17 if len(label) == 1 else 12) * S), "Bold"), fill=TEXT + (255,), anchor="mm")
+    return save(im.resize((w, h), Image.LANCZOS), name)
+
+
+def star_points(cx, cy, r_out, r_in):
+    pts = []
+    for k in range(10):
+        a = -math.pi / 2 + k * math.pi / 5
+        r = r_out if k % 2 == 0 else r_in
+        pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+    return pts
+
+
+def star_strip(size):
+    """Favourite star: frame 0 = outline, frame 1 = lit."""
+    name = f"star_{size}.png"
+    if name in ASSETS:
+        return name
+    S = 4; s = size * S
+    strip = Image.new("RGBA", (size, size * 2), (0, 0, 0, 0))
+    for f in range(2):
+        im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+        pts = star_points(s / 2, s / 2 + s * 0.03, s * 0.42, s * 0.18)
+        if f:
+            g = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+            ImageDraw.Draw(g).polygon(pts, fill=ACC["amber"] + (150,))
+            im.alpha_composite(g.filter(ImageFilter.GaussianBlur(3 * S)))
+            ImageDraw.Draw(im).polygon(pts, fill=ACC["amber"] + (255,))
+        else:
+            ImageDraw.Draw(im).line(pts + [pts[0]], fill=(120, 128, 140, 255), width=int(1.6 * S), joint="curve")
+        strip.paste(im.resize((size, size), Image.LANCZOS), (0, f * size))
+    return save(strip, name)
+
+
 def browser_overlay(p):
-    """Full-screen patch browser over any page, shown while Browser = Open (header TYPE / PATCH opens it)."""
+    """Full-screen patch browser over any page, shown while Browser = Open (header TYPE / PATCH opens it).
+    Left: types. Middle: the list. Right: search keyboard and the favourites view."""
     inv = [BROWSER_OPEN]
     y0 = 64
     bw, bh = W, H - y0
+    LX, LW = 300, 476          # list
+    KX, KW = 800, W - 32 - 800  # keyboard
     name = "browser_bg.png"
     if name not in ASSETS:
         im = Image.new("RGBA", (bw, bh), BG + (255,)); d = ImageDraw.Draw(im)
         d.rounded_rectangle((12, 4, bw - 12, bh - 12), 14, fill=PANEL, outline=BORDER, width=1)
         spaced(d, (32, 22), "BROWSE PATCHES", font(14, "Bold"), TEXT, spacing=2)
         spaced(d, (32, 58), "TYPE", font(11, "SemiBold"), LABEL, spacing=2)
-        spaced(d, (300, 58), "PATCHES", font(11, "SemiBold"), LABEL, spacing=2)
-        d.text((W - 210, 34), "tap a patch to load it  ·  drag the bar to scroll", font=font(12), fill=MUTED, anchor="rm")
+        spaced(d, (LX, 58), "PATCHES", font(11, "SemiBold"), LABEL, spacing=2)
+        d.text((LX + LW, 64), "drag to scroll  ·  tap to load", font=font(11), fill=MUTED, anchor="rm")
+        spaced(d, (KX, 58), "SEARCH", font(11, "SemiBold"), LABEL, spacing=2)
+        d.rounded_rectangle((KX, 76, KX + KW, 120), 12, fill=(11, 13, 16), outline=ACC["mint"], width=1)
+        # magnifier
+        d.ellipse((KX + 14, 88, KX + 30, 104), outline=MUTED, width=2); d.line((KX + 28, 102, KX + 35, 109), fill=MUTED, width=3)
+        spaced(d, (KX, 420), "SHOW", font(11, "SemiBold"), LABEL, spacing=2)
+        spaced(d, (KX, 484), "LIST TOUCH", font(11, "SemiBold"), LABEL, spacing=2)
         d.line((286, 52, 286, bh - 28), fill=BORDER)
+        d.line((KX - 12, 52, KX - 12, bh - 28), fill=BORDER)
         save(im, name)
     # Blocker: catches taps on empty parts of the browser so nothing underneath reacts (keeps it open).
     p.add(comp_button(clear_img(bw, bh), clear_img(bw, bh), 1, 2, bw, bh), "Browser", f"0 {y0} {bw} {bh}", focusable=False, inv=inv)
     p.entries.append(G.entry("browser bg", "Image", G.obj(("version", 2), ("imageType", "Regular"), ("colour", "0"), ("image", name)),
                              f"0 {y0} {bw} {bh}", "No", "Hide", "Always", invalidating=inv))
-    # Close
     p.add(comp_button(pill_img(150, 40, "mint", True, "CLOSE"), pill_img(150, 40, "mint", False, "CLOSE"), 0, 2, 150, 40),
           "Browser", f"{W - 182} {y0 + 14} 150 40", focusable=False, inv=inv)
     # Types: one button per type (ALL + 15), choice buttons on Category
@@ -509,7 +584,64 @@ def browser_overlay(p):
         p.add(comp_button(pill_img(240, th - 3, "mint", True, c, r=8), pill_img(240, th - 3, "mint", False, c, r=8), i, len(CATEGORIES), 240, th - 3),
               "Category", f"32 {ty + i * th} 240 {th - 3}", focusable=False, inv=inv)
     # Patches: 12 rows + scroll bar
-    patch_list(p, 300, y0 + 76, W - 300 - 32, 38, NUM_LIST_ROWS, 20.0, inv=inv)
+    patch_list(p, LX, y0 + 76, LW, 38, NUM_LIST_ROWS, 19.0, inv=inv, drag="List Drag")
+    # Search text
+    p.value_label("Search", f"{KX + 44} {y0 + 76} {KW - 56} 44", argb(TEXT), 21.0, "left verticallyCentred", inv=inv, style="Bold")
+    # Keyboard: A-Z, then SPACE, DEL, CLR (momentary buttons)
+    cols, kg = 6, 6
+    kw = (KW - (cols - 1) * kg) // cols
+    kh = 50
+    keys = [chr(ord("A") + i) for i in range(26)] + ["SPACE", "DEL", "CLR"]
+    col = row = 0
+    for k in keys:
+        span = 2 if k == "SPACE" else 1
+        if col + span > cols:
+            col, row = 0, row + 1
+        kx = KX + col * (kw + kg); ky = y0 + 132 + row * (kh + 6)
+        w_ = kw * span + kg * (span - 1)
+        p.add(comp_button(key_img(w_, kh, k, True), key_img(w_, kh, k, False), 1, 1, w_, kh), "Key " + k, f"{kx} {ky} {w_} {kh}", focusable=False, inv=inv)
+        col += span
+    # Favourites view and list touch mode
+    p.seg_inv("Fav Filter", KX, y0 + 438, ["ALL", "FAVOURITES"], "amber", (KW - 8) // 2, 38, 8, inv)
+    p.seg_inv("List Touch", KX, y0 + 502, ["DRAG", "TAP"], "mint", (KW - 8) // 2, 34, 8, inv)
+
+
+def header_chip(p, x, y, w, h, label, info, on, acc, panel):
+    """A mini HUD in the header: LED, name, one line of state. Tap = open its panel."""
+    d = p.d
+    d.rounded_rectangle((x, y, x + w, y + h), 12, fill=(19, 22, 26), outline=(46, 52, 61), width=1)
+    spaced(d, (x + 30, y + 6), label, font(11, "Bold", display=True), TEXT, spacing=2)
+    # chevron hint: it expands
+    d.line((x + w - 22, y + 18, x + w - 16, y + 24, x + w - 10, y + 18), fill=MUTED, width=2)
+    if on:
+        p.strip(led_strip(14, acc), f"{x + 10} {y + 9} 14 14", 2, on)
+    else:
+        d.ellipse((x + 13, y + 12, x + 21, y + 20), fill=tuple(int(c * 0.8) for c in ACC[acc]))
+    p.value_label(info, f"{x + 30} {y + 21} {w - 52} 20", argb(ACC[acc]), 14.0, "left verticallyCentred")
+    p.add(comp_button(clear_img(w, h), clear_img(w, h), panel, NUM_PANELS, w, h), "Panel", f"{x} {y} {w} {h}", focusable=False)
+
+
+def led_strip(size, acc):
+    name = f"led_{size}_{acc}.png"
+    if name in ASSETS:
+        return name
+    S = 4; s = size * S
+    strip = Image.new("RGBA", (size, size * 2), (0, 0, 0, 0))
+    for f in range(2):
+        im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+        if f:
+            g = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+            ImageDraw.Draw(g).ellipse((s * 0.2, s * 0.2, s * 0.8, s * 0.8), fill=ACC[acc] + (200,))
+            im.alpha_composite(g.filter(ImageFilter.GaussianBlur(1.6 * S)))
+            ImageDraw.Draw(im).ellipse((s * 0.28, s * 0.28, s * 0.72, s * 0.72), fill=ACC[acc] + (255,))
+        else:
+            ImageDraw.Draw(im).ellipse((s * 0.28, s * 0.28, s * 0.72, s * 0.72), fill=(52, 59, 69, 255))
+        strip.paste(im.resize((size, size), Image.LANCZOS), (0, f * size))
+    return save(strip, name)
+
+
+CHIPS = [("ARP", "Arp Info", "Arp On", "amber", PANEL_ARP), ("GRAINZ", "Grain Info", "Grain On", "pink", PANEL_GRAIN),
+         ("MOD", "Mod Info", None, "teal", PANEL_MOD1)]
 
 
 def env_data(name, acc, idx4):
@@ -547,13 +679,10 @@ class Page:
         d = self.d
         d.line((0, 64, W, 64), fill=(34, 38, 45), width=1)
         spaced(d, (16, 12), "WARPLINE", font(26, "Bold", display=True), (242, 245, 248), spacing=6)
-        spaced(d, (17, 44), "WAVETABLE SYNTH · MPC EDITION · GPLv3", font(10, "Medium"), MUTED, spacing=2)
-        cx = 520   # page name pill, left of the patch bar
-        f = font(14, "SemiBold")
-        tw = spaced(ImageDraw.Draw(Image.new("RGB", (1, 1))), (0, 0), self.title, f, TEXT, spacing=3)
-        pw = max(140, tw + 80)
-        d.rounded_rectangle((cx - pw / 2, 13, cx + pw / 2, 51), 19, outline=(46, 52, 61), width=1)
-        spaced(d, (cx, 23), self.title, f, TEXT, spacing=3, anchor="c")
+        spaced(d, (17, 44), self.title, font(10, "Medium"), MUTED, spacing=2)
+        # Mini HUD chips: tap one to open its panel (ARP, GRAINZ, MOD).
+        for i, (label, info, on, acc, panel) in enumerate(CHIPS):
+            header_chip(self, 286 + i * 150, 10, 140, 44, label, info, on, acc, panel)
         # patch bar
         x0, x1, y0, y1 = 744, 1264, 8, 56   # wide enough for large TYPE and PATCH text
         d.rounded_rectangle((x0, y0, x1, y1), 10, fill=(19, 22, 26), outline=(46, 52, 61), width=1)
@@ -567,12 +696,15 @@ class Page:
         self.add(comp_box(116, 28, "mint", True, 17.0, colour=ACC["mint"]), "Category", f"{cx0} {y0 + 17} 116 28")
         d.line((cx0 + 124, y0 + 8, cx0 + 124, y1 - 8), fill=(46, 52, 61))
         spaced(d, (cx0 + 134, y0 + 3), "PATCH", font(9, "SemiBold"), MUTED, spacing=2)
-        pw = (x1 - 96) - (cx0 + 130)
+        pw = (x1 - 140) - (cx0 + 130)
         key = comp_box(pw, 30, "white", True, 21.0, colour=TEXT)
         self.add(key, "Patch", f"{cx0 + 130} {y0 + 15} {pw} 30")
         # Tapping TYPE or PATCH opens the patch browser (invisible buttons over the boxes).
         self.add(comp_button(clear_img(116, 28), clear_img(116, 28), 1, 2, 116, 28), "Browser", f"{cx0} {y0 + 17} 116 28", focusable=False)
         self.add(comp_button(clear_img(pw, 30), clear_img(pw, 30), 1, 2, pw, 30), "Browser", f"{cx0 + 130} {y0 + 15} {pw} 30", focusable=False)
+        # Favourite star for the shown patch (lit when it is one); tap to add or remove it.
+        self.strip(star_strip(34), f"{x1 - 134} {y0 + 7} 34 34", 2, "Fav State")
+        self.add(comp_button(clear_img(40, 40), clear_img(40, 40), 1, 1, 40, 40), "Favourite", f"{x1 - 137} {y0 + 4} 40 40", focusable=False)
         # status tag (OK / n adj / Error)
         d.rounded_rectangle((x1 - 92, y0 + 14, x1 - 50, y0 + 34), 5, fill=(22, 53, 44))
         self.value_label("Status", f"{x1 - 92} {y0 + 14} 42 20", argb((127, 240, 200)), 12.0)
@@ -631,6 +763,10 @@ class Page:
         self.add(key, pname, f"{x} {y} {w} {h}")
         self.slot(pname, group)
 
+    def seg_inv(self, pname, x, y, labels, acc, bw, bh, gap, inv):
+        key, w, h = comp_seg(labels, bw, bh, gap, acc)
+        self.add(key, pname, f"{x} {y} {w} {h}", focusable=False, inv=inv)
+
     def image(self, img, rect):
         self.entries.append(G.entry(img, "Image", G.obj(("version", 2), ("imageType", "Regular"), ("colour", "0"), ("image", img)),
                                     rect, "No", "Show", "Always"))
@@ -640,9 +776,13 @@ class Page:
                                                         ("numFrames", frames), ("handleName", "Parameter %d" % PI[pname])),
                                     rect, "No", "Hide" if inv else "Show", "Always", invalidating=inv))
 
-    def value_label(self, pname, rect, colour, size=14.0, just="horizontallyCentred verticallyCentred", handle=None):
-        self.entries.append(G.entry(pname + " text", "Label", lbl("Value", colour, size, just, handle=handle or "Parameter %d" % PI[pname]),
-                                    rect, "No", "Hide", "Always"))
+    def value_label(self, pname, rect, colour, size=14.0, just="horizontallyCentred verticallyCentred", handle=None, inv=None, style="SemiBold"):
+        self.entries.append(G.entry(pname + " text", "Label", lbl("Value", colour, size, just, style=style, handle=handle or "Parameter %d" % PI[pname]),
+                                    rect, "No", "Hide", "Always", invalidating=inv))
+
+    def image_inv(self, img, rect, inv):
+        self.entries.append(G.entry(img, "Image", G.obj(("version", 2), ("imageType", "Regular"), ("colour", "0"), ("image", img)),
+                                    rect, "No", "Hide", "Always", invalidating=inv))
 
     def envelope(self, rect, name, acc, pnames):
         x0, y0, x1, y1 = rect
@@ -935,15 +1075,388 @@ p.note(604, 586, "Vital engine by Matt Tytel  ·  free software, GNU GPL v3  · 
 # right: scrollable patch list (tap a row to load it; the playing patch's row is outlined)
 p.panel((912, 76, 1264, 612))
 spaced(p.d, (926, 90), "LIST", font(11, "SemiBold"), LABEL, spacing=2)
-p.note(1250, 92, "tap to load · drag bar", MUTED, 11, anchor="r")
-for r in range(1, 9):
-    p.d.line((936, 116 + r * 54, 1200, 116 + r * 54), fill=(32, 36, 43))
-patch_list(p, 922, 116, 332, 54, 9, 19.0)
+p.seg_inv("List Touch", 1048, 84, ["DRAG", "TAP"], "mint", 96, 26, 6, None)
+patch_list(p, 922, 116, 332, 54, 9, 19.0, drag="List Drag Page")
 PAGES.append(p)
 
-# The browser goes on top of every page, last, so it covers everything while it is open.
+
+# ============================================================================================ 1.1 panels
+def panel_shell(p, k, title, acc, sub, art=None):
+    """Full-screen panel below the header while Panel = k: blocker, background, title, CLOSE."""
+    inv = [panel_on(k)]
+    y0 = 64; bw, bh = W, H - y0
+    name = f"panel_bg_{k}.png"
+    if name not in ASSETS:
+        im = Image.new("RGBA", (bw, bh), BG + (255,)); d = ImageDraw.Draw(im)
+        d.rounded_rectangle((12, 4, bw - 12, bh - 12), 14, fill=(17, 19, 23), outline=BORDER, width=1)
+        d.ellipse((32, 26, 42, 36), fill=ACC[acc])
+        tw = spaced(d, (52, 20), title, font(15, "Bold", display=True), TEXT, spacing=3)
+        if sub:
+            spaced(d, (64 + tw, 23), sub, font(11, "Medium"), MUTED, spacing=1.5)
+        if art:
+            art(d, im)
+        save(im, name)
+    p.add(comp_button(clear_img(bw, bh), clear_img(bw, bh), k, NUM_PANELS, bw, bh), "Panel", f"0 {y0} {bw} {bh}", focusable=False, inv=inv)
+    p.image_inv(name, f"0 {y0} {bw} {bh}", inv)
+    p.add(comp_button(pill_img(130, 38, acc, True, "CLOSE"), pill_img(130, 38, acc, False, "CLOSE"), 0, NUM_PANELS, 130, 38),
+          "Panel", f"{W - 162} {y0 + 12} 130 38", focusable=False, inv=inv)
+    return inv, y0
+
+
+def knob_inv(p, pname, x, y, cap, acc, inv, size=56, bi=False):
+    key, w, h = comp_knob(size, acc, bi)
+    p.add(key, pname, f"{x} {y} {w} {h}", inv=inv)
+    return w, h
+
+
+def box_inv(p, pname, rect, acc, inv, size=14.0, colour=None, menu=False):
+    x, y, w, h = rect
+    p.add(comp_box(w, h, acc, menu, size, colour), pname, f"{x} {y} {w} {h}", inv=inv)
+
+
+def toggle_inv(p, pname, x, y, acc, inv, w=70, h=32, label="ON"):
+    p.add(comp_toggle(acc, w, h, label), pname, f"{x} {y} {w} {h}", inv=inv)
+
+
+# ---- ARP
+def step_strip(w, h):
+    """Arp step cell, 4 frames: Off, On, Accent, Tie."""
+    name = f"step_{w}x{h}.png"
+    if name in ASSETS:
+        return name
+    S = 3; col = ACC["amber"]
+    strip = Image.new("RGBA", (w, h * 4), (0, 0, 0, 0))
+    for f in range(4):
+        im = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+        d.rounded_rectangle((S, S, w * S - S, h * S - S), 10 * S, fill=(21, 24, 28, 255), outline=(46, 52, 61, 255), width=S)
+        if f > 0:
+            top = {1: 0.42, 2: 0.12, 3: 0.42}[f]
+            box = (6 * S, int(h * S * top), w * S - 6 * S, h * S - 6 * S)
+            g = Image.new("RGBA", im.size, (0, 0, 0, 0))
+            ImageDraw.Draw(g).rounded_rectangle(box, 7 * S, fill=col + (140 if f == 2 else 90,))
+            im.alpha_composite(g.filter(ImageFilter.GaussianBlur(3 * S)))
+            ImageDraw.Draw(im).rounded_rectangle(box, 7 * S, fill=col + (255,) if f != 3 else tuple(int(c * 0.75) for c in col) + (255,))
+            if f == 3:   # tie: joins on to the next step
+                ImageDraw.Draw(im).rectangle((w * S - 12 * S, int(h * S * 0.55), w * S, int(h * S * 0.7)), fill=col + (255,))
+            label = {1: "", 2: "ACC", 3: "TIE"}[f]
+            if label:
+                ImageDraw.Draw(im).text((w * S / 2, h * S * (0.24 if f == 3 else 0.05) + 12 * S), label, font=font(11 * S, "Bold"),
+                                        fill=(11, 13, 16, 255) if f == 2 else col + (255,), anchor="mm")
+        strip.paste(im.resize((w, h), Image.LANCZOS), (0, f * h))
+    return save(strip, name)
+
+
+def bar_img(w, h, rgb, name):
+    if name in ASSETS:
+        return name
+    S = 3
+    im = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0))
+    ImageDraw.Draw(im).rounded_rectangle((0, 0, w * S - 1, h * S - 1), min(w, h) * S // 2, fill=rgb + (255,))
+    return save(im.resize((w, h), Image.LANCZOS), name)
+
+
+ARP_MODES = ["UP", "DOWN", "UP/DN", "DN/UP", "RAND", "PLAYED", "CHORD"]
+
+
+def arp_panel(p):
+    inv, y0 = panel_shell(p, PANEL_ARP, "ARPEGGIATOR", "amber", "PLAYS THE NOTES YOU HOLD", art=arp_art)
+    acc = "amber"
+    toggle_inv(p, "Arp On", 640, y0 + 15, acc, inv, 70, 32, "ON")
+    toggle_inv(p, "Arp Latch", 720, y0 + 15, acc, inv, 92, 32, "LATCH")
+    # mode
+    p.d  # (header art is in the panel background)
+    key, w, h = comp_seg(ARP_MODES, 112, 40, 8, acc)
+    p.add(key, "Arp Mode", f"32 {y0 + 70} {w} {h}", inv=inv)
+    # knobs
+    for i, (pn, cap, bi) in enumerate([("Arp Rate", "RATE", False), ("Arp Octaves", "OCTAVES", False), ("Arp Gate", "GATE", False),
+                                       ("Arp Swing", "SWING", False), ("Arp Accent", "ACCENT", False), ("Arp Length", "LENGTH", False)]):
+        knob_inv(p, pn, 40 + i * 138, y0 + 136, cap, acc, inv, size=60)
+    # steps
+    n = 16; gx0 = 32; gw = W - 64; gap = 8
+    cw = (gw - (n - 1) * gap) // n; ch = 132; sy = y0 + 300
+    for k in range(n):
+        cx = gx0 + k * (cw + gap)
+        # play marker under the cell
+        p.image_inv(bar_img(cw - 8, 5, ACC["white"], f"playmark_{cw - 8}.png"), f"{cx + 4} {sy + ch + 8} {cw - 8} 5",
+                    inv + ["IndexedEnabling/%d/17/Parameter %d" % (k, PI["Arp Position"])])
+        p.strip(step_strip(cw, ch), f"{cx} {sy} {cw} {ch}", 4, "Arp Step %d" % (k + 1), inv=inv)
+        # length marker: a bar after the last step that plays
+        p.image_inv(bar_img(4, ch + 20, ACC["amber"], f"lenmark_{ch + 20}.png"), f"{cx + cw + 2} {sy - 10} 4 {ch + 20}",
+                    inv + ["IndexedEnabling/%d/16/Parameter %d" % (k, PI["Arp Length"])])
+        p.add(comp_button(clear_img(cw, ch), clear_img(cw, ch), 1, 1, cw, ch), "Step Tap %d" % (k + 1), f"{cx} {sy} {cw} {ch}", focusable=False, inv=inv)
+
+
+def arp_art(d, im):
+    n = 16; gx0 = 32; gw = W - 64; gap = 8
+    cw = (gw - (n - 1) * gap) // n; sy = 300
+    spaced(d, (32, 54), "MODE", font(10, "SemiBold"), MUTED, spacing=1.5)
+    spaced(d, (32, 270), "STEP PATTERN", font(11, "SemiBold"), LABEL, spacing=2)
+    d.text((W - 32, 278), "tap a step:  ON  >  ACCENT  >  TIE  >  OFF", font=font(12), fill=MUTED, anchor="rm")
+    for k in range(n):
+        cx = gx0 + k * (cw + gap)
+        d.text((cx + cw / 2, sy + 132 + 30), str(k + 1), font=font(13, "SemiBold"), fill=LABEL if k % 4 == 0 else MUTED, anchor="mm")
+    for i, cap in enumerate(["RATE", "OCTAVES", "GATE", "SWING", "ACCENT", "LENGTH"]):
+        x = 40 + i * 138
+        spaced(d, (x + 36, 136 + 60 + 3), cap, font(10, "SemiBold"), LABEL, spacing=1, anchor="c")
+    d.rounded_rectangle((880, 128, W - 32, 252), 12, fill=(21, 24, 28), outline=(38, 43, 51))
+    for j, t in enumerate(["Hold notes or a chord on the pads.", "With the sequencer playing, steps lock to the bar.",
+                           "LATCH keeps it going after you let go.", "CHORD plays all held notes on each step."]):
+        d.text((900, 146 + j * 25), t, font=font(12), fill=MUTED if j else TEXT)
+
+
+# ---- GRAINZ: four big columns with value-driven particle pictures
+GR_FRAMES = 24
+def particles(kind, w, h, frames=GR_FRAMES):
+    """My own glow-particle pictures; each frame is one value (0..1) so they grow with the control."""
+    name = f"gr_{kind}_{w}x{h}.png"
+    if name in ASSETS:
+        return name
+    rnd = random.Random({"grain": 7, "scatter": 11, "space": 5, "mix": 3}[kind])
+    S = 2
+    strip = Image.new("RGBA", (w, h * frames), (0, 0, 0, 0))
+    cx, cy = w * S / 2, h * S / 2
+    col = {"grain": (102, 214, 230), "scatter": (255, 179, 92), "space": (181, 156, 255), "mix": (233, 108, 220)}[kind]
+    seeds = [(rnd.random(), rnd.random(), rnd.random()) for _ in range(140)]
+    for f in range(frames):
+        v = f / (frames - 1)
+        im = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0))
+        glow = Image.new("RGBA", im.size, (0, 0, 0, 0))
+        d, g = ImageDraw.Draw(im), ImageDraw.Draw(glow)
+        if kind == "grain":    # node cloud: more and bigger nodes, linked to their neighbours
+            n = int(10 + 70 * v); rad = (0.22 + 0.22 * v) * min(w, h) * S
+            pts = []
+            for a, b, c in seeds[:n]:
+                ang = a * math.tau; r = rad * math.sqrt(b)
+                pts.append((cx + r * math.cos(ang) * 1.25, cy + r * math.sin(ang), 1.5 + 4.5 * c * (0.5 + v)))
+            for i, (x1, y1, _) in enumerate(pts):
+                for x2, y2, _ in pts[i + 1:]:
+                    dd = math.hypot(x2 - x1, y2 - y1)
+                    if dd < rad * 0.38:
+                        d.line((x1, y1, x2, y2), fill=col + (int(110 * (1 - dd / (rad * 0.38))),), width=S)
+            for x, y, r in pts:
+                g.ellipse((x - r * 2.2 * S, y - r * 2.2 * S, x + r * 2.2 * S, y + r * 2.2 * S), fill=col + (120,))
+                d.ellipse((x - r * S, y - r * S, x + r * S, y + r * S), fill=(235, 252, 255, 255))
+        elif kind == "scatter":   # triangles thrown further out as SCATTER rises
+            n = 40
+            for a, b, c in seeds[:n]:
+                ang = a * math.tau; r = (0.06 + 0.42 * v * (0.3 + 0.7 * b)) * min(w, h) * S * 1.1
+                x, y = cx + r * math.cos(ang) * 1.3, cy + r * math.sin(ang)
+                sz = (4 + 9 * c) * S; rot = c * math.tau + v * 2.0
+                tri = [(x + sz * math.cos(rot + k * math.tau / 3), y + sz * math.sin(rot + k * math.tau / 3)) for k in range(3)]
+                g.polygon(tri, fill=col + (150,))
+                d.polygon(tri, outline=col + (255,), fill=col + (int(60 + 140 * c),))
+        elif kind == "space":     # concentric spiral rings, more and wider with SPACE
+            rings = 2 + int(7 * v)
+            for k in range(rings):
+                rr = (0.06 + 0.045 * k) * min(w, h) * S * (0.85 + 0.25 * v)
+                start = k * 37 + v * 90
+                bbox = (cx - rr * 1.3, cy - rr, cx + rr * 1.3, cy + rr)
+                a = int(255 * (1 - k / (rings + 1)))
+                g.arc(bbox, start, start + 280, fill=col + (140,), width=6 * S)
+                d.arc(bbox, start, start + 280, fill=col + (a,), width=2 * S)
+                ang = math.radians(start + 280)
+                d.ellipse((cx + rr * 1.3 * math.cos(ang) - 3 * S, cy + rr * math.sin(ang) - 3 * S,
+                           cx + rr * 1.3 * math.cos(ang) + 3 * S, cy + rr * math.sin(ang) + 3 * S), fill=(255, 255, 255, a))
+        else:                     # mix: a magenta double helix, taller and brighter with MIX
+            amp = (0.08 + 0.32 * v) * h * S
+            for strand in (0, 1):
+                prev = None
+                for i in range(0, 121):
+                    t = i / 120
+                    x = w * S * (0.06 + 0.88 * t)
+                    y = cy + amp * math.sin(t * math.tau * 2 + strand * math.pi)
+                    if prev:
+                        g.line((prev, (x, y)), fill=col + (130,), width=6 * S)
+                        d.line((prev, (x, y)), fill=col + (int(110 + 145 * v),), width=2 * S)
+                    prev = (x, y)
+            for i in range(0, 25):
+                t = i / 24
+                x = w * S * (0.06 + 0.88 * t)
+                y1 = cy + amp * math.sin(t * math.tau * 2); y2 = cy + amp * math.sin(t * math.tau * 2 + math.pi)
+                d.line((x, y1, x, y2), fill=col + (int(40 + 90 * v),), width=S)
+                for y in (y1, y2):
+                    d.ellipse((x - 3 * S, y - 3 * S, x + 3 * S, y + 3 * S), fill=(255, 230, 252, 255))
+        out = glow.filter(ImageFilter.GaussianBlur(5 * S))
+        out.alpha_composite(im)
+        strip.paste(out.resize((w, h), Image.LANCZOS), (0, f * h))
+    return save(strip, name)
+
+
+def thin_bar_strip(w, h, acc_rgb, frames=48):
+    name = f"thinbar_{w}x{h}_{acc_rgb[0]}.png"
+    if name in ASSETS:
+        return name
+    S = 3
+    strip = Image.new("RGBA", (w, h * frames), (0, 0, 0, 0))
+    for f in range(frames):
+        v = f / (frames - 1)
+        im = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+        d.rounded_rectangle((0, 0, w * S - 1, h * S - 1), h * S // 2, fill=(40, 45, 54, 255))
+        if v > 0:
+            d.rounded_rectangle((0, 0, max(h * S, int(w * S * v)), h * S - 1), h * S // 2, fill=acc_rgb + (255,))
+        strip.paste(im.resize((w, h), Image.LANCZOS), (0, f * h))
+    return save(strip, name)
+
+
+def comp_drag(w, h, acc):
+    """Invisible horizontal slider with focus: touch-drag across it, data wheel when focused."""
+    key = f"drag_{w}x{h}_{acc}"
+    if key not in DEFS:
+        DEFS[key] = G.component_definition(G.control_actions("knob overlay"), [focus(acc, w, h), slider_bar(w, h)], "00000000")
+    return key
+
+
+GR_COLS = [("GRAIN", "Grain Size", "grain", (102, 214, 230)), ("SCATTER", "Grain Scatter", "scatter", (255, 179, 92)),
+           ("SPACE", "Grain Space", "space", (181, 156, 255)), ("MIX", "Grain Mix", "mix", (233, 108, 220))]
+
+
+def grain_art(d, im):
+    cw = (W - 64 - 3 * 16) // 4
+    for i, (title, _pn, _k, rgb) in enumerate(GR_COLS):
+        x = 32 + i * (cw + 16)
+        d.rounded_rectangle((x, 64, x + cw, 400), 16, fill=(12, 14, 17), outline=(34, 38, 45))
+        spaced(d, (x + cw / 2, 80), title, font(17, "Bold", display=True), (232, 236, 241), spacing=5, anchor="c")
+    spaced(d, (32, 420), "DETAIL", font(11, "SemiBold"), LABEL, spacing=2)
+    for i, cap in enumerate(["DENSITY", "POSITION", "PITCH", "PITCH RND", "SPREAD", "REVERSE", "FEEDBACK"]):
+        x = 40 + i * 140
+        spaced(d, (x + 36, 440 + 56 + 3), cap, font(10, "SemiBold"), LABEL, spacing=1, anchor="c")
+    spaced(d, (1026, 444), "SYNC", font(10, "SemiBold"), MUTED, spacing=1.5)
+    d.rounded_rectangle((1026, 464, 1246, 504), 8, fill=(17, 20, 24), outline=(46, 52, 61))
+
+
+def grain_panel(p):
+    inv, y0 = panel_shell(p, PANEL_GRAIN, "GRAINZ", "pink", "GRANULAR FX ON THE SYNTH'S OUTPUT", art=grain_art)
+    toggle_inv(p, "Grain On", 560, y0 + 15, "pink", inv, 70, 32, "ON")
+    toggle_inv(p, "Grain Freeze", 640, y0 + 15, "pink", inv, 100, 32, "FREEZE")
+    cw = (W - 64 - 3 * 16) // 4
+    for i, (title, pn, kind, rgb) in enumerate(GR_COLS):
+        x = 32 + i * (cw + 16)
+        pw, ph = cw - 24, 196
+        p.strip(particles(kind, pw, ph), f"{x + 12} {y0 + 106} {pw} {ph}", GR_FRAMES, pn, inv=inv)
+        p.value_label(pn, f"{x} {y0 + 300} {cw} 50", argb((242, 245, 248)), 38.0, inv=inv, style="Bold")
+        p.strip(thin_bar_strip(cw - 60, 6, rgb), f"{x + 30} {y0 + 360} {cw - 60} 6", 48, pn, inv=inv)
+        p.add(comp_drag(cw, 336, "pink"), pn, f"{x} {y0 + 64} {cw} 336", inv=inv)
+    for i, (pn, bi) in enumerate([("Grain Density", False), ("Grain Position", False), ("Grain Pitch", True), ("Grain Pitch Rnd", False),
+                                  ("Grain Spread", False), ("Grain Reverse", False), ("Grain Feedback", False)]):
+        knob_inv(p, pn, 40 + i * 140, y0 + 440, "", "pink", inv, size=56, bi=bi)
+    box_inv(p, "Grain Sync", (1026, y0 + 464, 220, 40), "pink", inv, 17.0)
+
+
+# ---- MOD matrix
+def amount_strip(w, h, frames=49):
+    """Bipolar amount bar: fills from the centre to the value."""
+    name = f"amount_{w}x{h}.png"
+    if name in ASSETS:
+        return name
+    S = 3; col = ACC["teal"]; neg = ACC["coral"]
+    strip = Image.new("RGBA", (w, h * frames), (0, 0, 0, 0))
+    for f in range(frames):
+        v = f / (frames - 1) * 2 - 1
+        im = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+        d.rounded_rectangle((S, S, w * S - S, h * S - S), 8 * S, fill=(17, 20, 24, 255), outline=(46, 52, 61, 255), width=S)
+        mid = w * S / 2
+        if abs(v) > 0.01:
+            x2 = mid + v * (w * S / 2 - 6 * S)
+            d.rounded_rectangle((min(mid, x2), 6 * S, max(mid, x2), h * S - 6 * S), 4 * S, fill=(col if v > 0 else neg) + (200,))
+        d.line((mid, 4 * S, mid, h * S - 4 * S), fill=(90, 98, 110, 255), width=S)
+        strip.paste(im.resize((w, h), Image.LANCZOS), (0, f * h))
+    return save(strip, name)
+
+
+def shape_strip(w, h):
+    """LFO shape picture, 5 frames: Sine, Triangle, Saw Up, Saw Down, Square."""
+    name = f"lfoshape_{w}x{h}.png"
+    if name in ASSETS:
+        return name
+    S = 3; col = ACC["teal"]
+    strip = Image.new("RGBA", (w, h * 5), (0, 0, 0, 0))
+    for f in range(5):
+        im = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0))
+        pts = []
+        for i in range(201):
+            t = i / 200 * 2
+            ph = t % 1
+            y = {0: math.sin(ph * math.tau), 1: 1 - 4 * abs(ph - 0.5) if True else 0, 2: ph * 2 - 1, 3: 1 - ph * 2,
+                 4: 1 if ph < 0.5 else -1}[f]
+            if f == 1:
+                y = 4 * abs(ph - 0.5) - 1
+            pts.append((w * S * (0.06 + 0.88 * i / 200), h * S / 2 - y * h * S * 0.36))
+        glow_line(im, pts, col, width=int(2.4 * S), glow=4 * S)
+        strip.paste(im.resize((w, h), Image.LANCZOS), (0, f * h))
+    return save(strip, name)
+
+
+def mod_art(d, im):
+    spaced(d, (32, 64), "", font(10), MUTED)
+
+
+def mod_panel(p):
+    for k in (PANEL_MOD1, PANEL_MOD2, PANEL_LFO):
+        sub = {PANEL_MOD1: "SLOTS 1 - 8", PANEL_MOD2: "SLOTS 9 - 16", PANEL_LFO: "MATRIX LFOs"}[k]
+        first = 0 if k == PANEL_MOD1 else 8
+        art = lfo_art if k == PANEL_LFO else (lambda d, im, first=first: mod_rows_art(d, im, first))
+        inv, y0 = panel_shell(p, k, "MOD MATRIX", "teal", sub, art=art)
+        # tabs
+        for j, (lab, val) in enumerate([("1 - 8", PANEL_MOD1), ("9 - 16", PANEL_MOD2), ("LFOs", PANEL_LFO)]):
+            p.add(comp_button(pill_img(110, 36, "teal", True, lab), pill_img(110, 36, "teal", False, lab), val, NUM_PANELS, 110, 36),
+                  "Panel", f"{640 + j * 120} {y0 + 13} 110 36", focusable=False, inv=inv)
+        if k == PANEL_LFO:
+            cw = (W - 64 - 3 * 16) // 4
+            for i in range(4):
+                x = 32 + i * (cw + 16); n = i + 1
+                p.strip(shape_strip(cw - 24, 90), f"{x + 12} {y0 + 104} {cw - 24} 90", 5, f"LFO{n} Shape", inv=inv)
+                key, w, h = comp_seg(["SIN", "TRI", "UP", "DN", "SQR"], (cw - 24 - 4 * 4) // 5, 32, 4, "teal")
+                p.add(key, f"LFO{n} Shape", f"{x + 12} {y0 + 204} {w} {h}", inv=inv)
+                box_inv(p, f"LFO{n} Sync", (x + 100, y0 + 254, cw - 112, 34), "teal", inv, 17.0, colour=TEXT)
+                box_inv(p, f"LFO{n} Tempo", (x + 100, y0 + 298, cw - 112, 34), "teal", inv, 17.0, colour=TEXT)
+                box_inv(p, f"LFO{n} Mode", (x + 100, y0 + 342, cw - 112, 34), "teal", inv, 17.0, colour=TEXT)
+                knob_inv(p, f"LFO{n} Rate", x + (cw - 72) // 2, y0 + 400, "", "teal", inv, size=56)
+            continue
+        first = 0 if k == PANEL_MOD1 else 8
+        for r in range(8):
+            s_ = first + r + 1
+            y = y0 + 100 + r * 56
+            box_inv(p, f"Mod {s_} Source", (100, y, 300, 44), "teal", inv, 18.0, colour=TEXT)
+            box_inv(p, f"Mod {s_} Dest", (470, y, 330, 44), "teal", inv, 18.0, colour=TEXT)
+            p.strip(amount_strip(406, 44), f"830 {y} 406 44", 49, f"Mod {s_} Amount", inv=inv)
+            p.add(comp_box(406, 44, "teal", False, 18.0, TEXT), f"Mod {s_} Amount", f"830 {y} 406 44", inv=inv)
+
+
+def mod_rows_art(d, im, first):
+    spaced(d, (100, 70), "SOURCE", font(10, "SemiBold"), MUTED, spacing=1.5)
+    spaced(d, (470, 70), "DESTINATION", font(10, "SemiBold"), MUTED, spacing=1.5)
+    spaced(d, (830, 70), "AMOUNT", font(10, "SemiBold"), MUTED, spacing=1.5)
+    d.text((W - 32, 76), "drag across a box, or turn the data wheel", font=font(11), fill=MUTED, anchor="rm")
+    for r in range(8):
+        y = 100 + r * 56
+        d.rounded_rectangle((32, y, W - 32, y + 44), 12, fill=(21, 24, 28), outline=(38, 43, 51))
+        d.rounded_rectangle((100, y, 400, y + 44), 10, fill=(17, 20, 24), outline=(46, 52, 61))
+        d.rounded_rectangle((470, y, 800, y + 44), 10, fill=(17, 20, 24), outline=(46, 52, 61))
+        d.line((414, y + 22, 452, y + 22), fill=ACC["teal"], width=2)
+        d.polygon([(452, y + 16), (461, y + 22), (452, y + 28)], fill=ACC["teal"])
+        d.text((66, y + 22), str(first + r + 1), font=font(18, "Bold"), fill=ACC["teal"], anchor="mm")
+    # slot numbers are drawn per page in mod_panel's background (same art for both slot pages, numbers differ)
+
+
+def lfo_art(d, im):
+    cw = (W - 64 - 3 * 16) // 4
+    for i in range(4):
+        x = 32 + i * (cw + 16)
+        d.rounded_rectangle((x, 64, x + cw, H - 64 - 24), 14, fill=(21, 24, 28), outline=(38, 43, 51))
+        spaced(d, (x + 14, 76), f"LFO {i + 1}", font(14, "Bold", display=True), ACC["teal"], spacing=2)
+        d.rounded_rectangle((x + 12, 104, x + cw - 12, 194), 8, fill=WELL, outline=WELL_EDGE)
+        for j, t in enumerate(["SYNC", "TEMPO", "MODE"]):
+            spaced(d, (x + 14, 264 + j * 44), t, font(10, "SemiBold"), MUTED, spacing=1.5)
+            d.rounded_rectangle((x + 100, 254 + j * 44, x + cw - 12, 288 + j * 44), 8, fill=(17, 20, 24), outline=(46, 52, 61))
+        spaced(d, (x + cw / 2, 400 + 56 + 3), "RATE (SYNC = SECONDS)", font(10, "SemiBold"), LABEL, spacing=1, anchor="c")
+
+
+# The overlays go on top of every page, last, so they cover everything while open.
 for pg in PAGES:
     browser_overlay(pg)
+    arp_panel(pg)
+    grain_panel(pg)
+    mod_panel(pg)
 
 
 # ------------------------------------------------------------------------------------------------ write
