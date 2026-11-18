@@ -66,12 +66,15 @@ void VitalCore::loadInit() {
 
   for (int i = 0; i < vital::kNumLfos; ++i)
     engine_->getLfoSource(i)->initTriangle();
+  patch_lfos_.clear();
 
   for (auto& control : controls_) {
     if (vital::Parameters::isParameter(control.first))
       control.second->set(vital::Parameters::getDetails(control.first).default_value);
   }
   tuning_->setDefaultTuning();
+  clearModulations();
+  connectUserModulations();
   engine_->checkOversampling();
 }
 
@@ -151,29 +154,91 @@ void VitalCore::warmUp() {
 
 using json = nlohmann::json;
 
-void VitalCore::clearModulations() {
+void VitalCore::disconnectIndex(int bank_index) {
+  auto it = std::find(connected_modulations_.begin(), connected_modulations_.end(), bank_index);
+  if (it == connected_modulations_.end())
+    return;
   vital::ModulationConnectionBank& bank = engine_->getModulationBank();
-  for (int index : connected_modulations_) {
-    vital::ModulationConnection* connection = bank.atIndex(index);
-    vital::modulation_change change;
-    change.source = engine_->getModulationSource(connection->source_name);
-    change.mono_destination = engine_->getMonoModulationDestination(connection->destination_name);
-    change.mono_modulation_switch = engine_->getMonoModulationSwitch(connection->destination_name);
-    change.destination_scale = vital::Parameters::getParameterRange(connection->destination_name);
-    change.poly_modulation_switch = engine_->getPolyModulationSwitch(connection->destination_name);
-    change.poly_destination = engine_->getPolyModulationDestination(connection->destination_name);
-    change.modulation_processor = connection->modulation_processor.get();
-    change.disconnecting = true;
-    engine_->disconnectModulation(change);
-    connection->source_name = "";
-    connection->destination_name = "";
-  }
+  vital::ModulationConnection* connection = bank.atIndex(bank_index);
+  vital::modulation_change change;
+  change.source = engine_->getModulationSource(connection->source_name);
+  change.mono_destination = engine_->getMonoModulationDestination(connection->destination_name);
+  change.mono_modulation_switch = engine_->getMonoModulationSwitch(connection->destination_name);
+  change.destination_scale = vital::Parameters::getParameterRange(connection->destination_name);
+  change.poly_modulation_switch = engine_->getPolyModulationSwitch(connection->destination_name);
+  change.poly_destination = engine_->getPolyModulationDestination(connection->destination_name);
+  change.modulation_processor = connection->modulation_processor.get();
+  change.disconnecting = true;
+  engine_->disconnectModulation(change);
+  connection->source_name = "";
+  connection->destination_name = "";
+  connected_modulations_.erase(it);
+}
+
+void VitalCore::clearModulations() {
+  std::vector<int> connected = connected_modulations_;
+  for (int index : connected)
+    disconnectIndex(index);
   connected_modulations_.clear();
 
+  vital::ModulationConnectionBank& bank = engine_->getModulationBank();
   int num_connections = static_cast<int>(bank.numConnections());
   for (int i = 0; i < num_connections; ++i)
     bank.atIndex(i)->modulation_processor->lineMapGenerator()->initLinear();
   engine_->disableUnnecessaryModSources();
+}
+
+void VitalCore::connectUserModulations() {
+  for (int s = 0; s < kNumUserModulations; ++s) {
+    const UserModulation& m = user_modulations_[s];
+    int index = kFirstUserModulation + s;
+    if (m.source.empty() || m.destination.empty())
+      continue;
+    if (connectModulation(index, m.source, m.destination))
+      setControl("modulation_" + std::to_string(index + 1) + "_bipolar", m.bipolar ? 1.0f : 0.0f);
+  }
+  engine_->updateAllModulationSwitches();
+}
+
+void VitalCore::setUserModulation(int slot, const std::string& source, const std::string& destination, bool bipolar) {
+  if (slot < 0 || slot >= kNumUserModulations)
+    return;
+  int index = kFirstUserModulation + slot;
+  UserModulation& m = user_modulations_[slot];
+  if (m.source == source && m.destination == destination && m.bipolar == bipolar)
+    return;
+  disconnectIndex(index);
+  m.source = source;
+  m.destination = destination;
+  m.bipolar = bipolar;
+  if (!source.empty() && !destination.empty() && connectModulation(index, source, destination))
+    setControl("modulation_" + std::to_string(index + 1) + "_bipolar", bipolar ? 1.0f : 0.0f);
+  // Vital's disableUnnecessaryModSources() switches every LFO, envelope and random source off; connecting
+  // switches a source on. So switch off the ones the old routing used, then on again every source still
+  // connected (the patch's own and the other slots).
+  engine_->disableUnnecessaryModSources();
+  vital::ModulationConnectionBank& bank = engine_->getModulationBank();
+  for (int connected : connected_modulations_)
+    engine_->enableModSource(bank.atIndex(connected)->source_name);
+  engine_->updateAllModulationSwitches();
+}
+
+void VitalCore::restoreLfoShape(int lfo) {
+  if (lfo < 0 || lfo >= vital::kNumLfos)
+    return;
+  LineGenerator* g = engine_->getLfoSource(lfo);
+  if (lfo < static_cast<int>(patch_lfos_.size()) && !patch_lfos_[lfo].empty()) {
+    try {
+      g->jsonToState(json::parse(patch_lfos_[lfo]));
+    }
+    catch (const std::exception&) {
+      g->initTriangle();
+    }
+  }
+  else {
+    g->initTriangle();
+  }
+  g->render();
 }
 
 bool VitalCore::connectModulation(int bank_index, const std::string& source, const std::string& destination) {
@@ -267,8 +332,11 @@ bool VitalCore::loadPatch(const std::string& text, PatchReport& report) {
       int index = 0;
       int dropped = 0;
       for (const json& modulation : settings["modulations"]) {
-        if (index >= vital::kMaxModulationConnections)
-          break;
+        if (index >= kFirstUserModulation) {
+          if (!modulation.value("source", "").empty())
+            dropped++;
+          continue;
+        }
         std::string source = modulation.value("source", "");
         std::string destination = modulation.value("destination", "");
         vital::ModulationConnection* connection = engine_->getModulationBank().atIndex(index);
@@ -309,6 +377,7 @@ bool VitalCore::loadPatch(const std::string& text, PatchReport& report) {
     }
 
     // LFO shapes.
+    patch_lfos_.assign(vital::kNumLfos, std::string());
     if (settings.count("lfos")) {
       int i = 0;
       for (const json& lfo : settings["lfos"]) {
@@ -317,6 +386,7 @@ bool VitalCore::loadPatch(const std::string& text, PatchReport& report) {
         LineGenerator* source = engine_->getLfoSource(i);
         source->jsonToState(lfo);
         source->render();
+        patch_lfos_[i] = lfo.dump();
         i++;
       }
     }
@@ -327,6 +397,7 @@ bool VitalCore::loadPatch(const std::string& text, PatchReport& report) {
     else
       tuning_->setDefaultTuning();
 
+    connectUserModulations();
     engine_->updateAllModulationSwitches();
     engine_->checkOversampling();
   }

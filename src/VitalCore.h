@@ -87,6 +87,15 @@ class VitalCore {
     bool addModulation(const std::string& source, const std::string& destination, float amount,
                        bool bipolar = false);
 
+    // The plugin's own mod matrix lives in the last 16 slots of Vital's modulation bank, so patches get
+    // the first 48. Slots survive patch loads (they are reconnected after each one).
+    static constexpr int kNumUserModulations = 16;
+    static constexpr int kFirstUserModulation = 64 - kNumUserModulations;
+    // Off the audio thread (or paused): route user slot 0..15; empty source or destination = off.
+    void setUserModulation(int slot, const std::string& source, const std::string& destination, bool bipolar);
+    // Off the audio thread (or paused): put LFO 0..7 back to the shape the loaded patch gave it.
+    void restoreLfoShape(int lfo);
+
   private:
     std::unique_ptr<vital::SoundEngine> engine_;
     std::unique_ptr<Tuning> tuning_;
@@ -94,6 +103,11 @@ class VitalCore {
     std::vector<std::pair<std::string, vital::Value*>> controls_;   // sorted by name
     std::vector<int> connected_modulations_;                         // bank indices in use
     void clearModulations();
+    void disconnectIndex(int bank_index);
+    void connectUserModulations();
+    struct UserModulation { std::string source, destination; bool bipolar = false; };
+    std::array<UserModulation, kNumUserModulations> user_modulations_;
+    std::vector<std::string> patch_lfos_;                            // the loaded patch's LFO shapes (JSON)
     bool connectModulation(int bank_index, const std::string& source, const std::string& destination);
     vital::Value* findControl(const std::string& name) const;
     double time_ = 0.0;
