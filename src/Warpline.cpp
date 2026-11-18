@@ -32,10 +32,13 @@
 #include <filesystem>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
 #include <thread>
 #include <vector>
 
+#include "Arp.h"
+#include "Granulator.h"
 #include "VitalCore.h"
 #include "synth_constants.h"
 #include "synth_parameters.h"
@@ -115,6 +118,85 @@ constexpr int kNumLive = sizeof(kLive) / sizeof(kLive[0]);
 constexpr int kListRows = 12;      // rows of the scrollable patch list (the browser shows 12, the PATCH page the first 9)
 constexpr int kListRowsV1 = 9;     // rows that existed before the browser (parameter order is permanent)
 constexpr int kListPageRows = 9;   // rows the PATCH page shows; scrolling stops when its last row holds the last patch
+
+// ---- 1.1 additions (all their parameters come after "Browser", so older projects keep their order) ----
+
+// Vital controls added in 1.1: the mod matrix's own LFOs. The matrix calls them LFO 1-4; in the engine
+// they are Vital's LFO 5-8, so they do not disturb the LFOs a patch already uses. Their settings belong
+// to the matrix, so a patch load does not change them.
+const Exposed kExposed2[] = {
+  { "lfo_5_sync", "LFO1 Sync" }, { "lfo_5_frequency", "LFO1 Rate" }, { "lfo_5_tempo", "LFO1 Tempo" }, { "lfo_5_sync_type", "LFO1 Mode" },
+  { "lfo_6_sync", "LFO2 Sync" }, { "lfo_6_frequency", "LFO2 Rate" }, { "lfo_6_tempo", "LFO2 Tempo" }, { "lfo_6_sync_type", "LFO2 Mode" },
+  { "lfo_7_sync", "LFO3 Sync" }, { "lfo_7_frequency", "LFO3 Rate" }, { "lfo_7_tempo", "LFO3 Tempo" }, { "lfo_7_sync_type", "LFO3 Mode" },
+  { "lfo_8_sync", "LFO4 Sync" }, { "lfo_8_frequency", "LFO4 Rate" }, { "lfo_8_tempo", "LFO4 Tempo" }, { "lfo_8_sync_type", "LFO4 Mode" },
+};
+constexpr int kNumExposed2 = sizeof(kExposed2) / sizeof(kExposed2[0]);
+constexpr int kNumMatrixLfos = 4;
+constexpr int kFirstMatrixLfo = 4;   // Vital LFO index (0-based) of the matrix's LFO 1
+
+// Mod matrix sources and destinations: screen name, Vital name.
+struct Named { const char* label; const char* vital; };
+const Named kModSources[] = {
+  { "Off", "" }, { "Env 1 (Amp)", "env_1" }, { "Env 2", "env_2" }, { "Env 3", "env_3" },
+  { "LFO 1", "lfo_5" }, { "LFO 2", "lfo_6" }, { "LFO 3", "lfo_7" }, { "LFO 4", "lfo_8" },
+  { "Velocity", "velocity" }, { "Mod Wheel", "mod_wheel" }, { "Aftertouch", "aftertouch" }, { "Random", "random" },
+  { "Macro 1", "macro_control_1" }, { "Macro 2", "macro_control_2" }, { "Macro 3", "macro_control_3" }, { "Macro 4", "macro_control_4" },
+};
+constexpr int kNumModSources = sizeof(kModSources) / sizeof(kModSources[0]);
+const Named kModDestinations[] = {
+  { "Off", "" },
+  { "Osc1 WT Pos", "osc_1_wave_frame" }, { "Osc1 Level", "osc_1_level" }, { "Osc1 Detune", "osc_1_unison_detune" },
+  { "Osc1 Warp", "osc_1_distortion_amount" }, { "Osc1 Morph", "osc_1_spectral_morph_amount" }, { "Osc1 Pitch", "osc_1_transpose" },
+  { "Osc1 Pan", "osc_1_pan" },
+  { "Osc2 WT Pos", "osc_2_wave_frame" }, { "Osc2 Level", "osc_2_level" }, { "Osc2 Detune", "osc_2_unison_detune" },
+  { "Osc2 Warp", "osc_2_distortion_amount" }, { "Osc2 Morph", "osc_2_spectral_morph_amount" }, { "Osc2 Pitch", "osc_2_transpose" },
+  { "Osc2 Pan", "osc_2_pan" },
+  { "Osc3 WT Pos", "osc_3_wave_frame" }, { "Osc3 Level", "osc_3_level" }, { "Osc3 Detune", "osc_3_unison_detune" },
+  { "Osc3 Warp", "osc_3_distortion_amount" }, { "Osc3 Morph", "osc_3_spectral_morph_amount" }, { "Osc3 Pitch", "osc_3_transpose" },
+  { "Osc3 Pan", "osc_3_pan" },
+  { "F1 Cutoff", "filter_1_cutoff" }, { "F1 Reso", "filter_1_resonance" }, { "F1 Drive", "filter_1_drive" },
+  { "F1 Blend", "filter_1_blend" }, { "F1 Mix", "filter_1_mix" },
+  { "F2 Cutoff", "filter_2_cutoff" }, { "F2 Reso", "filter_2_resonance" }, { "F2 Drive", "filter_2_drive" },
+  { "F2 Blend", "filter_2_blend" }, { "F2 Mix", "filter_2_mix" },
+  { "Dist Drive", "distortion_drive" }, { "Dist Mix", "distortion_mix" },
+  { "Chorus Mix", "chorus_dry_wet" }, { "Phaser Mix", "phaser_dry_wet" },
+  { "Delay Fdbk", "delay_feedback" }, { "Delay Mix", "delay_dry_wet" },
+  { "Reverb Size", "reverb_size" }, { "Reverb Mix", "reverb_dry_wet" },
+  { "LFO1 Rate", "lfo_5_frequency" }, { "LFO2 Rate", "lfo_6_frequency" }, { "LFO3 Rate", "lfo_7_frequency" },
+  { "LFO4 Rate", "lfo_8_frequency" },
+  { "Volume", "volume" },
+};
+constexpr int kNumModDestinations = sizeof(kModDestinations) / sizeof(kModDestinations[0]);
+constexpr int kNumModSlots = VitalCore::kNumUserModulations;
+// Sources that swing both ways: their modulation is centred on the knob (Vital's "bipolar").
+bool bipolarSource(int s) { return (s >= 4 && s <= 7) || s == 11; }
+
+const char* const kLfoShapes[] = { "Sine", "Triangle", "Saw Up", "Saw Down", "Square" };
+constexpr int kNumLfoShapes = 5;
+const int kLfoShapeToCore[kNumLfoShapes] = { 1, 0, 3, 4, 2 };   // VitalCore::setLfoShape numbering
+
+const char* const kArpModes[Arp::kNumModes] = { "Up", "Down", "Up/Down", "Down/Up", "Random", "As Played", "Chord" };
+const char* const kArpModesShort[Arp::kNumModes] = { "UP", "DOWN", "UP/DN", "DN/UP", "RAND", "PLAYED", "CHORD" };
+const char* const kArpRates[Arp::kNumRates] = { "1/4", "1/4 D", "1/4 T", "1/8", "1/8 D", "1/8 T", "1/16", "1/16 D", "1/16 T",
+                                                "1/32", "1/32 T" };
+const char* const kStepStates[Arp::kNumStepStates] = { "Off", "On", "Accent", "Tie" };
+const char* const kGrainSync[Granulator::kNumSyncRates] = { "Free", "1/4", "1/8", "1/16", "1/32", "1/8 T", "1/16 T" };
+// The overlay panels (Panel parameter).
+const char* const kPanels[] = { "Closed", "Arp", "Granulator", "Mod 1-8", "Mod 9-16", "LFOs" };
+enum PanelId { kPanelClosed = 0, kPanelArp, kPanelGrain, kPanelMod1, kPanelMod2, kPanelLfo, kNumPanels };
+// The browser's search keyboard.
+const char* const kKeys = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+constexpr int kNumLetterKeys = 26;
+enum ExtraKey { kKeySpace = kNumLetterKeys, kKeyDelete, kKeyClear, kNumKeys };
+constexpr size_t kMaxQuery = 20;
+
+// "modulation_49_amount" ... "modulation_64_amount": the engine controls behind the matrix's amounts.
+const std::vector<std::string> kModAmountControls = [] {
+  std::vector<std::string> v;
+  for (int s = 0; s < VitalCore::kNumUserModulations; ++s)
+    v.push_back("modulation_" + std::to_string(VitalCore::kFirstUserModulation + s + 1) + "_amount");
+  return v;
+}();
 
 int exposedIndex(const char* vital_name) {
   for (int i = 0; i < static_cast<int>(sizeof(kExposed) / sizeof(kExposed[0])); ++i)
@@ -397,7 +479,7 @@ class Warpline : public mpc::Plugin {
       info.name = "Warpline";
       info.vendor = "CLVRKE";
       info.uniqueId = MPC_FOURCC('C', 'v', 'V', 'm');
-      info.version = 1000;
+      info.version = 1100;
       info.isInstrument = true;
       info.numInputs = 0;
       info.numOutputs = 2;
@@ -536,6 +618,8 @@ class Warpline : public mpc::Plugin {
         browser_index_ = addParam(br);
       }
 
+      addParamsV11();
+
       dirty_ = std::make_unique<std::atomic<bool>[]>(numParams());
       for (int i = 0; i < numParams(); ++i)
         dirty_[i].store(false);
@@ -544,8 +628,11 @@ class Warpline : public mpc::Plugin {
       for (int i = 0; i < static_cast<int>(patches_.size()); ++i)
         addProgram(trimName(patches_[i].name, 24).c_str(), { static_cast<float>(i) });
 
+      loadFavourites();
       core_ = std::make_unique<VitalCore>();
       core_->prepare(44100.0);
+      granulator_.prepare(44100.0);
+      arp_.setSampleRate(44100.0);
       rememberPatchLimits();
       applyEcoSettings();
       pullParamsFromCore();
@@ -569,13 +656,20 @@ class Warpline : public mpc::Plugin {
       pauseAudio();
       core_->prepare(sample_rate);
       applyEcoSettings();
+      granulator_.prepare(sample_rate);
+      arp_.setSampleRate(sample_rate);
+      arp_dirty_.store(true);
+      grain_dirty_.store(true);
       resumeAudio();
     }
 
     void reset() override {
       // Audio thread (resume, or after a state load). Stops hanging notes.
-      if (!paused_.load())
+      if (!paused_.load()) {
+        arp_.reset([](int, float, bool) {});
         core_->allSoundsOff();
+        granulator_.reset();
+      }
     }
 
     // ----- audio ------------------------------------------------------------------------------
@@ -594,29 +688,49 @@ class Warpline : public mpc::Plugin {
 
       applyDirtyParams();
 
-      if (ctx.transport.valid && ctx.transport.tempoValid && ctx.transport.bpm > 0.0)
-        core_->setBpm(static_cast<float>(ctx.transport.bpm));
-      if (ctx.transport.valid && ctx.transport.playing && ctx.transport.ppqValid && ctx.transport.bpm > 0.0)
+      double bpm = 120.0;
+      if (ctx.transport.valid && ctx.transport.tempoValid && ctx.transport.bpm > 0.0) {
+        bpm = ctx.transport.bpm;
+        core_->setBpm(static_cast<float>(bpm));
+      }
+      bool playing = ctx.transport.valid && ctx.transport.playing && ctx.transport.ppqValid && ctx.transport.bpm > 0.0;
+      if (playing)
         core_->setTime(ctx.transport.ppqPos * 60.0 / ctx.transport.bpm);
 
-      // Render between MIDI events so notes land on the right sample.
+      auto send = [this](int note, float velocity, bool on) {
+        if (on)
+          core_->noteOn(note, velocity, 0, arp_channel_);
+        else
+          core_->noteOff(note, 0.0f, 0, arp_channel_);
+      };
+      if (arp_dirty_.exchange(false))
+        arp_.setSettings(arpSettings(), send);
+      arp_.beginBlock(bpm, playing, playing ? ctx.transport.ppqPos : 0.0);
+
+      // Render between MIDI events and arp steps so notes land on the right sample.
       int pos = 0;
       int e = 0;
       while (pos < ctx.numFrames) {
         while (e < ctx.numMidiEvents && ctx.midi[e].sampleOffset <= pos)
-          handleMidi(ctx.midi[e++]);
+          handleMidi(ctx.midi[e++], send);
+        arp_.fire(send);
         int next = ctx.numFrames;
         if (e < ctx.numMidiEvents)
           next = std::min(next, std::max(pos + 1, ctx.midi[e].sampleOffset));
+        next = std::min(next, pos + std::max(1, arp_.samplesToNextEvent()));
         core_->render(left + pos, right + pos, next - pos);
+        arp_.advance(next - pos);
         pos = next;
       }
       while (e < ctx.numMidiEvents)
-        handleMidi(ctx.midi[e++]);
+        handleMidi(ctx.midi[e++], send);
+      arp_step_.store(arp_.running() ? arp_.currentStep() : -1);
 
-      if (right == left) {
-        // Mono output: nothing more to do (left already holds the left channel).
-      }
+      if (grain_dirty_.exchange(false))
+        granulator_.setSettings(grainSettings());
+      granulator_.setTempo(bpm);
+      if (right != left)
+        granulator_.process(left, right, ctx.numFrames);
       in_process_.store(false);
     }
 
@@ -653,8 +767,19 @@ class Warpline : public mpc::Plugin {
         worker_cv_.notify_all();
         return;
       }
-      if (index == browser_index_ || index == list_current_index_)
+      if (index == browser_index_) {
+        if (plain > 0.5f && panel_index_ >= 0 && getInt(panel_index_) != kPanelClosed) {
+          setNormalised(panel_index_, 0.0f);
+          notifyHostParameterChanged(panel_index_);
+        }
+        return;
+      }
+      if (index == list_current_index_)
         return;   // screen state only
+      if (index >= first_v11_index_ && first_v11_index_ >= 0) {
+        parameterChangedV11(index, plain);
+        return;
+      }
       if (index == list_scroll_index_) {
         if (!list_scroll_from_plugin_.load()) {
           list_top_.store(topFromScroll(plain));
@@ -710,6 +835,8 @@ class Warpline : public mpc::Plugin {
         out = k >= 0 ? trimName(patches_[k].name, 24) : "";
         return true;
       }
+      if (index >= first_v11_index_ && first_v11_index_ >= 0)
+        return formatValueV11(index, plain, out);
       if (index == prev_index_) { out = "<"; return true; }
       if (index == next_index_) { out = ">"; return true; }
       if (index < kNumOwn || index >= kNumOwn + kNumExposed)
@@ -837,7 +964,14 @@ class Warpline : public mpc::Plugin {
       setNormalised(kPatch, (!found_by_path && n > static_cast<uint32_t>(kPatch)) ? values[kPatch]
                                                                                  : getParamNormalisedForPatch(index));
       suppress_patch_trigger_.store(false);
+      {
+        // The framework restored every parameter before this call (List Drag too): that is not a touch.
+        std::lock_guard<std::mutex> lock(drag_mutex_);
+        drag_ = DragGesture();
+      }
       markAllDirty();
+      mod_routing_dirty_.store(true);
+      worker_cv_.notify_all();
     }
 
   private:
@@ -920,13 +1054,32 @@ class Warpline : public mpc::Plugin {
     // Next / previous patch (dir = +1 / -1) from "from", staying inside the Category filter.
     int stepPatch(int from, int dir) const {
       int n = static_cast<int>(patches_.size());
-      int filter = category_.load();   // 0 = all, else type + 1
+      std::lock_guard<std::mutex> lock(filter_mutex_);
       for (int k = 1; k <= n; ++k) {
         int i = ((from + dir * k) % n + n) % n;
-        if (filter == 0 || patches_[i].type == filter - 1)
+        if (passesFilter(i))
           return i;
       }
       return from;
+    }
+
+    // TYPE, search text and favourites. Caller holds filter_mutex_.
+    bool passesFilter(int i) const {
+      int filter = category_.load();   // 0 = all, else type + 1
+      if (filter != 0 && patches_[i].type != filter - 1)
+        return false;
+      if (fav_only_.load() && favourites_.count(favKey(i)) == 0)
+        return false;
+      if (!query_.empty() && search_names_[i].find(query_) == std::string::npos)
+        return false;
+      return true;
+    }
+
+    // Favourites are kept by file name (without .vital), so they survive moving a bank to another drive.
+    std::string favKey(int i) const {
+      if (i < 0 || i >= static_cast<int>(patches_.size()))
+        return "";
+      return patches_[i].path.empty() ? std::string("Init") : fs::path(patches_[i].path).stem().string();
     }
 
     // Which list row a parameter is, or -1.
@@ -940,9 +1093,9 @@ class Warpline : public mpc::Plugin {
     // Patches inside the TYPE filter, in list order.
     std::vector<int> filteredPatches() const {
       std::vector<int> out;
-      int filter = category_.load();
+      std::lock_guard<std::mutex> lock(filter_mutex_);
       for (int i = 0; i < static_cast<int>(patches_.size()); ++i)
-        if (filter == 0 || patches_[i].type == filter - 1)
+        if (passesFilter(i))
           out.push_back(i);
       return out;
     }
@@ -1023,6 +1176,8 @@ class Warpline : public mpc::Plugin {
       }
       rememberPatchLimits();
       applyEcoSettings(&report);
+      lfo_applied_mask_ = 0;          // the patch brought its own LFO 5-8
+      syncMatrixLocked();
       core_->warmUp();
       return ok;
     }
@@ -1097,6 +1252,9 @@ class Warpline : public mpc::Plugin {
           updateLiveDisplay();
           lock.lock();
         }
+        lock.unlock();
+        workerV11();
+        lock.lock();
 
         int want = requested_patch_.load();
         bool patch_due = want != loaded_patch_ && nowNs() - last_patch_request_ns_.load() > kDebounceNs;
@@ -1180,6 +1338,12 @@ class Warpline : public mpc::Plugin {
         dirty_[i].store(true);
       dirty_[kMaxVoices].store(true);
       dirty_[kMaxUnison].store(true);
+      for (int s = 0; s < kNumModSlots && mod_first_index_ >= 0; ++s)
+        dirty_[modAmountIndex(s)].store(true);
+      for (int i = 0; i < kNumExposed2 && exposed2_first_index_ >= 0; ++i)
+        dirty_[exposed2_first_index_ + i].store(true);
+      arp_dirty_.store(true);
+      grain_dirty_.store(true);
       any_dirty_.store(true);
     }
 
@@ -1203,14 +1367,34 @@ class Warpline : public mpc::Plugin {
           v = std::min(v, static_cast<float>(max_unison));
         core_->setControl(kExposed[i].vital, v);
       }
+      // Mod matrix amounts (Vital modulations 49-64).
+      for (int s = 0; s < kNumModSlots && mod_first_index_ >= 0; ++s) {
+        if (!dirty_[modAmountIndex(s)].exchange(false))
+          continue;
+        core_->setControl(kModAmountControls[s], get(modAmountIndex(s)) / 100.0f);
+      }
+      // Matrix LFO settings: only while a slot uses that LFO (otherwise the patch's LFO 5-8 stay as they are).
+      int in_use = lfo_in_use_.load();
+      for (int i = 0; i < kNumExposed2 && exposed2_first_index_ >= 0; ++i) {
+        int index = exposed2_first_index_ + i;
+        if ((in_use & (1 << (i / 4))) == 0 || !dirty_[index].exchange(false))
+          continue;
+        core_->setControl(kExposed2[i].vital, get(index) + offset2_[i]);
+      }
     }
 
-    void handleMidi(const mpc::MidiEvent& m) {
+    template <typename NoteFn>
+    void handleMidi(const mpc::MidiEvent& m, NoteFn& send) {
       int channel = m.channel();
-      if (m.isNoteOn())
-        core_->noteOn(m.data[1], m.data[2] / 127.0f, 0, channel);
-      else if (m.isNoteOff())
-        core_->noteOff(m.data[1], m.data[2] / 127.0f, 0, channel);
+      if (m.isNoteOn()) {
+        arp_channel_ = channel;
+        if (!arp_.noteOn(m.data[1], m.data[2] / 127.0f, send))
+          core_->noteOn(m.data[1], m.data[2] / 127.0f, 0, channel);
+      }
+      else if (m.isNoteOff()) {
+        if (!arp_.noteOff(m.data[1], send))
+          core_->noteOff(m.data[1], m.data[2] / 127.0f, 0, channel);
+      }
       else if (m.status() == 0xE0) {
         int bend = (m.data[2] << 7) | m.data[1];
         core_->pitchBend((bend - 8192) / 8192.0f);
@@ -1224,11 +1408,559 @@ class Warpline : public mpc::Plugin {
           core_->modWheel(value / 127.0f);
         else if (cc == 64)
           core_->sustain(value >= 64);
-        else if (cc == 120)
+        else if (cc == 120) {
+          arp_.reset(send);
           core_->allSoundsOff();
-        else if (cc == 123)
+        }
+        else if (cc == 123) {
+          arp_.reset(send);
           core_->allNotesOff();
+        }
       }
+    }
+
+
+    // ===== 1.1: favourites, search, arpeggiator, mod matrix, granulator ===========================
+    void addParamsV11() {
+      // Search names: lower case, without the two-letter type code.
+      search_names_.clear();
+      for (const PatchEntry& p : patches_)
+        search_names_.push_back(lowerCase(p.name.size() > 3 && p.name[2] == ' ' ? p.name.substr(3) : p.name));
+
+      auto screen = [this](mpc::Param p) {   // not automatable: screen state, never recorded
+        p.automatable = false;
+        return addParam(p);
+      };
+      auto withSuffix = [this](int index, const char* suffix, bool sign = false) {
+        if (static_cast<int>(suffix_.size()) <= index) {
+          suffix_.resize(index + 1);
+          signed_.resize(index + 1, false);
+        }
+        suffix_[index] = suffix;
+        signed_[index] = sign;
+      };
+
+      // Favourites and search.
+      fav_toggle_index_ = screen(mpc::boolParam("fav_toggle", "Favourite", false));
+      first_v11_index_ = fav_toggle_index_;
+      fav_state_index_ = screen(mpc::choiceParam("fav_state", "Fav State", { "Off", "On" }, 0));
+      fav_filter_index_ = screen(mpc::choiceParam("fav_filter", "Fav Filter", { "All", "Favourites" }, 0));
+      search_index_ = screen(mpc::floatParam("search", "Search", 0.0f, 1.0f, 0.0f));
+      for (int k = 0; k < kNumKeys; ++k) {
+        std::string id = "key_" + std::to_string(k + 1);
+        std::string name = "Key " + keyLabel(k);
+        int index = screen(mpc::boolParam(id.c_str(), name.c_str(), false));
+        if (k == 0) key_first_index_ = index;
+      }
+
+      // Overlay panels and the header chips.
+      std::vector<std::string> panels(kPanels, kPanels + kNumPanels);
+      panel_index_ = screen(mpc::choiceParam("panel", "Panel", panels, 0));
+      arp_info_index_ = screen(mpc::floatParam("arp_info", "Arp Info", 0.0f, 1.0f, 0.0f));
+      grain_info_index_ = screen(mpc::floatParam("grain_info", "Grain Info", 0.0f, 1.0f, 0.0f));
+      mod_info_index_ = screen(mpc::floatParam("mod_info", "Mod Info", 0.0f, 1.0f, 0.0f));
+
+      // Arpeggiator (automatable, so you can switch it per sequence).
+      arp_first_index_ = addParam(mpc::boolParam("arp_on", "Arp On", false));
+      addParam(mpc::choiceParam("arp_mode", "Arp Mode", std::vector<std::string>(kArpModes, kArpModes + Arp::kNumModes), 0));
+      addParam(mpc::choiceParam("arp_rate", "Arp Rate", std::vector<std::string>(kArpRates, kArpRates + Arp::kNumRates), 6));
+      addParam(mpc::intParam("arp_octaves", "Arp Octaves", 1, 4, 1));
+      withSuffix(addParam(mpc::floatParam("arp_gate", "Arp Gate", 5.0f, 100.0f, 50.0f, "", 0)), "%");
+      withSuffix(addParam(mpc::floatParam("arp_swing", "Arp Swing", 0.0f, 75.0f, 0.0f, "", 0)), "%");
+      addParam(mpc::boolParam("arp_latch", "Arp Latch", false));
+      addParam(mpc::intParam("arp_length", "Arp Length", 1, Arp::kMaxSteps, Arp::kMaxSteps));
+      withSuffix(addParam(mpc::floatParam("arp_accent", "Arp Accent", 0.0f, 100.0f, 50.0f, "", 0)), "%");
+      std::vector<std::string> states(kStepStates, kStepStates + Arp::kNumStepStates);
+      for (int k = 0; k < Arp::kMaxSteps; ++k) {
+        std::string id = "arp_step_" + std::to_string(k + 1), name = "Arp Step " + std::to_string(k + 1);
+        int index = addParam(mpc::choiceParam(id.c_str(), name.c_str(), states, Arp::kStepOn));
+        if (k == 0) arp_step_first_index_ = index;
+      }
+      for (int k = 0; k < Arp::kMaxSteps; ++k) {
+        std::string id = "arp_tap_" + std::to_string(k + 1), name = "Step Tap " + std::to_string(k + 1);
+        int index = screen(mpc::boolParam(id.c_str(), name.c_str(), false));
+        if (k == 0) arp_tap_first_index_ = index;
+      }
+      {
+        std::vector<std::string> steps;
+        for (int k = 1; k <= Arp::kMaxSteps; ++k)
+          steps.push_back(std::to_string(k));
+        steps.push_back("-");
+        arp_pos_index_ = screen(mpc::choiceParam("arp_pos", "Arp Position", steps, Arp::kMaxSteps));
+      }
+
+      // Mod matrix: 16 slots of source, destination, amount.
+      std::vector<std::string> sources, destinations;
+      for (const Named& n : kModSources) sources.push_back(n.label);
+      for (const Named& n : kModDestinations) destinations.push_back(n.label);
+      for (int k = 0; k < kNumModSlots; ++k) {
+        std::string n = std::to_string(k + 1);
+        int index = addParam(mpc::choiceParam(("mod_" + n + "_src").c_str(), ("Mod " + n + " Source").c_str(), sources, 0));
+        if (k == 0) mod_first_index_ = index;
+        addParam(mpc::choiceParam(("mod_" + n + "_dst").c_str(), ("Mod " + n + " Dest").c_str(), destinations, 0));
+        withSuffix(addParam(mpc::floatParam(("mod_" + n + "_amt").c_str(), ("Mod " + n + " Amount").c_str(),
+                                            -100.0f, 100.0f, 0.0f, "", 0)), "%", true);
+      }
+      // The matrix's four LFOs: shape here, timing below (Vital controls of LFO 5-8).
+      std::vector<std::string> shapes(kLfoShapes, kLfoShapes + kNumLfoShapes);
+      for (int k = 0; k < kNumMatrixLfos; ++k) {
+        std::string n = std::to_string(k + 1);
+        int index = addParam(mpc::choiceParam(("mlfo_" + n + "_shape").c_str(), ("LFO" + n + " Shape").c_str(), shapes, 0));
+        if (k == 0) lfo_shape_first_index_ = index;
+      }
+      offset2_.assign(kNumExposed2, 0.0f);
+      for (int i = 0; i < kNumExposed2; ++i) {
+        const vital::ValueDetails d = vital::Parameters::getDetails(kExposed2[i].vital);
+        mpc::Param p;
+        if (d.value_scale == vital::ValueDetails::kIndexed && d.string_lookup) {
+          std::vector<std::string> choices;
+          for (int c = static_cast<int>(d.min); c <= static_cast<int>(d.max); ++c)
+            choices.push_back(d.string_lookup[c]);
+          p = mpc::choiceParam("", "", choices, static_cast<int>(d.default_value - d.min));
+          offset2_[i] = d.min;
+        }
+        else if (d.value_scale == vital::ValueDetails::kIndexed) {
+          p = mpc::intParam("", "", static_cast<int>(d.min), static_cast<int>(d.max), static_cast<int>(d.default_value));
+        }
+        else {
+          p = mpc::floatParam("", "", d.min, d.max, d.default_value);
+        }
+        p.id = std::string("v_") + kExposed2[i].vital;
+        p.name = kExposed2[i].label;
+        int index = addParam(p);
+        if (i == 0) exposed2_first_index_ = index;
+      }
+
+      // Granulator.
+      grain_first_index_ = addParam(mpc::boolParam("gr_on", "Grain On", false));
+      withSuffix(addParam(mpc::floatParam("gr_size", "Grain Size", 10.0f, 500.0f, 120.0f, "", 0)), "ms");
+      withSuffix(addParam(mpc::floatParam("gr_scatter", "Grain Scatter", 0.0f, 100.0f, 30.0f, "", 0)), "%");
+      withSuffix(addParam(mpc::floatParam("gr_space", "Grain Space", 0.0f, 100.0f, 30.0f, "", 0)), "%");
+      withSuffix(addParam(mpc::floatParam("gr_mix", "Grain Mix", 0.0f, 100.0f, 50.0f, "", 0)), "%");
+      withSuffix(addParam(mpc::floatParam("gr_density", "Grain Density", 1.0f, 80.0f, 20.0f, "", 0)), "/s");
+      withSuffix(addParam(mpc::floatParam("gr_position", "Grain Position", 0.0f, 1000.0f, 80.0f, "", 0)), "ms");
+      withSuffix(addParam(mpc::floatParam("gr_pitch", "Grain Pitch", -24.0f, 24.0f, 0.0f, "", 0)), "st", true);
+      withSuffix(addParam(mpc::floatParam("gr_pitch_rand", "Grain Pitch Rnd", 0.0f, 24.0f, 0.0f, "", 1)), "st");
+      withSuffix(addParam(mpc::floatParam("gr_spread", "Grain Spread", 0.0f, 100.0f, 50.0f, "", 0)), "%");
+      withSuffix(addParam(mpc::floatParam("gr_reverse", "Grain Reverse", 0.0f, 100.0f, 0.0f, "", 0)), "%");
+      withSuffix(addParam(mpc::floatParam("gr_feedback", "Grain Feedback", 0.0f, 90.0f, 0.0f, "", 0)), "%");
+      addParam(mpc::boolParam("gr_freeze", "Grain Freeze", false));
+      grain_last_index_ = addParam(mpc::choiceParam("gr_sync", "Grain Sync",
+                                                    std::vector<std::string>(kGrainSync, kGrainSync + Granulator::kNumSyncRates), 0));
+
+      // Touch scrolling for the patch lists: an invisible strip over the rows (one per list height).
+      // Drag = scroll, a single quick touch = load the patch under the finger. "Tap" mode hides the strips,
+      // so the row buttons underneath take the touches again.
+      list_touch_index_ = screen(mpc::choiceParam("list_touch", "List Touch", { "Drag", "Tap" }, 0));
+      drag_index_[0] = screen(mpc::floatParam("list_drag", "List Drag", 0.0f, 1.0f, 0.5f));
+      drag_index_[1] = screen(mpc::floatParam("list_drag_page", "List Drag Page", 0.0f, 1.0f, 0.5f));
+      suffix_.resize(numParams());
+      signed_.resize(numParams(), false);
+    }
+
+    // Host thread: one event of a touch on a list strip (which = 0 browser, 1 PATCH page).
+    void listDragEvent(int which, float value) {
+      std::lock_guard<std::mutex> lock(drag_mutex_);
+      int64_t now = nowNs();
+      int rows = which == 0 ? kListRows : kListPageRows;
+      if (now - drag_.last_ns > kGestureGapNs || drag_.which != which) {
+        drag_ = DragGesture();
+        drag_.which = which;
+        drag_.anchor = value;
+        drag_.anchor_top = list_top_.load();
+        drag_.rows = rows;
+      }
+      else {
+        drag_.events++;
+        // The list follows the finger: moving up (value up) brings later patches into view.
+        int count = static_cast<int>(filteredPatches().size());
+        int top = std::clamp(drag_.anchor_top + static_cast<int>(std::lround((value - drag_.anchor) * rows)), 0,
+                             maxListTop(count));
+        if (top != list_top_.load()) {
+          list_top_.store(top);
+          list_marker_dirty_.store(true);
+          display_dirty_.store(true);
+          worker_cv_.notify_all();
+        }
+      }
+      drag_.last_ns = now;
+    }
+
+    // Worker thread: a gesture that ended after a single event was a tap.
+    void checkListTap() {
+      int row = -1;
+      {
+        std::lock_guard<std::mutex> lock(drag_mutex_);
+        if (drag_.which < 0 || drag_.done || nowNs() - drag_.last_ns <= kGestureGapNs)
+          return;
+        drag_.done = true;
+        if (drag_.events == 0)
+          row = std::clamp(static_cast<int>((1.0f - drag_.anchor) * drag_.rows), 0, drag_.rows - 1);
+      }
+      if (row < 0)
+        return;
+      int k = listPatchAt(row);
+      if (k >= 0 && k != requested_patch_.load()) {
+        setNormalised(kPatch, param(kPatch).toNormalised(static_cast<float>(k)));   // triggers the load
+        notifyHostParameterChanged(kPatch);
+      }
+    }
+
+    static std::string keyLabel(int k) {
+      if (k < kNumLetterKeys) return std::string(1, kKeys[k]);
+      if (k == kKeySpace) return "SPACE";
+      if (k == kKeyDelete) return "DEL";
+      return "CLR";
+    }
+
+    int modSourceIndex(int s) const { return mod_first_index_ + 3 * s; }
+    int modDestIndex(int s) const { return mod_first_index_ + 3 * s + 1; }
+    int modAmountIndex(int s) const { return mod_first_index_ + 3 * s + 2; }
+
+    // Momentary screen buttons: act on press, then spring back.
+    template <typename F>
+    void momentary(int index, float plain, F&& action) {
+      if (plain < 0.5f)
+        return;
+      if (suppress_patch_trigger_.load()) {   // a saved "pressed" value from a restore: just release it
+        setNormalised(index, 0.0f);
+        return;
+      }
+      action();
+      setNormalised(index, 0.0f);
+      notifyHostParameterChanged(index);
+    }
+
+    void filterChanged() {
+      list_top_.store(0);
+      list_follow_.store(true);
+      display_dirty_.store(true);
+      worker_cv_.notify_all();
+    }
+
+    void parameterChangedV11(int index, float plain) {
+      if (index == fav_toggle_index_) {
+        momentary(index, plain, [this] {
+          std::string key = favKey(requested_patch_.load());
+          {
+            std::lock_guard<std::mutex> lock(filter_mutex_);
+            if (!favourites_.erase(key))
+              favourites_.insert(key);
+          }
+          fav_save_.store(true);
+          if (fav_only_.load())
+            filterChanged();
+          display_dirty_.store(true);
+          worker_cv_.notify_all();
+        });
+        return;
+      }
+      if (index == drag_index_[0] || index == drag_index_[1]) {
+        // Only real touches: not a project or state restore, and the browser strip only while the browser is open.
+        bool browser_strip = index == drag_index_[0];
+        if (getInt(list_touch_index_) == 0 && !suppress_patch_trigger_.load() &&
+            (!browser_strip || getInt(browser_index_) != 0))
+          listDragEvent(browser_strip ? 0 : 1, plain);
+        return;
+      }
+      if (index == list_touch_index_)
+        return;
+      if (index == fav_filter_index_) {
+        fav_only_.store(plain > 0.5f);
+        filterChanged();
+        return;
+      }
+      if (index == fav_state_index_ || index == search_index_ || index == arp_pos_index_ ||
+          index == arp_info_index_ || index == grain_info_index_ || index == mod_info_index_)
+        return;   // display only
+      if (index >= key_first_index_ && index < key_first_index_ + kNumKeys) {
+        momentary(index, plain, [this, index] {
+          int k = index - key_first_index_;
+          {
+            std::lock_guard<std::mutex> lock(filter_mutex_);
+            if (k < kNumLetterKeys) { if (query_.size() < kMaxQuery) query_ += static_cast<char>(std::tolower(kKeys[k])); }
+            else if (k == kKeySpace) { if (!query_.empty() && query_.back() != ' ' && query_.size() < kMaxQuery) query_ += ' '; }
+            else if (k == kKeyDelete) { if (!query_.empty()) query_.pop_back(); }
+            else query_.clear();
+          }
+          filterChanged();
+        });
+        return;
+      }
+      if (index == panel_index_) {
+        if (plain > 0.5f && getInt(browser_index_) != 0) {
+          setNormalised(browser_index_, 0.0f);
+          notifyHostParameterChanged(browser_index_);
+        }
+        return;
+      }
+      if (index >= arp_tap_first_index_ && index < arp_tap_first_index_ + Arp::kMaxSteps) {
+        momentary(index, plain, [this, index] {
+          int step = arp_step_first_index_ + (index - arp_tap_first_index_);
+          set(step, static_cast<float>((getInt(step) + 1) % Arp::kNumStepStates));
+          notifyHostParameterChanged(step);
+          arp_dirty_.store(true);
+        });
+        return;
+      }
+      if (index >= arp_first_index_ && index < arp_step_first_index_ + Arp::kMaxSteps) {
+        arp_dirty_.store(true);
+        if (index < arp_step_first_index_)
+          display_dirty_.store(true);   // the ARP chip's text
+        return;
+      }
+      if (index >= mod_first_index_ && index < mod_first_index_ + 3 * kNumModSlots) {
+        if ((index - mod_first_index_) % 3 == 2) {
+          dirty_[index].store(true);
+          any_dirty_.store(true);
+        }
+        else {
+          mod_routing_dirty_.store(true);
+          display_dirty_.store(true);
+          worker_cv_.notify_all();
+        }
+        return;
+      }
+      if (index >= lfo_shape_first_index_ && index < lfo_shape_first_index_ + kNumMatrixLfos) {
+        lfo_shape_dirty_.fetch_or(1 << (index - lfo_shape_first_index_));
+        worker_cv_.notify_all();
+        return;
+      }
+      if (index >= exposed2_first_index_ && index < exposed2_first_index_ + kNumExposed2) {
+        dirty_[index].store(true);
+        any_dirty_.store(true);
+        return;
+      }
+      if (index >= grain_first_index_ && index <= grain_last_index_) {
+        grain_dirty_.store(true);
+        display_dirty_.store(true);
+        return;
+      }
+    }
+
+    bool formatValueV11(int index, float plain, std::string& out) {
+      if (index == search_index_) {
+        std::lock_guard<std::mutex> lock(filter_mutex_);
+        std::string q = query_;
+        std::transform(q.begin(), q.end(), q.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+        out = q.empty() ? std::string("TYPE TO SEARCH") : q + "_";
+        return true;
+      }
+      if (index >= key_first_index_ && index < key_first_index_ + kNumKeys) {
+        out = keyLabel(index - key_first_index_);
+        return true;
+      }
+      if (index == fav_toggle_index_) { out = "FAV"; return true; }
+      if (index == arp_info_index_) {
+        out = getInt(arp_first_index_) ? std::string(kArpModesShort[getInt(arp_first_index_ + 1)]) + " " +
+                                           kArpRates[getInt(arp_first_index_ + 2)]
+                                       : std::string("OFF");
+        return true;
+      }
+      if (index == grain_info_index_) {
+        if (!getInt(grain_first_index_)) out = "OFF";
+        else if (getInt(grain_last_index_ - 1)) out = "FROZEN";
+        else out = "MIX " + formatNumber(get(grain_first_index_ + 4), 0) + "%";
+        return true;
+      }
+      if (index == mod_info_index_) {
+        int n = activeModSlots();
+        out = n == 0 ? std::string("OFF") : std::to_string(n) + (n == 1 ? " SLOT" : " SLOTS");
+        return true;
+      }
+      if (index >= exposed2_first_index_ && index < exposed2_first_index_ + kNumExposed2) {
+        const Exposed& x = kExposed2[index - exposed2_first_index_];
+        const vital::ValueDetails d = vital::Parameters::getDetails(x.vital);
+        if (d.value_scale != vital::ValueDetails::kExponential)
+          return false;
+        double hz = std::pow(2.0, static_cast<double>(plain));   // LFO frequency: show Hz
+        out = formatNumber(hz, hz < 1.0 ? 2 : 1) + "Hz";
+        return true;
+      }
+      if (index < static_cast<int>(suffix_.size()) && !suffix_[index].empty()) {
+        const mpc::Param& p = param(index);
+        out = p.display(plain);
+        if (signed_[index] && plain > 0.0f)
+          out = "+" + out;
+        if (out == "-0") out = "0";
+        out += suffix_[index];
+        return true;
+      }
+      return false;
+    }
+
+    int activeModSlots() const {
+      int n = 0;
+      for (int s = 0; s < kNumModSlots; ++s)
+        if (getInt(modSourceIndex(s)) > 0 && getInt(modDestIndex(s)) > 0)
+          ++n;
+      return n;
+    }
+
+    Arp::Settings arpSettings() const {
+      Arp::Settings a;
+      int i = arp_first_index_;
+      a.on = getInt(i) != 0;
+      a.mode = getInt(i + 1);
+      a.rate = getInt(i + 2);
+      a.octaves = getInt(i + 3);
+      a.gate = get(i + 4) / 100.0f;
+      a.swing = get(i + 5) / 100.0f;
+      a.latch = getInt(i + 6) != 0;
+      a.length = getInt(i + 7);
+      a.accent = get(i + 8) / 100.0f;
+      for (int k = 0; k < Arp::kMaxSteps; ++k)
+        a.steps[k] = getInt(arp_step_first_index_ + k);
+      return a;
+    }
+
+    Granulator::Settings grainSettings() const {
+      Granulator::Settings g;
+      int i = grain_first_index_;
+      g.on = getInt(i) != 0;
+      g.size_ms = get(i + 1);
+      g.scatter = get(i + 2) / 100.0f;
+      g.space = get(i + 3) / 100.0f;
+      g.mix = get(i + 4) / 100.0f;
+      g.density = get(i + 5);
+      g.position_ms = get(i + 6);
+      g.pitch = get(i + 7);
+      g.pitch_rand = get(i + 8);
+      g.spread = get(i + 9) / 100.0f;
+      g.reverse = get(i + 10) / 100.0f;
+      g.feedback = get(i + 11) / 100.0f;
+      g.freeze = getInt(i + 12) != 0;
+      g.sync = getInt(i + 13);
+      return g;
+    }
+
+    // Connects the matrix slots and the matrix LFOs in the engine. Caller holds load_mutex_ with audio paused.
+    void syncMatrixLocked() {
+      int in_use = 0;
+      for (int s = 0; s < kNumModSlots; ++s) {
+        int src = getInt(modSourceIndex(s));
+        int dst = getInt(modDestIndex(s));
+        if (src <= 0 || dst <= 0)
+          src = dst = 0;
+        if (src >= 4 && src <= 7)
+          in_use |= 1 << (src - 4);
+        if (src != applied_src_[s] || dst != applied_dst_[s]) {
+          core_->setUserModulation(s, kModSources[src].vital, kModDestinations[dst].vital, bipolarSource(src));
+          applied_src_[s] = src;
+          applied_dst_[s] = dst;
+        }
+      }
+      int shapes_due = lfo_shape_dirty_.exchange(0);
+      for (int k = 0; k < kNumMatrixLfos; ++k) {
+        int bit = 1 << k;
+        int lfo = kFirstMatrixLfo + k;
+        if ((in_use & bit) && !(lfo_applied_mask_ & bit)) {
+          // Taking this LFO over: remember the patch's own settings first.
+          for (int c = 0; c < 4; ++c)
+            saved_lfo_controls_[k][c] = core_->getControl(kExposed2[4 * k + c].vital);
+          core_->setLfoShape(lfo, kLfoShapeToCore[getInt(lfo_shape_first_index_ + k)]);
+          for (int c = 0; c < 4; ++c)
+            dirty_[exposed2_first_index_ + 4 * k + c].store(true);
+          any_dirty_.store(true);
+        }
+        else if (!(in_use & bit) && (lfo_applied_mask_ & bit)) {
+          // Given back: the patch's LFO as it was.
+          for (int c = 0; c < 4; ++c)
+            core_->setControl(kExposed2[4 * k + c].vital, saved_lfo_controls_[k][c]);
+          core_->restoreLfoShape(lfo);
+        }
+        else if ((in_use & bit) && (shapes_due & bit)) {
+          core_->setLfoShape(lfo, kLfoShapeToCore[getInt(lfo_shape_first_index_ + k)]);
+        }
+      }
+      lfo_applied_mask_ = in_use;
+      lfo_in_use_.store(in_use);
+    }
+
+    // Worker thread, every tick.
+    void workerV11() {
+      if (mod_routing_dirty_.exchange(false) || lfo_shape_dirty_.load() != 0) {
+        std::lock_guard<std::mutex> load_lock(load_mutex_);
+        pauseAudio();
+        syncMatrixLocked();
+        paused_.store(false);   // no markAllDirty: nothing else changed
+      }
+      if (fav_save_.exchange(false))
+        saveFavourites();
+      checkListTap();
+      // Star in the header: is the shown patch a favourite?
+      if (fav_state_index_ >= 0) {
+        bool fav;
+        {
+          std::lock_guard<std::mutex> lock(filter_mutex_);
+          fav = favourites_.count(favKey(requested_patch_.load())) != 0;
+        }
+        if (fav != (getInt(fav_state_index_) != 0)) {
+          setNormalised(fav_state_index_, fav ? 1.0f : 0.0f);
+          notifyHostParameterChanged(fav_state_index_);
+        }
+      }
+      // Arp play marker, only while the arp panel is open.
+      if (arp_pos_index_ >= 0) {
+        int step = getInt(panel_index_) == kPanelArp ? arp_step_.load() : -1;
+        int want = step < 0 ? Arp::kMaxSteps : step;
+        if (want != getInt(arp_pos_index_)) {
+          setNormalised(arp_pos_index_, param(arp_pos_index_).toNormalised(static_cast<float>(want)));
+          notifyHostParameterChanged(arp_pos_index_);
+        }
+      }
+    }
+
+    // <drive>/Warpline/Favourites.txt next to the user patches, or the plugin folder when that is unknown.
+    static fs::path favouritesFile() {
+      fs::path plugin_folder(mpc::pluginFolder());
+      fs::path parent = plugin_folder.parent_path();
+      if (const char* env = std::getenv("WARPLINE_FAVOURITES"))
+        return fs::path(env);
+      if (parent.filename() == "VST2 Plugins" || parent.filename() == "Synths")
+        return parent.parent_path() / "Warpline" / "Favourites.txt";
+      return plugin_folder / "Favourites.txt";
+    }
+
+    void loadFavourites() {
+      std::string text;
+      if (!mpc::readTextFile(favouritesFile().string(), text))
+        return;
+      std::lock_guard<std::mutex> lock(filter_mutex_);
+      size_t start = 0;
+      while (start <= text.size()) {
+        size_t end = text.find('\n', start);
+        if (end == std::string::npos) end = text.size();
+        std::string line = text.substr(start, end - start);
+        while (!line.empty() && (line.back() == '\r' || line.back() == ' ')) line.pop_back();
+        if (!line.empty())
+          favourites_.insert(line);
+        start = end + 1;
+      }
+    }
+
+    // Worker thread. Written as .new then renamed, so a power cut never leaves half a file.
+    void saveFavourites() {
+      std::string text;
+      {
+        std::lock_guard<std::mutex> lock(filter_mutex_);
+        for (const std::string& f : favourites_)
+          text += f + "\n";
+      }
+      fs::path file = favouritesFile();
+      std::error_code ec;
+      fs::create_directories(file.parent_path(), ec);
+      fs::path tmp = file;
+      tmp += ".new";
+      {
+        std::ofstream out(tmp, std::ios::binary | std::ios::trunc);
+        if (!out)
+          return;
+        out << text;
+        if (!out)
+          return;
+      }
+      fs::rename(tmp, file, ec);
     }
 
     std::unique_ptr<VitalCore> core_;
@@ -1271,6 +2003,51 @@ class Warpline : public mpc::Plugin {
     std::atomic<int64_t> live_hold_until_ns_ { 0 };
     int factory_count_ = 1;
     std::atomic<int> category_{ 0 };
+
+
+    // 1.1 state.
+    int first_v11_index_ = -1;
+    int fav_toggle_index_ = -1, fav_state_index_ = -1, fav_filter_index_ = -1, search_index_ = -1, key_first_index_ = -1;
+    int panel_index_ = -1, arp_info_index_ = -1, grain_info_index_ = -1, mod_info_index_ = -1;
+    int arp_first_index_ = -1, arp_step_first_index_ = -1, arp_tap_first_index_ = -1, arp_pos_index_ = -1;
+    int mod_first_index_ = -1, lfo_shape_first_index_ = -1, exposed2_first_index_ = -1;
+    int grain_first_index_ = -1, grain_last_index_ = -1;
+    std::vector<std::string> suffix_;
+    std::vector<bool> signed_;
+    static constexpr int64_t kGestureGapNs = 250LL * 1000 * 1000;
+    struct DragGesture {
+      int which = -1;
+      float anchor = 0.0f;
+      int anchor_top = 0;
+      int rows = kListRows;
+      int events = 0;          // events after the first
+      int64_t last_ns = 0;
+      bool done = false;
+    };
+    std::mutex drag_mutex_;
+    DragGesture drag_;
+    int list_touch_index_ = -1;
+    std::array<int, 2> drag_index_ { -1, -1 };
+    std::vector<float> offset2_;
+    std::vector<std::string> search_names_;
+    mutable std::mutex filter_mutex_;
+    std::string query_;
+    std::set<std::string> favourites_;
+    std::atomic<bool> fav_only_{ false };
+    std::atomic<bool> fav_save_{ false };
+    Arp arp_;
+    int arp_channel_ = 0;
+    std::atomic<bool> arp_dirty_{ true };
+    std::atomic<int> arp_step_{ -1 };
+    Granulator granulator_;
+    std::atomic<bool> grain_dirty_{ true };
+    std::atomic<bool> mod_routing_dirty_{ true };
+    std::atomic<int> lfo_shape_dirty_{ 0 };
+    std::atomic<int> lfo_in_use_{ 0 };
+    int lfo_applied_mask_ = 0;
+    std::array<int, kNumModSlots> applied_src_ {};
+    std::array<int, kNumModSlots> applied_dst_ {};
+    std::array<std::array<float, 4>, kNumMatrixLfos> saved_lfo_controls_ {};
 
     std::mutex status_mutex_;
     std::string status_text_ = "OK";
