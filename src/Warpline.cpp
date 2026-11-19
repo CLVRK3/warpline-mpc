@@ -39,6 +39,7 @@
 
 #include "Arp.h"
 #include "Granulator.h"
+#include "GrainzClouds.h"
 #include "VitalCore.h"
 #include "synth_constants.h"
 #include "synth_parameters.h"
@@ -180,6 +181,10 @@ const char* const kArpModesShort[Arp::kNumModes] = { "UP", "DOWN", "UP/DN", "DN/
 const char* const kArpRates[Arp::kNumRates] = { "1/4", "1/4 D", "1/4 T", "1/8", "1/8 D", "1/8 T", "1/16", "1/16 D", "1/16 T",
                                                 "1/32", "1/32 T" };
 const char* const kStepStates[Arp::kNumStepStates] = { "Off", "On", "Accent", "Tie" };
+// GRAINZ engines: our own grain cloud, then the four texture modes (GrainzClouds).
+const char* const kGrainModes[] = { "Grainz", "Particle", "Stretch", "Loop", "Spectral" };
+const char* const kGrainModesShort[] = { "MIX", "PARTICLE", "STRETCH", "LOOP", "SPECTRAL" };
+constexpr int kNumGrainModes = 5;
 const char* const kGrainSync[Granulator::kNumSyncRates] = { "Free", "1/4", "1/8", "1/16", "1/32", "1/8 T", "1/16 T" };
 // The overlay panels (Panel parameter).
 const char* const kPanels[] = { "Closed", "Arp", "Granulator", "Mod 1-8", "Mod 9-16", "LFOs" };
@@ -632,6 +637,9 @@ class Warpline : public mpc::Plugin {
       core_ = std::make_unique<VitalCore>();
       core_->prepare(44100.0);
       granulator_.prepare(44100.0);
+      textures_.prepare(44100.0);
+      wet_l_.assign(kWetChunk, 0.0f);
+      wet_r_.assign(kWetChunk, 0.0f);
       arp_.setSampleRate(44100.0);
       rememberPatchLimits();
       applyEcoSettings();
@@ -657,6 +665,8 @@ class Warpline : public mpc::Plugin {
       core_->prepare(sample_rate);
       applyEcoSettings();
       granulator_.prepare(sample_rate);
+      textures_.prepare(sample_rate);
+      sample_rate_ = sample_rate;
       arp_.setSampleRate(sample_rate);
       arp_dirty_.store(true);
       grain_dirty_.store(true);
@@ -669,6 +679,7 @@ class Warpline : public mpc::Plugin {
         arp_.reset([](int, float, bool) {});
         core_->allSoundsOff();
         granulator_.reset();
+        textures_.reset();
       }
     }
 
@@ -726,11 +737,21 @@ class Warpline : public mpc::Plugin {
         handleMidi(ctx.midi[e++], send);
       arp_step_.store(arp_.running() ? arp_.currentStep() : -1);
 
-      if (grain_dirty_.exchange(false))
+      if (grain_dirty_.exchange(false)) {
         granulator_.setSettings(grainSettings());
+        textures_.setSettings(textureSettings());
+        texture_on_ = getInt(grain_first_index_) != 0 && grain_mode_index_ >= 0 && getInt(grain_mode_index_) > 0;
+        texture_mix_target_ = get(grain_first_index_ + 4) / 100.0f;
+        texture_sync_ = getInt(grain_last_index_);
+      }
       granulator_.setTempo(bpm);
-      if (right != left)
+      if (right != left) {
         granulator_.process(left, right, ctx.numFrames);
+        if (texture_on_)
+          processTextures(left, right, ctx.numFrames, bpm, playing, playing ? ctx.transport.ppqPos : 0.0);
+        else
+          texture_mix_ = 0.0f;
+      }
       in_process_.store(false);
     }
 
@@ -1564,6 +1585,14 @@ class Warpline : public mpc::Plugin {
       list_touch_index_ = screen(mpc::choiceParam("list_touch", "List Touch", { "Drag", "Tap" }, 0));
       drag_index_[0] = screen(mpc::floatParam("list_drag", "List Drag", 0.0f, 1.0f, 0.5f));
       drag_index_[1] = screen(mpc::floatParam("list_drag_page", "List Drag Page", 0.0f, 1.0f, 0.5f));
+
+      // GRAINZ engine (Grainz = our grain cloud; the other four are the texture modes) and their TEXTURE control.
+      grain_mode_index_ = addParam(mpc::choiceParam("gr_mode", "Grain Mode",
+                                                    std::vector<std::string>(kGrainModes, kGrainModes + kNumGrainModes), 0));
+      grain_texture_index_ = addParam(mpc::floatParam("gr_texture", "Grain Texture", 0.0f, 100.0f, 50.0f, "", 0));
+      suffix_.resize(numParams());
+      signed_.resize(numParams(), false);
+      suffix_[grain_texture_index_] = "%";
       suffix_.resize(numParams());
       signed_.resize(numParams(), false);
     }
@@ -1777,7 +1806,8 @@ class Warpline : public mpc::Plugin {
         any_dirty_.store(true);
         return;
       }
-      if (index >= grain_first_index_ && index <= grain_last_index_) {
+      if ((index >= grain_first_index_ && index <= grain_last_index_) || index == grain_mode_index_ ||
+          index == grain_texture_index_) {
         grain_dirty_.store(true);
         display_dirty_.store(true);
         return;
@@ -1797,6 +1827,9 @@ class Warpline : public mpc::Plugin {
         return true;
       }
       if (index == fav_toggle_index_) { out = "FAV"; return true; }
+      // The star shows Fav State as a picture. Its text never changes: favourites are global, not per project, so
+      // the star may legitimately differ from a project's saved value (and host_sim's state check compares text).
+      if (index == fav_state_index_) { out = "STAR"; return true; }
       if (index == arp_info_index_) {
         out = getInt(arp_first_index_) ? std::string(kArpModesShort[getInt(arp_first_index_ + 1)]) + " " +
                                            kArpRates[getInt(arp_first_index_ + 2)]
@@ -1806,7 +1839,8 @@ class Warpline : public mpc::Plugin {
       if (index == grain_info_index_) {
         if (!getInt(grain_first_index_)) out = "OFF";
         else if (getInt(grain_last_index_ - 1)) out = "FROZEN";
-        else out = "MIX " + formatNumber(get(grain_first_index_ + 4), 0) + "%";
+        else out = std::string(kGrainModesShort[std::clamp(getInt(grain_mode_index_), 0, kNumGrainModes - 1)]) + " " +
+                   formatNumber(get(grain_first_index_ + 4), 0) + "%";
         return true;
       }
       if (index == mod_info_index_) {
@@ -1863,7 +1897,7 @@ class Warpline : public mpc::Plugin {
     Granulator::Settings grainSettings() const {
       Granulator::Settings g;
       int i = grain_first_index_;
-      g.on = getInt(i) != 0;
+      g.on = getInt(i) != 0 && (grain_mode_index_ < 0 || getInt(grain_mode_index_) == 0);
       g.size_ms = get(i + 1);
       g.scatter = get(i + 2) / 100.0f;
       g.space = get(i + 3) / 100.0f;
@@ -1878,6 +1912,49 @@ class Warpline : public mpc::Plugin {
       g.freeze = getInt(i + 12) != 0;
       g.sync = getInt(i + 13);
       return g;
+    }
+
+    // The texture modes use the same controls: GRAIN = size, SCATTER = density, SPACE = reverb, MIX = dry/wet,
+    // POSITION, PITCH, SPREAD, FEEDBACK, FREEZE, plus TEXTURE. SYNC sends triggers on the beat grid.
+    GrainzClouds::Settings textureSettings() const {
+      GrainzClouds::Settings t;
+      int i = grain_first_index_;
+      t.mode = std::max(0, getInt(grain_mode_index_) - 1);
+      t.size = (get(i + 1) - 10.0f) / 490.0f;
+      t.density = get(i + 2) / 100.0f;
+      t.reverb = get(i + 3) / 100.0f;
+      t.position = get(i + 6) / 1000.0f;
+      t.pitch = get(i + 7);
+      t.spread = get(i + 9) / 100.0f;
+      t.feedback = get(i + 11) / 100.0f;
+      t.freeze = getInt(i + 12) != 0;
+      t.texture = get(grain_texture_index_) / 100.0f;
+      return t;
+    }
+
+    // Audio thread: wet from the texture engine, mixed equal-power at the host rate (dry stays full bandwidth).
+    void processTextures(float* left, float* right, int frames, double bpm, bool playing, double ppq) {
+      // Sync: a trigger on each grid line (to the block).
+      static const double kBeats[Granulator::kNumSyncRates] = { 0.0, 1.0, 0.5, 0.25, 0.125, 1.0 / 3.0, 1.0 / 6.0 };
+      int sync = std::clamp(texture_sync_, 0, Granulator::kNumSyncRates - 1);
+      if (sync > 0) {
+        double beats = static_cast<double>(frames) * bpm / (60.0 * sample_rate_);
+        double start = playing ? ppq : free_beat_;
+        double grid = kBeats[sync];
+        if (std::floor((start + beats) / grid) > std::floor(start / grid) || std::fmod(start, grid) == 0.0)
+          textures_.trigger();
+        free_beat_ = start + beats;
+      }
+      for (int pos = 0; pos < frames; pos += kWetChunk) {
+        int n = std::min(kWetChunk, frames - pos);
+        textures_.process(left + pos, right + pos, wet_l_.data(), wet_r_.data(), n);
+        for (int k = 0; k < n; ++k) {
+          texture_mix_ += 0.002f * (texture_mix_target_ - texture_mix_);
+          float dry = std::cos(texture_mix_ * 1.5707963f), wet = std::sin(texture_mix_ * 1.5707963f);
+          left[pos + k] = dry * left[pos + k] + wet * wet_l_[k];
+          right[pos + k] = dry * right[pos + k] + wet * wet_r_[k];
+        }
+      }
     }
 
     // Connects the matrix slots and the matrix LFOs in the engine. Caller holds load_mutex_ with audio paused.
@@ -1965,6 +2042,14 @@ class Warpline : public mpc::Plugin {
         return fs::path(env);
       if (parent.filename() == "VST2 Plugins" || parent.filename() == "Synths")
         return parent.parent_path() / "Warpline" / "Favourites.txt";
+      // A build folder (desktop tests, host_sim): keep favourites in memory, so test runs (which press every
+      // button) never leave a Favourites.txt next to a build that gets packaged.
+      std::error_code ec;
+      if (fs::exists(plugin_folder / "src" / "Warpline.cpp", ec))
+        return fs::path();   // the source project itself (native test builds)
+      for (const fs::path& part : plugin_folder)
+        if (part == "build" || part == "dist")
+          return fs::path();
       return plugin_folder / "Favourites.txt";
     }
 
@@ -1994,6 +2079,8 @@ class Warpline : public mpc::Plugin {
           text += f + "\n";
       }
       fs::path file = favouritesFile();
+      if (file.empty())
+        return;
       std::error_code ec;
       fs::create_directories(file.parent_path(), ec);
       fs::path tmp = file;
@@ -2093,6 +2180,15 @@ class Warpline : public mpc::Plugin {
     std::atomic<bool> arp_dirty_{ true };
     std::atomic<int> arp_step_{ -1 };
     Granulator granulator_;
+    GrainzClouds textures_;
+    static constexpr int kWetChunk = 4096;
+    std::vector<float> wet_l_, wet_r_;
+    double sample_rate_ = 44100.0;
+    double free_beat_ = 0.0;
+    bool texture_on_ = false;
+    float texture_mix_ = 0.0f, texture_mix_target_ = 0.5f;
+    int texture_sync_ = 0;
+    int grain_mode_index_ = -1, grain_texture_index_ = -1;
     std::atomic<bool> grain_dirty_{ true };
     std::atomic<bool> mod_routing_dirty_{ true };
     std::atomic<int> lfo_shape_dirty_{ 0 };

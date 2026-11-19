@@ -2,3 +2,4 @@ build/
 dist/
 *.zip
 __pycache__/
+Favourites.txt
