@@ -76,6 +76,10 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   - The list moves by the change between events. A pause over 250 ms, or a jump over 0.2 in one event, starts a new
     touch. Device, 2026-11-19 (Live III): measuring from the first event made quick repeated flicks snap back after
     about two, so the list seemed to stop scrolling.
+  - The strip's value follows the finger's movement from where it was, not the finger's position (Live III, 2026-11-19:
+    with only the delta fix it still stopped after about two drags, once the value reached the top or bottom). So
+    after every touch (no event for 120 ms) the plugin puts both strips back at 0.5 (`recentreDragStrips`, guarded
+    by `recentring_`). A single event at 0.5 doesn't count as a tap.
   - If tapping a row loads the wrong patch on some MPC, switch to TAP.
 - **Horizontal drags** (mod boxes and AMOUNT bars, GRAINZ columns, every `comp_box`): a see-through film-strip `Knob`
   with `dragOrientation: Horizontal`, as the last child of the component. A `Slider` (ColourBar, horizontal) didn't

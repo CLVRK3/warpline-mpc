@@ -1602,9 +1602,14 @@ class Warpline : public mpc::Plugin {
         if (drag_.which < 0 || drag_.done || nowNs() - drag_.last_ns <= kGestureGapNs)
           return;
         drag_.done = true;
-        if (drag_.events == 0)
+        // A single event at the middle is the strip being touched where it already was, not a tap on a row.
+        if (drag_.events == 0 && std::fabs(drag_.anchor - kDragCentre) > 0.02f)
           row = std::clamp(static_cast<int>((1.0f - drag_.anchor) * drag_.rows), 0, drag_.rows - 1);
       }
+      // Put both strips back in the middle after every touch. On the MPC the strip's value follows the finger's
+      // movement from where it was (device, 2026-11-19, Live III), so without this it reaches the top or bottom
+      // after a couple of drags and the list stops moving.
+      recentreDragStrips();
       if (row < 0)
         return;
       int k = listPatchAt(row);
@@ -1612,6 +1617,19 @@ class Warpline : public mpc::Plugin {
         setNormalised(kPatch, param(kPatch).toNormalised(static_cast<float>(k)));   // triggers the load
         notifyHostParameterChanged(kPatch);
       }
+    }
+
+    void recentreDragStrips() {
+      recentring_.store(true);
+      for (int index : drag_index_) {
+        if (index >= 0 && std::fabs(get(index) - kDragCentre) > 0.001f) {
+          setNormalised(index, kDragCentre);
+          notifyHostParameterChanged(index);
+        }
+      }
+      recentring_.store(false);
+      std::lock_guard<std::mutex> lock(drag_mutex_);
+      drag_.last_value = kDragCentre;
     }
 
     static std::string keyLabel(int k) {
@@ -1666,6 +1684,8 @@ class Warpline : public mpc::Plugin {
       if (index == drag_index_[0] || index == drag_index_[1]) {
         // Only real touches: not a project or state restore, and the browser strip only while the browser is open.
         bool browser_strip = index == drag_index_[0];
+        if (recentring_.load())
+          return;   // our own move back to the middle
         if (getInt(list_touch_index_) == 0 && !suppress_patch_trigger_.load() &&
             (!browser_strip || getInt(browser_index_) != 0))
           listDragEvent(browser_strip ? 0 : 1, plain);
@@ -2022,7 +2042,9 @@ class Warpline : public mpc::Plugin {
     int grain_first_index_ = -1, grain_last_index_ = -1;
     std::vector<std::string> suffix_;
     std::vector<bool> signed_;
-    static constexpr int64_t kGestureGapNs = 250LL * 1000 * 1000;
+    static constexpr int64_t kGestureGapNs = 120LL * 1000 * 1000;   // no event for this long = the touch ended
+    static constexpr float kDragCentre = 0.5f;
+    std::atomic<bool> recentring_{ false };
     static constexpr float kTouchJump = 0.2f;   // more than this between two events = a new touch
     struct DragGesture {
       int which = -1;
