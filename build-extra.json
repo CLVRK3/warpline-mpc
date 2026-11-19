@@ -13,7 +13,8 @@
     "vital/common",
     "vital/common/wavetable",
     "vital/third_party",
-    "shim"
+    "shim",
+    "third_party/mutable"
   ],
   "armLinkFlags": [
     "-lpthread"
