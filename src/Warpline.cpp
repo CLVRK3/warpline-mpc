@@ -1559,23 +1559,30 @@ class Warpline : public mpc::Plugin {
     }
 
     // Host thread: one event of a touch on a list strip (which = 0 browser, 1 PATCH page).
+    // Host thread: one event of a touch on a list strip (which = 0 browser, 1 PATCH page).
+    // The strip reports where the finger is (0 bottom .. 1 top). The list moves by the change between events,
+    // so a new touch never pulls the list back: a pause, or a jump bigger than a finger moves in one event,
+    // starts a new touch where the finger landed (device, 2026-11-19: quick repeated flicks used to snap back).
     void listDragEvent(int which, float value) {
       std::lock_guard<std::mutex> lock(drag_mutex_);
       int64_t now = nowNs();
       int rows = which == 0 ? kListRows : kListPageRows;
-      if (now - drag_.last_ns > kGestureGapNs || drag_.which != which) {
+      bool new_touch = now - drag_.last_ns > kGestureGapNs || drag_.which != which ||
+                       std::fabs(value - drag_.last_value) > kTouchJump;
+      if (new_touch) {
         drag_ = DragGesture();
         drag_.which = which;
         drag_.anchor = value;
-        drag_.anchor_top = list_top_.load();
         drag_.rows = rows;
+        drag_.top = static_cast<float>(list_top_.load());
       }
       else {
         drag_.events++;
         // The list follows the finger: moving up (value up) brings later patches into view.
         int count = static_cast<int>(filteredPatches().size());
-        int top = std::clamp(drag_.anchor_top + static_cast<int>(std::lround((value - drag_.anchor) * rows)), 0,
-                             maxListTop(count));
+        float max_top = static_cast<float>(maxListTop(count));
+        drag_.top = std::clamp(drag_.top + (value - drag_.last_value) * rows, 0.0f, max_top);
+        int top = static_cast<int>(std::lround(drag_.top));
         if (top != list_top_.load()) {
           list_top_.store(top);
           list_marker_dirty_.store(true);
@@ -1583,6 +1590,7 @@ class Warpline : public mpc::Plugin {
           worker_cv_.notify_all();
         }
       }
+      drag_.last_value = value;
       drag_.last_ns = now;
     }
 
@@ -2015,10 +2023,12 @@ class Warpline : public mpc::Plugin {
     std::vector<std::string> suffix_;
     std::vector<bool> signed_;
     static constexpr int64_t kGestureGapNs = 250LL * 1000 * 1000;
+    static constexpr float kTouchJump = 0.2f;   // more than this between two events = a new touch
     struct DragGesture {
       int which = -1;
       float anchor = 0.0f;
-      int anchor_top = 0;
+      float top = 0.0f;        // list position, fractional, while dragging
+      float last_value = -10.0f;
       int rows = kListRows;
       int events = 0;          // events after the first
       int64_t last_ns = 0;
