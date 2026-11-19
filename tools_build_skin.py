@@ -1350,19 +1350,60 @@ def grain_art(d, im):
     for i, (title, _pn, _k, rgb) in enumerate(GR_COLS):
         x = 32 + i * (cw + 16)
         d.rounded_rectangle((x, 64, x + cw, 400), 16, fill=(12, 14, 17), outline=(34, 38, 45))
-        spaced(d, (x + cw / 2, 80), title, font(17, "Bold", display=True), (232, 236, 241), spacing=5, anchor="c")
     spaced(d, (32, 420), "DETAIL", font(11, "SemiBold"), LABEL, spacing=2)
-    for i, cap in enumerate(["DENSITY", "POSITION", "PITCH", "PITCH RND", "SPREAD", "REVERSE", "FEEDBACK"]):
+    for i, cap in enumerate(["", "POSITION", "PITCH", "", "SPREAD", "", "FEEDBACK"]):   # 0, 3, 5 follow the engine
         x = 40 + i * 140
-        spaced(d, (x + 36, 440 + 56 + 3), cap, font(10, "SemiBold"), LABEL, spacing=1, anchor="c")
+        if cap:
+            spaced(d, (x + 36, 440 + 56 + 3), cap, font(10, "SemiBold"), LABEL, spacing=1, anchor="c")
     spaced(d, (1026, 444), "SYNC", font(10, "SemiBold"), MUTED, spacing=1.5)
     d.rounded_rectangle((1026, 464, 1246, 504), 8, fill=(17, 20, 24), outline=(46, 52, 61))
 
 
+GR_ENGINES = ["GRAINZ", "PARTICLE", "STRETCH", "LOOP", "SPECTRAL"]
+# Column titles: GRAINZ's own engine, and the four texture modes (same parameters, the processor's meaning).
+GR_TITLES = {0: ["GRAIN", "SCATTER", "SPACE", "MIX"], 1: ["SIZE", "DENSITY", "REVERB", "MIX"]}
+GR_HINTS = ["our own grain cloud: up to 40 grains from the last 1.5 s",
+            "grains from the last second: DENSITY centre = few, left = regular, right = random",
+            "time stretch / pitch shift: SIZE = window size, DENSITY = diffusion, TEXTURE = filter",
+            "looping delay: POSITION = delay time, FREEZE loops it, SIZE = loop length, TEXTURE = filter",
+            "spectral: SIZE = warp, DENSITY = refresh / phase blur, TEXTURE = quantise"]
+
+
+def text_img(text, f, colour, w, h, anchor="c", spacing=1.5):
+    safe = "".join(ch for ch in text.lower() if ch.isalnum())[:40]
+    name = f"txt_{safe}_{w}x{h}_{colour[0]}{colour[1]}{colour[2]}.png"
+    if name in ASSETS:
+        return name
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    x = {"c": w / 2, "l": 0, "r": w}[anchor]
+    spaced(d, (x, 0), text, f, colour, spacing=spacing, anchor=anchor)
+    return save(im, name)
+
+
+def grain_mode_on(k):
+    return "IndexedEnabling/%d/%d/Parameter %d" % (k, len(GR_ENGINES), PI["Grain Mode"])
+
+
 def grain_panel(p):
-    inv, y0 = panel_shell(p, PANEL_GRAIN, "GRAINZ", "pink", "GRANULAR FX ON THE SYNTH'S OUTPUT", art=grain_art)
-    toggle_inv(p, "Grain On", 560, y0 + 15, "pink", inv, 70, 32, "ON")
-    toggle_inv(p, "Grain Freeze", 640, y0 + 15, "pink", inv, 100, 32, "FREEZE")
+    inv, y0 = panel_shell(p, PANEL_GRAIN, "GRAINZ", "pink", "", art=grain_art)
+    toggle_inv(p, "Grain On", 176, y0 + 15, "pink", inv, 70, 32, "ON")
+    toggle_inv(p, "Grain Freeze", 254, y0 + 15, "pink", inv, 100, 32, "FREEZE")
+    key, w_, h_ = comp_seg(GR_ENGINES, 138, 32, 6, "pink")
+    p.add(key, "Grain Mode", f"376 {y0 + 15} {w_} {h_}", inv=inv)
+    # per-engine text: column titles, detail captions, a one-line hint
+    cwt = (W - 64 - 3 * 16) // 4
+    for k in range(len(GR_ENGINES)):
+        cond = inv + [grain_mode_on(k)]
+        titles = GR_TITLES[0 if k == 0 else 1]
+        for i, t in enumerate(titles):
+            x = 32 + i * (cwt + 16)
+            p.image_inv(text_img(t, font(17, "Bold", display=True), (232, 236, 241), cwt, 24, spacing=5), f"{x} {y0 + 78} {cwt} 24", cond)
+        caps = ["DENSITY", "PITCH RND", "REVERSE"] if k == 0 else ["TEXTURE", "", ""]
+        for slot, cap in zip((0, 3, 5), caps):
+            if cap:
+                p.image_inv(text_img(cap, font(10, "SemiBold"), LABEL, 120, 14, spacing=1), f"{40 + slot * 140 + 36 - 60} {y0 + 499} 120 14", cond)
+        p.image_inv(text_img(GR_HINTS[k], font(11), MUTED, 860, 16, anchor="l", spacing=0.3), f"120 {y0 + 420} 860 16", cond)
     cw = (W - 64 - 3 * 16) // 4
     for i, (title, pn, kind, rgb) in enumerate(GR_COLS):
         x = 32 + i * (cw + 16)
@@ -1371,9 +1412,15 @@ def grain_panel(p):
         p.value_label(pn, f"{x} {y0 + 300} {cw} 50", argb((242, 245, 248)), 38.0, inv=inv, style="Bold")
         p.strip(thin_bar_strip(cw - 60, 6, rgb), f"{x + 30} {y0 + 360} {cw - 60} 6", 48, pn, inv=inv)
         p.add(comp_drag(cw, 336, "pink"), pn, f"{x} {y0 + 64} {cw} 336", inv=inv)
-    for i, (pn, bi) in enumerate([("Grain Density", False), ("Grain Position", False), ("Grain Pitch", True), ("Grain Pitch Rnd", False),
-                                  ("Grain Spread", False), ("Grain Reverse", False), ("Grain Feedback", False)]):
-        knob_inv(p, pn, 40 + i * 140, y0 + 440, "", "pink", inv, size=56, bi=bi)
+    for i, (pn, bi) in enumerate([(None, False), ("Grain Position", False), ("Grain Pitch", True), (None, False),
+                                  ("Grain Spread", False), (None, False), ("Grain Feedback", False)]):
+        if pn:
+            knob_inv(p, pn, 40 + i * 140, y0 + 440, "", "pink", inv, size=56, bi=bi)
+    # Slots 0, 3, 5: GRAINZ's own controls, or TEXTURE in the texture modes (one copy per mode: no "any of" condition).
+    for slot, pn in ((0, "Grain Density"), (3, "Grain Pitch Rnd"), (5, "Grain Reverse")):
+        knob_inv(p, pn, 40 + slot * 140, y0 + 440, "", "pink", inv + [grain_mode_on(0)], size=56)
+    for k in range(1, len(GR_ENGINES)):
+        knob_inv(p, "Grain Texture", 40, y0 + 440, "", "pink", inv + [grain_mode_on(k)], size=56)
     box_inv(p, "Grain Sync", (1026, y0 + 464, 220, 40), "pink", inv, 17.0)
 
 
