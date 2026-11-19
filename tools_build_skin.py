@@ -32,7 +32,8 @@ PI = {p["name"]: p["index"] for p in PARAMS}
 NUM_LIST_ROWS = 12
 BROWSER_OPEN = "IndexedEnabling/1/2/Parameter %d" % PI["Browser"]   # visible while the browser is open
 LIVE_ON = "IndexedEnabling/1/2/Parameter %d" % PI["Live View"]   # visible while Live View is On
-TOUCH_DRAG = "IndexedEnabling/0/2/Parameter %d" % PI["List Touch"]   # list drag strips, while List Touch = Drag
+TOUCH_DRAG = "IndexedEnabling/0/2/Parameter %d" % PI["List Touch"]   # list drag rows, while List Touch = Drag
+TOUCH_TAP = "IndexedEnabling/1/2/Parameter %d" % PI["List Touch"]    # plain button rows, while List Touch = Tap
 NUM_PANELS = 6
 PANEL_ARP, PANEL_GRAIN, PANEL_MOD1, PANEL_MOD2, PANEL_LFO = 1, 2, 3, 4, 5
 def panel_on(k):
@@ -428,6 +429,19 @@ def comp_row(w, h, colour, size):
     return key
 
 
+def comp_row_drag(w, h, gap, colour, size):
+    """List row for List Touch = Drag: shows the row's name (Data); touch-down presses the row (Toggle Switch on
+    Data); dragging moves a see-through vertical film-strip Knob on the list's drag strip (handle Drag)."""
+    key = f"rowdrag_{w}x{h}_{gap}_{colour}_{int(size)}"
+    if key not in DEFS:
+        knob = G.obj(("version", 5), ("knobType", "FilmStrip"), ("filmStrip", clear_strip(w, h)), ("numFrames", 2),
+                     ("invert", False), ("dragOrientation", "Vertical"), ("handleName", "Drag"))
+        kid = [G.entry("value", "Label", lbl("Value", colour, size, "left verticallyCentred"), f"16 {gap} {w - 24} {h - 2 * gap}", "No", "Show", "Always"),
+               G.entry("drag", "Knob", knob, f"0 0 {w} {h}", "No", "Show", "Always")]
+        DEFS[key] = G.component_definition([G.action("Mouse Down", "Toggle Switch", "Data", "")], kid, "00000000")
+    return key
+
+
 def comp_button(on_img, off_img, button_id, group_size, w, h):
     """A plain button (no focus) that sets its parameter to choice button_id of group_size."""
     key = f"btn_{on_img}_{off_img}_{button_id}of{group_size}"
@@ -498,7 +512,10 @@ def row_outline_img(w, h):
 
 def patch_list(p, x, y, w, row_h, rows, size, inv=None, drag="List Drag"):
     """Rows of patch names, each in its own squircle, with a scroll bar on the right; the playing patch's row is
-    filled. A see-through strip over the rows (Touch = Drag) scrolls by dragging and loads on a quick tap."""
+    filled. List Touch = Tap: each row is a button. Drag: each row is a component whose touch-down presses the row
+    (Mouse Down -> Toggle Switch on Data) and whose see-through vertical Knob drags the list strip (handle Drag);
+    the plugin loads the row only when no drag follows the press (Live III, 2026-11-19: one strip over all rows
+    scrolled, but reports only movement, so it can't tell which row was tapped)."""
     sb_w = 34
     rw = w - sb_w - 8
     cur = PI["List Current"]
@@ -510,10 +527,13 @@ def patch_list(p, x, y, w, row_h, rows, size, inv=None, drag="List Drag"):
         p.entries.append(G.entry(f"mark {r}", "Image", G.obj(("version", 2), ("imageType", "Regular"), ("colour", "0"), ("image", row_mark_img(rw, row_h - 2 * gap))),
                                  f"{x} {ry + gap} {rw} {row_h - 2 * gap}", "No", "Hide", "Always",
                                  invalidating=(inv or []) + ["IndexedEnabling/%d/%d/Parameter %d" % (r, NUM_LIST_ROWS + 1, cur)]))
-        p.add(comp_row(rw, row_h - 2 * gap, argb(TEXT), size), "List %d" % (r + 1), f"{x} {ry + gap} {rw} {row_h - 2 * gap}", focusable=False, inv=inv)
+        p.add(comp_row(rw, row_h - 2 * gap, argb(TEXT), size), "List %d" % (r + 1), f"{x} {ry + gap} {rw} {row_h - 2 * gap}",
+              focusable=False, inv=(inv or []) + [TOUCH_TAP])
+        p.entries.append(G.entry("List %d drag" % (r + 1), comp_row_drag(rw, row_h, gap, argb(TEXT), size), G.obj(("version", 1), ("handleName", "Data")),
+                                 f"{x} {ry} {rw} {row_h}", "No", "Hide", "Always",
+                                 remap=[("Data", "Parameter %d" % PI["List %d" % (r + 1)]), ("Drag", "Parameter %d" % PI[drag])],
+                                 invalidating=(inv or []) + [TOUCH_DRAG]))
     h = rows * row_h
-    # Drag strip over the rows, on top of them, only while List Touch = Drag (Tap hides it: the rows take the touch).
-    p.add(comp_vscroll(rw, h), drag, f"{x} {y} {rw} {h}", focusable=False, inv=(inv or []) + [TOUCH_DRAG])
     p.entries.append(G.entry("scroll thumb", "Image", G.obj(("version", 2), ("imageType", "FilmStrip"), ("colour", "0"), ("image", scroll_strip(sb_w, h)),
                                                              ("numFrames", 48), ("handleName", "Parameter %d" % PI["List Scroll"])),
                              f"{x + w - sb_w} {y} {sb_w} {h}", "No", "Hide", "Always", invalidating=inv))
