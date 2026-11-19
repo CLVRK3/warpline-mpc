@@ -80,6 +80,12 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
     with only the delta fix it still stopped after about two drags, once the value reached the top or bottom). So
     after every touch (no event for 120 ms) the plugin puts both strips back at 0.5 (`recentreDragStrips`, guarded
     by `recentring_`). A single event at 0.5 doesn't count as a tap.
+  - The strip doesn't say where the finger is, so taps can't come from it (Live III, 2026-11-19: with one strip over
+    the rows, tapping a row did nothing). In DRAG mode each row is now its own component (`comp_row_drag`):
+    - Touch-down presses the row (Mouse Down -> Toggle Switch on `Data` = List n).
+    - A see-through vertical film-strip Knob on handle `Drag` (remapped to List Drag / List Drag Page) scrolls.
+    - The plugin loads the row 220 ms after the press, if no drag event came in between (`pending_tap_patch_`,
+      `checkListTap`). TAP mode shows the plain button rows, which load at once.
   - If tapping a row loads the wrong patch on some MPC, switch to TAP.
 - **Horizontal drags** (mod boxes and AMOUNT bars, GRAINZ columns, every `comp_box`): a see-through film-strip `Knob`
   with `dragOrientation: Horizontal`, as the last child of the component. A `Slider` (ColourBar, horizontal) didn't
