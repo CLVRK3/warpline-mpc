@@ -370,36 +370,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 116 28"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -431,6 +401,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 104 28"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_116x28.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 116 28"
                                 }
                             }
                         ]
@@ -496,36 +495,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 200 30"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -557,6 +526,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 188 30"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_200x30.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 200 30"
                                 }
                             }
                         ]
@@ -805,36 +803,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 104 24"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -866,6 +834,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 92 24"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_104x24.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 104 24"
                                 }
                             }
                         ]
@@ -1069,36 +1066,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 104 24"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -1130,6 +1097,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 92 24"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_104x24.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 104 24"
                                 }
                             }
                         ]
@@ -1333,36 +1329,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 104 24"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -1394,6 +1360,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 92 24"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_104x24.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 104 24"
                                 }
                             }
                         ]
@@ -1597,36 +1592,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 104 24"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -1658,6 +1623,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 92 24"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_104x24.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 104 24"
                                 }
                             }
                         ]
@@ -2931,36 +2925,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 104 24"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -2992,6 +2956,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 92 24"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_104x24.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 104 24"
                                 }
                             }
                         ]
@@ -3195,36 +3188,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 255 40"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -3256,6 +3219,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 243 40"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_255x40.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 255 40"
                                 }
                             }
                         ]
@@ -4158,36 +4150,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 231 30"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -4219,6 +4181,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 219 30"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_231x30.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 231 30"
                                 }
                             }
                         ]
@@ -4655,36 +4646,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 231 30"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -4716,6 +4677,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 219 30"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_231x30.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 231 30"
                                 }
                             }
                         ]
@@ -5109,36 +5099,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 256 40"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -5170,6 +5130,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 244 40"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_256x40.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 256 40"
                                 }
                             }
                         ]
@@ -5357,36 +5346,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 410 50"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -5418,6 +5377,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 398 50"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_410x50.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 410 50"
                                 }
                             }
                         ]
@@ -10797,15 +10785,14 @@
                                 "componentData": {
                                     "version": 1,
                                     "name": "drag",
-                                    "type": "Slider",
+                                    "type": "Knob",
                                     "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_292x336.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
                                         "handleName": "Data"
                                     }
                                 },
@@ -10899,36 +10886,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 220 40"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -10960,6 +10917,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 208 40"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_220x40.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 220 40"
                                 }
                             }
                         ]
@@ -11344,36 +11330,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 300 44"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -11405,6 +11361,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 288 44"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_300x44.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 300 44"
                                 }
                             }
                         ]
@@ -11484,36 +11469,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 330 44"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -11545,6 +11500,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 318 44"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_330x44.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 330 44"
                                 }
                             }
                         ]
@@ -11624,36 +11608,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 406 44"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -11685,6 +11639,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 394 44"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_406x44.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 406 44"
                                 }
                             }
                         ]
@@ -12097,36 +12080,6 @@
                                 "version": 2,
                                 "componentData": {
                                     "version": 1,
-                                    "name": "drag",
-                                    "type": "Slider",
-                                    "data": {
-                                        "version": 2,
-                                        "sliderType": "ColourBar",
-                                        "direction": "Horizontal",
-                                        "backgroundColour": "00000000",
-                                        "outlineColour": "00000000",
-                                        "valueColour": "00000000",
-                                        "isBipolar": false,
-                                        "handleName": "Data"
-                                    }
-                                },
-                                "handle remapping": {
-                                    "version": 1,
-                                    "map": []
-                                },
-                                "bounds": {
-                                    "version": 1,
-                                    "acceptsHWFocus": "No",
-                                    "showWhenDataModelInvalid": "Show",
-                                    "whenVisible": "Always",
-                                    "boundsType": "Absolute",
-                                    "bounds": "0 0 180 34"
-                                }
-                            },
-                            {
-                                "version": 2,
-                                "componentData": {
-                                    "version": 1,
                                     "name": "value",
                                     "type": "Label",
                                     "data": {
@@ -12158,6 +12111,35 @@
                                     "whenVisible": "Always",
                                     "boundsType": "Absolute",
                                     "bounds": "6 0 168 34"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_180x34.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 180 34"
                                 }
                             }
                         ]

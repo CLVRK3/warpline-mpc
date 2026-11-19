@@ -328,10 +328,24 @@ def focus(acc, w, h, r=None):
                                            ("backgroundInset", 2.0), ("outlineThickness", 1.5)), f"0 0 {w} {h}", "No", "Show", "WhenFocussed")
 
 
+def clear_strip(w, h, frames=2):
+    name = f"clearstrip_{w}x{h}.png"
+    if name not in ASSETS:
+        save(Image.new("RGBA", (w, h * frames), (0, 0, 0, 0)), name)
+    return name
+
+
+def hdrag_knob(w, h, image=None, frames=2):
+    """Horizontal drag area: a film-strip Knob with dragOrientation Horizontal, the horizontal slider that works on
+    MPC hardware (mpc-vst-plugins docs/SDK-PORTING.md). A Slider (ColourBar) did not drag on a Live III
+    (2026-11-19). See-through unless an image strip is given. Keep it the component's last child: touch goes there."""
+    data = G.obj(("version", 5), ("knobType", "FilmStrip"), ("filmStrip", image or clear_strip(w, h, frames)), ("numFrames", frames),
+                 ("invert", False), ("dragOrientation", "Horizontal"), ("handleName", "Data"))
+    return G.entry("drag", "Knob", data, f"0 0 {w} {h}", "No", "Show", "Always")
+
+
 def slider_bar(w, h):
-    data = G.obj(("version", 2), ("sliderType", "ColourBar"), ("direction", "Horizontal"), ("backgroundColour", "00000000"),
-                 ("outlineColour", "00000000"), ("valueColour", "00000000"), ("isBipolar", False), ("handleName", "Data"))
-    return G.entry("drag", "Slider", data, f"0 0 {w} {h}", "No", "Show", "Always")
+    return hdrag_knob(w, h)
 
 
 KNOB_W = 72          # component width; the knob image is centred in it
@@ -350,8 +364,9 @@ def comp_knob(size, acc, bi):
 def comp_box(w, h, acc, menu, size=15.0, colour=None):
     key = f"box{'M' if menu else 'K'}_{w}x{h}_{acc}_{int(size)}"
     if key not in DEFS:
-        kid = [focus(acc, w, h), slider_bar(w, h),
-               G.entry("value", "Label", lbl("Value", argb(colour or ACC[acc]), size), f"6 0 {w - 12} {h}", "No", "Show", "Always")]
+        kid = [focus(acc, w, h),
+               G.entry("value", "Label", lbl("Value", argb(colour or ACC[acc]), size), f"6 0 {w - 12} {h}", "No", "Show", "Always"),
+               slider_bar(w, h)]
         # Menu boxes (Patch, Type) open no overlay on double-tap: the MPC's menu shows plugin lists
         # without text, so the PATCH page has its own list instead.
         # Menu boxes (Patch, Type) open no overlay at all (no double-tap, no Enter): the MPC's menu shows
