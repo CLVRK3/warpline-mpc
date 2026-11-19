@@ -73,7 +73,13 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   - An invisible vertical slider over the rows (`List Drag`, `List Drag Page`), shown while `List Touch` = Drag.
   - Events less than 250 ms apart are one gesture: the list follows the value change. A gesture with a single event is a tap at
     that position and loads the row (worker, `checkListTap`).
-  - This assumes MPC sends the absolute touch position on touch-down (the scroll bar's slider seems to). If not, switch to TAP.
+  - The list moves by the change between events. A pause over 250 ms, or a jump over 0.2 in one event, starts a new
+    touch. Device, 2026-11-19 (Live III): measuring from the first event made quick repeated flicks snap back after
+    about two, so the list seemed to stop scrolling.
+  - If tapping a row loads the wrong patch on some MPC, switch to TAP.
+- **Horizontal drags** (mod boxes and AMOUNT bars, GRAINZ columns, every `comp_box`): a see-through film-strip `Knob`
+  with `dragOrientation: Horizontal`, as the last child of the component. A `Slider` (ColourBar, horizontal) didn't
+  drag on a Live III (2026-11-19). The vertical ColourBar scroll bars do work.
   - The SDK's state loader restores every parameter by id *before* `loadExtraState`, which looks like a one-event gesture.
     `loadExtraState` therefore clears the gesture, or each project load would "tap" a row and change the patch
     (found offline, 2026-11-18).
