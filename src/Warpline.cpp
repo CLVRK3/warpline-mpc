@@ -799,6 +799,15 @@ class Warpline : public mpc::Plugin {
         if (plain < 0.5f || stepping_.exchange(true))
           return;
         int k = listPatchAt(r);
+        if (list_touch_index_ >= 0 && getInt(list_touch_index_) == 0 && !suppress_patch_trigger_.load()) {
+          // DRAG mode: the press comes on touch-down. It is a tap only if no drag follows (checkListTap).
+          std::lock_guard<std::mutex> lock(drag_mutex_);
+          int64_t now = nowNs();
+          bool dragging = drag_.which >= 0 && !drag_.done && now - drag_.last_ns <= kGestureGapNs;
+          pending_tap_patch_ = dragging ? -1 : k;
+          pending_tap_ns_ = now;
+          k = -1;
+        }
         if (k >= 0)
           setNormalised(kPatch, param(kPatch).toNormalised(static_cast<float>(k)));   // triggers the load
         setNormalised(index, 0.0f);
@@ -968,6 +977,7 @@ class Warpline : public mpc::Plugin {
         // The framework restored every parameter before this call (List Drag too): that is not a touch.
         std::lock_guard<std::mutex> lock(drag_mutex_);
         drag_ = DragGesture();
+        pending_tap_patch_ = -1;
       }
       markAllDirty();
       mod_routing_dirty_.store(true);
@@ -1570,6 +1580,8 @@ class Warpline : public mpc::Plugin {
       bool new_touch = now - drag_.last_ns > kGestureGapNs || drag_.which != which ||
                        std::fabs(value - drag_.last_value) > kTouchJump;
       if (new_touch) {
+        if (std::fabs(value - drag_.last_value) > 0.002f && drag_.last_value > -1.0f)
+          pending_tap_patch_ = -1;   // the strip moved
         drag_ = DragGesture();
         drag_.which = which;
         drag_.anchor = value;
@@ -1578,6 +1590,7 @@ class Warpline : public mpc::Plugin {
       }
       else {
         drag_.events++;
+        pending_tap_patch_ = -1;   // the finger moved: a drag, not a tap
         // The list follows the finger: moving up (value up) brings later patches into view.
         int count = static_cast<int>(filteredPatches().size());
         float max_top = static_cast<float>(maxListTop(count));
@@ -1594,25 +1607,30 @@ class Warpline : public mpc::Plugin {
       drag_.last_ns = now;
     }
 
-    // Worker thread: a gesture that ended after a single event was a tap.
+    // Worker thread. DRAG mode: a row press with no drag after it is a tap; load that row's patch. Every touch that
+    // moved a strip ends with the strips back in the middle.
     void checkListTap() {
-      int row = -1;
+      int k = -1;
+      bool recentre = false;
       {
         std::lock_guard<std::mutex> lock(drag_mutex_);
-        if (drag_.which < 0 || drag_.done || nowNs() - drag_.last_ns <= kGestureGapNs)
-          return;
-        drag_.done = true;
-        // A single event at the middle is the strip being touched where it already was, not a tap on a row.
-        if (drag_.events == 0 && std::fabs(drag_.anchor - kDragCentre) > 0.02f)
-          row = std::clamp(static_cast<int>((1.0f - drag_.anchor) * drag_.rows), 0, drag_.rows - 1);
+        int64_t now = nowNs();
+        if (pending_tap_patch_ >= 0 && now - pending_tap_ns_ > kTapWaitNs && now - drag_.last_ns > kGestureGapNs) {
+          k = pending_tap_patch_;
+          pending_tap_patch_ = -1;
+        }
+        else if (pending_tap_patch_ < 0) {
+          pending_tap_ns_ = 0;
+        }
+        if (drag_.which >= 0 && !drag_.done && now - drag_.last_ns > kGestureGapNs) {
+          drag_.done = true;
+          recentre = true;
+        }
       }
-      // Put both strips back in the middle after every touch. On the MPC the strip's value follows the finger's
-      // movement from where it was (device, 2026-11-19, Live III), so without this it reaches the top or bottom
-      // after a couple of drags and the list stops moving.
-      recentreDragStrips();
-      if (row < 0)
-        return;
-      int k = listPatchAt(row);
+      // On the MPC a strip's value follows the finger's movement from where it was (Live III, 2026-11-19), so it
+      // goes back to the middle after each touch, or it reaches the top or bottom and the list stops moving.
+      if (recentre)
+        recentreDragStrips();
       if (k >= 0 && k != requested_patch_.load()) {
         setNormalised(kPatch, param(kPatch).toNormalised(static_cast<float>(k)));   // triggers the load
         notifyHostParameterChanged(kPatch);
@@ -2044,6 +2062,9 @@ class Warpline : public mpc::Plugin {
     std::vector<bool> signed_;
     static constexpr int64_t kGestureGapNs = 120LL * 1000 * 1000;   // no event for this long = the touch ended
     static constexpr float kDragCentre = 0.5f;
+    static constexpr int64_t kTapWaitNs = 220LL * 1000 * 1000;   // a row press with no drag for this long = a tap
+    int pending_tap_patch_ = -1;    // drag_mutex_
+    int64_t pending_tap_ns_ = 0;
     std::atomic<bool> recentring_{ false };
     static constexpr float kTouchJump = 0.2f;   // more than this between two events = a new touch
     struct DragGesture {
