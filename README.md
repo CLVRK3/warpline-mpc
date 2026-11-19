@@ -144,6 +144,24 @@ GRAINZ is a granular effect on Warpline's output. It keeps the last 1.5 seconds 
   (chance that a grain plays backwards), feedback, and **SYNC** (grains on 1/4 to 1/16T instead of the density knob).
 - **FREEZE** holds the buffer, so the grains keep playing what is already in it.
 
+![GRAINZ in STRETCH mode](docs/screenshots/warpline-grainz-stretch.png)
+
+**Engines.** The buttons along the top choose how GRAINZ works:
+- **GRAINZ:** Warpline's own grain cloud, as described above.
+- **PARTICLE, STRETCH, LOOP and SPECTRAL:** texture modes, built on Emilie Gillet's open-source granular processor (MIT licence, see
+  `third_party/mutable`). They work on about the last second of sound. In these modes the columns are titled
+  **SIZE / DENSITY / REVERB / MIX**, and a **TEXTURE** knob takes the place of density in the detail row. A line under DETAIL says what
+  each control does in the chosen mode:
+  - **PARTICLE:** grains. DENSITY in the centre = few grains, to the left = regular, to the right = random. TEXTURE = grain shape, and
+    diffusion at the top of its range.
+  - **STRETCH:** time stretch and pitch shift. SIZE = window size, DENSITY = diffusion, TEXTURE = filter (low-pass to the left, high-pass
+    to the right).
+  - **LOOP:** a looping delay. POSITION = delay time, FREEZE turns it into a loop, SIZE = loop length, TEXTURE = filter.
+  - **SPECTRAL:** spectral processing. SIZE = warp, DENSITY = how often the spectrum refreshes (and phase blur), TEXTURE = quantise.
+  - **In every texture mode:** PITCH, SPREAD, FEEDBACK and FREEZE work as their names say. SYNC sends a trigger on each beat line
+    (in PARTICLE, a trigger fires a grain). The processor runs at its own 32 kHz, so the wet sound is band-limited to about 14 kHz.
+    The dry sound isn't affected.
+
 ### Mod matrix (MOD)
 ![The mod matrix](docs/screenshots/warpline-mod.png)
 
@@ -236,7 +254,8 @@ Good to know:
 ## Files
 - `skins/`: the custom screen (built by `tools_build_skin.py`) · `tools_preview_skin.py`: page previews
 - `src/Warpline.cpp`: the MPC plugin (parameters, pages, patch browser, search, favourites, mod matrix, threading)
-- `src/Arp.h`: the arpeggiator · `src/Granulator.h`: GRAINZ · `src/VitalCore.*`: drives one Vital engine, loads and saves .vital
+- `src/Arp.h`: the arpeggiator · `src/Granulator.h`: GRAINZ · `src/GrainzClouds.*` + `third_party/mutable/`: GRAINZ's texture
+  modes (MIT, vendored, see its README) · `src/VitalCore.*`: drives one Vital engine, loads and saves .vital
 - `src/VitalEngine.cpp`: unity build of the engine · `vital/`: Vital's engine sources (synthesis + the parts of common/ it needs)
 - `shim/JuceHeader.h`: tiny stand-in for the few JUCE bits the engine used (macros, Base64). No JUCE is needed.
 - `Content/Patches/`: factory patches · `tools/make_factory.cpp`: rebuilds them (see `tools/README.md`)
@@ -259,4 +278,6 @@ patch upgrader was split out of `load_save.cpp`, kissfft is included outside the
 ## Licence
 **GPL-3.0-or-later** (see `LICENSE`). Vital is © Matt Tytel and released under GPLv3 (https://github.com/mtytel/vital).
 If you share this plugin, share its source too (this folder). "Vital" is Matt Tytel's trademark, so this edition has its own name, Warpline. It is not made or endorsed by Vital Audio.
-The MPC Plugin SDK framework (`framework/`, MIT) is linked unchanged. kissfft is BSD-3-Clause and nlohmann/json is MIT.
+The MPC Plugin SDK framework (`framework/`, MIT) is linked unchanged. GRAINZ's texture modes use Emilie Gillet's open-source granular
+processor and stmlib (MIT, `third_party/mutable/LICENSE`; one fix, listed in `third_party/mutable/README.md`). "Mutable Instruments" is a
+registered trademark, and Warpline isn't made or endorsed by Emilie Gillet or Mutable Instruments. kissfft is BSD-3-Clause and nlohmann/json is MIT.

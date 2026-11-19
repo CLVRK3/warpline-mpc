@@ -94,6 +94,21 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
     `loadExtraState` therefore clears the gesture, or each project load would "tap" a row and change the patch
     (found offline, 2026-11-18).
 
+## GRAINZ texture modes (2026-11-19, offline)
+- **Parameters:** `Grain Mode` (Grainz, Particle, Stretch, Loop, Spectral) and `Grain Texture`, appended after `List Drag Page`.
+  Mode 0 is our `Granulator`. Modes 1-4 are `GrainzClouds`, built on the vendored processor in `third_party/mutable`.
+  `GrainzClouds.cpp` is its only translation unit (it defines `TEST` for the portable code paths); `build-extra.json` adds
+  `third_party/mutable` to the include path.
+- **Rates:** the processor runs at 32 kHz on 32-frame blocks.
+  - Host to 32 kHz: a 4th-order Butterworth low-pass at 13.5 kHz, then Hermite interpolation.
+  - The output comes back the same way, through a 48-frame primed FIFO.
+  - Only the wet signal comes out. Warpline mixes dry and wet equal-power at the host rate.
+- **Mapping:** size = (GRAIN − 10) / 490, density = SCATTER, reverb = SPACE, position = POSITION / 1000, pitch, spread, feedback,
+  freeze, texture. SYNC sends a trigger at each grid line (block accuracy).
+- **Upstream bug fixed:** `Window::Start()` never cleared `done_`, so STRETCH was silent. Listed in `third_party/mutable/README.md`.
+- **CPU, x86 native, 256-frame blocks at 44.1 kHz, the whole plugin with one note:** dry 22 µs; GRAINZ 69; PARTICLE 79; STRETCH 98;
+  LOOP 89; SPECTRAL 141 µs. Measure on the MPC before release.
+
 ## Rules that must not break
 
 - Never change the uid `CvVm`, the .so names or parameter ids. Only add new parameters at the END of the list (older ones
