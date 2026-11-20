@@ -198,6 +198,13 @@ namespace vital {
     stereo_ = new cr::Value(constants::kLeftOne);
     addIdleMonoProcessor(stereo_);
 
+    // MPC edition: two mono sources the plugin sets itself (Warpline's random generator, "Gen 1/2").
+    for (int i = 0; i < 2; ++i) {
+      gen_values_[i] = new cr::Value(0.5f);
+      addIdleMonoProcessor(gen_values_[i]);
+      data_->mod_sources["gen_" + std::to_string(i + 1)] = gen_values_[i]->output();
+    }
+
     data_->mod_sources["note"] = note_percentage_->output();
     data_->mod_sources["note_in_octave"] = note_in_octave();
     data_->mod_sources["aftertouch"] = aftertouch();
