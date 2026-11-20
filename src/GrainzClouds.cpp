@@ -2,6 +2,8 @@
 // MIT licence, copyright Emilie Gillet): it builds it as one unit with TEST defined, which selects its portable code
 // paths (no Cortex-M4 assembly, no hardware drivers). See GrainzClouds.h.
 #define TEST 1
+// MSVC (the SDK's native Windows test build) only defines M_PI with this, and the processor's filters use it.
+#define _USE_MATH_DEFINES 1
 
 #include "clouds/dsp/correlator.cc"
 #include "clouds/dsp/granular_processor.cc"
