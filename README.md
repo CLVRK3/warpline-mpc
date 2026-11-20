@@ -270,9 +270,8 @@ patch upgrader was split out of `load_save.cpp`, kissfft is included outside the
   150 real-world .vital patches loaded and played with no errors, no NaNs and none silent. Fast patch switching was stress-tested under ThreadSanitizer with no data races.
   The code also compiles cleanly for 32-bit ARM.
 - **Tested on an MPC Live III** (64-bit build, 1.0.0). The 32-bit build for older MPCs has not been run on hardware.
-- 1.1.0 was tested offline here with a test host and ASan. It covers arp timing (free and synced), latch, the step pattern,
-  GRAINZ freeze and extremes, mod matrix routing with LFOs, patch changes with the matrix on, search, favourites, drag/tap, and state reload.
-  The new panels and drag scrolling still need checking on the MPC.
+- 1.1.0 was tested on an MPC Live III (MPC OS 3.10.1, 2026-11-20): arp, GRAINZ (all five modes, about 20-25% CPU with chords), mod matrix, search,
+  favourites, drag-scrolling and tap-to-load. Before that it was tested offline with a test host and ASan.
 - The skin is checked with the SDK's `validate.py` (versions, indices, images) and rendered as previews here. Check it on the MPC's screen too.
 
 ## Licence

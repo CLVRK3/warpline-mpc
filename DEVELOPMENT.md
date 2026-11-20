@@ -107,7 +107,10 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   freeze, texture. SYNC sends a trigger at each grid line (block accuracy).
 - **Upstream bug fixed:** `Window::Start()` never cleared `done_`, so STRETCH was silent. Listed in `third_party/mutable/README.md`.
 - **CPU, x86 native, 256-frame blocks at 44.1 kHz, the whole plugin with one note:** dry 22 µs; GRAINZ 69; PARTICLE 79; STRETCH 98;
-  LOOP 89; SPECTRAL 141 µs. Measure on the MPC before release.
+  LOOP 89; SPECTRAL 141 µs.
+- **Device check, 2026-11-20, MPC Live III, MPC OS 3.10.1:** all five GRAINZ modes work. With chords playing, the MPC's CPU
+  meter showed about 20-25%, close to where Warpline already sat without GRAINZ. The Windows native build needs
+  `_USE_MATH_DEFINES` (MSVC) for the processor's `M_PI`.
 
 ## Rules that must not break
 
