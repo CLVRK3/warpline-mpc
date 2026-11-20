@@ -34,8 +34,11 @@ BROWSER_OPEN = "IndexedEnabling/1/2/Parameter %d" % PI["Browser"]   # visible wh
 LIVE_ON = "IndexedEnabling/1/2/Parameter %d" % PI["Live View"]   # visible while Live View is On
 TOUCH_DRAG = "IndexedEnabling/0/2/Parameter %d" % PI["List Touch"]   # list drag rows, while List Touch = Drag
 TOUCH_TAP = "IndexedEnabling/1/2/Parameter %d" % PI["List Touch"]    # plain button rows, while List Touch = Tap
-NUM_PANELS = 6
-PANEL_ARP, PANEL_GRAIN, PANEL_MOD1, PANEL_MOD2, PANEL_LFO = 1, 2, 3, 4, 5
+NUM_PANELS = 7
+PANEL_ARP, PANEL_GRAIN, PANEL_MOD1, PANEL_MOD2, PANEL_LFO, PANEL_GEN = 1, 2, 3, 4, 5, 6
+# 1.2 wavetable picker: the display art per Osc Table value (0 = Patch keeps the column's own picture)
+TABLE_KINDS = [None, "shapes", "sine", "tri", "sawpure", "square", "pwm", "harm", "formant", "sync"]
+NUM_TABLES = len(TABLE_KINDS)
 def panel_on(k):
     return "IndexedEnabling/%d/%d/Parameter %d" % (k, NUM_PANELS, PI["Panel"])
 PK = {p["name"]: p for p in PARAMS}
@@ -194,6 +197,32 @@ def arrow_img(left, on, w=44, h=42):
 WT_W, WT_H = 279, 150
 WT_FRAMES = 8
 def wave_value(kind, k, t):
+    import math as _m
+    tri = lambda x: 4 * x if x < 0.25 else (2 - 4 * x if x < 0.75 else 4 * x - 4)
+    if kind == "shapes":    # sine > saturated sine > triangle > square > pulse > saw
+        seq = [lambda x: _m.sin(2 * _m.pi * x), lambda x: _m.tanh(2.5 * _m.sin(2 * _m.pi * x)) / _m.tanh(2.5), tri,
+               lambda x: 1.0 if x < 0.5 else -1.0, lambda x: 1.0 if x < 0.2 else -1.0, lambda x: 1 - 2 * x]
+        return seq[min(5, int(round(k * 5)))](t)
+    if kind == "sine":
+        return _m.sin(2 * _m.pi * t)
+    if kind == "tri":
+        return tri(t)
+    if kind == "sawpure":
+        return 1 - 2 * t
+    if kind == "square":
+        return 0.85 if t < 0.5 else -0.85
+    if kind == "pwm":
+        return 0.85 if t < 0.5 - 0.46 * k else -0.85
+    if kind == "harm":
+        n = 1 + 15 * k
+        v = sum(max(0.0, min(1.0, n - (h - 1))) * _m.sin(2 * _m.pi * h * t) / h for h in range(1, 17))
+        return v * 0.7
+    if kind == "formant":
+        f = 3 + 6 * k
+        return _m.sin(2 * _m.pi * t * f) * (0.5 - 0.5 * _m.cos(2 * _m.pi * t)) * 0.9
+    if kind == "sync":
+        ph = (t * (1 + 6 * k)) % 1.0
+        return 0.85 * (1 - 2 * ph)
     if kind == "saw":
         return (1 - k) * math.sin(2 * math.pi * t) + k * (1 - 2 * t)
     if kind == "vox":
@@ -202,7 +231,7 @@ def wave_value(kind, k, t):
 
 
 def wt_strip(kind, acc, frames=48):
-    name = f"wt_{kind}_{acc}.png"
+    name = f"wt_{kind}_{acc}.png" if frames == 48 else f"wt_{kind}_{acc}_{frames}.png"
     if name in ASSETS:
         return name
     S = 2; w, h = WT_W * S, WT_H * S
@@ -217,7 +246,7 @@ def wt_strip(kind, acc, frames=48):
         sd.line(frame_pts(f), fill=(58, 65, 76, 255), width=S, joint="curve")
     strip = Image.new("RGBA", (WT_W, WT_H * frames), (0, 0, 0, 0))
     for n in range(frames):
-        frac = n / (frames - 1)
+        frac = n / (frames - 1) if frames > 1 else 0.0
         fr = stack.copy()
         pts = frame_pts(None, frac)
         base = (104 - frac * (WT_FRAMES - 1) * 9) * S
@@ -828,9 +857,16 @@ class Page:
     def wavetable(self, osc, rect, acc, kind):  # noqa
         x0, y0, x1, y1 = rect
         self.well(rect)
-        self.strip(wt_strip(kind, acc), f"{x0} {y0} {x1 - x0} {y1 - y0}", 48, f"Osc{osc} WT Pos")
-        # Live View: the same picture driven by the modulated position, drawn on top while Live View is On.
-        self.strip(wt_strip(kind, acc), f"{x0} {y0} {x1 - x0} {y1 - y0}", 48, f"Osc{osc} WT Live", inv=[LIVE_ON])
+        r = f"{x0} {y0} {x1 - x0} {y1 - y0}"
+        # One picture per Osc Table choice (1.2), so the display matches what plays; Patch keeps the column's art.
+        for t, tk in enumerate(TABLE_KINDS):
+            pick = "IndexedEnabling/%d/%d/Parameter %d" % (t, NUM_TABLES, PI[f"Osc{osc} Table"])
+            # Memory: single-frame tables get one picture, the morphing ones 16 (the patch art keeps 48).
+            frames = 48 if tk is None else (1 if tk in ("sine", "tri", "sawpure", "square") else 16)
+            img = wt_strip(tk or kind, acc, frames)
+            self.strip(img, r, frames, f"Osc{osc} WT Pos", inv=[pick])
+            # Live View: the same picture driven by the modulated position, drawn on top while Live View is On.
+            self.strip(img, r, frames, f"Osc{osc} WT Live", inv=[pick, LIVE_ON])
 
     def filter_view(self, rect, acc, cut, model):
         x0, y0, x1, y1 = rect
@@ -881,7 +917,8 @@ WAVE_KIND = ["saw", "vox", "sub"]
 p = Page("MAIN", "MAIN", 0)
 for o in range(3):
     acc = OSC_ACC[o]; n = o + 1
-    x0, x1 = column(p, o, f"OSC {n}", acc, "WAVETABLE")
+    x0, x1 = column(p, o, f"OSC {n}", acc)
+    p.box(f"Osc{n} Table", (x0 + 80, PANEL_Y0 + 9, x1 - 124, PANEL_Y0 + 33), acc, size=12.0, colour=TEXT)
     p.box(f"Osc{n} Warp Mode", (x1 - 116, PANEL_Y0 + 9, x1 - 12, PANEL_Y0 + 33), acc, size=12.0, colour=(197, 204, 213))
     p.wavetable(n, (x0 + 12, PANEL_Y0 + 44, x1 - 12, PANEL_Y0 + 194), acc, WAVE_KIND[o])
     p.knob_row(x0 + 12, PANEL_Y0 + 208, [(f"Osc{n} WT Pos", "WT POS"), (f"Osc{n} Unison", "UNISON"), (f"Osc{n} Detune", "DETUNE"), (f"Osc{n} Level", "LEVEL")], acc, gidx=o)
@@ -911,7 +948,8 @@ PAGES.append(p)
 p = Page("OSC", "OSCILLATORS", 1)
 for o in range(3):
     acc = OSC_ACC[o]; n = o + 1
-    x0, x1 = column(p, o, f"OSC {n}", acc, "PITCH · WARP")
+    x0, x1 = column(p, o, f"OSC {n}", acc)
+    p.box(f"Osc{n} Table", (x0 + 80, PANEL_Y0 + 9, x1 - 124, PANEL_Y0 + 33), acc, size=12.0, colour=TEXT)
     p.box(f"Osc{n} Warp Mode", (x1 - 116, PANEL_Y0 + 9, x1 - 12, PANEL_Y0 + 33), acc, size=12.0, colour=(197, 204, 213))
     p.wavetable(n, (x0 + 12, PANEL_Y0 + 44, x1 - 12, PANEL_Y0 + 194), acc, WAVE_KIND[o])
     p.knob_row(x0 + 12, PANEL_Y0 + 208, [(f"Osc{n} Transp", "TRANSP", True), (f"Osc{n} Fine", "FINE", True), (f"Osc{n} Warp", "WARP"), (f"Osc{n} Morph", "MORPH")], acc, gidx=o)
@@ -1206,6 +1244,8 @@ def arp_panel(p):
     for i, (pn, cap, bi) in enumerate([("Arp Rate", "RATE", False), ("Arp Octaves", "OCTAVES", False), ("Arp Gate", "GATE", False),
                                        ("Arp Swing", "SWING", False), ("Arp Accent", "ACCENT", False), ("Arp Length", "LENGTH", False)]):
         knob_inv(p, pn, 40 + i * 138, y0 + 136, cap, acc, inv, size=60)
+    for i, pn in enumerate(["Arp Chance", "Arp Deja Vu", "Arp Loop"]):
+        knob_inv(p, pn, 900 + i * 118, y0 + 136, "", "violet", inv, size=60)
     # steps
     n = 16; gx0 = 32; gw = W - 64; gap = 8
     cw = (gw - (n - 1) * gap) // n; ch = 132; sy = y0 + 300
@@ -1233,10 +1273,15 @@ def arp_art(d, im):
     for i, cap in enumerate(["RATE", "OCTAVES", "GATE", "SWING", "ACCENT", "LENGTH"]):
         x = 40 + i * 138
         spaced(d, (x + 36, 136 + 60 + 3), cap, font(10, "SemiBold"), LABEL, spacing=1, anchor="c")
-    d.rounded_rectangle((880, 128, W - 32, 252), 12, fill=(21, 24, 28), outline=(38, 43, 51))
-    for j, t in enumerate(["Hold notes or a chord on the pads.", "With the sequencer playing, steps lock to the bar.",
-                           "LATCH keeps it going after you let go.", "CHORD plays all held notes on each step."]):
-        d.text((900, 146 + j * 25), t, font=font(12), fill=MUTED if j else TEXT)
+    d.rounded_rectangle((880, 100, W - 32, 252), 12, fill=(21, 24, 28), outline=(38, 43, 51))
+    spaced(d, (896, 110), "GENERATE", font(11, "SemiBold"), ACC["violet"], spacing=2)
+    d.text((W - 48, 117), "LOOP replays the dice", font=font(11), fill=MUTED, anchor="rm")
+    for i, cap in enumerate(["CHANCE", "DEJA VU", "LOOP"]):
+        x = 900 + i * 118
+        spaced(d, (x + 36, 136 + 60 + 3), cap, font(10, "SemiBold"), LABEL, spacing=1, anchor="c")
+    d.text((32, 500), "Hold notes on the pads.  With the sequencer playing, steps lock to the bar.  LATCH keeps them going,"
+           "  CHORD plays them all.  CHANCE skips steps at random;  DEJA VU 50% repeats the last LOOP steps' dice.",
+           font=font(11), fill=MUTED)
 
 
 # ---- GRAINZ: four big columns with value-driven particle pictures
@@ -1473,15 +1518,24 @@ def mod_art(d, im):
 
 
 def mod_panel(p):
-    for k in (PANEL_MOD1, PANEL_MOD2, PANEL_LFO):
-        sub = {PANEL_MOD1: "SLOTS 1 - 8", PANEL_MOD2: "SLOTS 9 - 16", PANEL_LFO: "MATRIX LFOs"}[k]
+    for k in (PANEL_MOD1, PANEL_MOD2, PANEL_LFO, PANEL_GEN):
+        sub = {PANEL_MOD1: "SLOTS 1 - 8", PANEL_MOD2: "SLOTS 9 - 16", PANEL_LFO: "MATRIX LFOs", PANEL_GEN: "RANDOM SOURCES"}[k]
         first = 0 if k == PANEL_MOD1 else 8
-        art = lfo_art if k == PANEL_LFO else (lambda d, im, first=first: mod_rows_art(d, im, first))
+        art = {PANEL_LFO: lfo_art, PANEL_GEN: gen_art}.get(k) or (lambda d, im, first=first: mod_rows_art(d, im, first))
         inv, y0 = panel_shell(p, k, "MOD MATRIX", "teal", sub, art=art)
         # tabs
-        for j, (lab, val) in enumerate([("1 - 8", PANEL_MOD1), ("9 - 16", PANEL_MOD2), ("LFOs", PANEL_LFO)]):
-            p.add(comp_button(pill_img(110, 36, "teal", True, lab), pill_img(110, 36, "teal", False, lab), val, NUM_PANELS, 110, 36),
-                  "Panel", f"{640 + j * 120} {y0 + 13} 110 36", focusable=False, inv=inv)
+        for j, (lab, val) in enumerate([("1 - 8", PANEL_MOD1), ("9 - 16", PANEL_MOD2), ("LFOs", PANEL_LFO), ("GEN", PANEL_GEN)]):
+            p.add(comp_button(pill_img(104, 36, "teal", True, lab), pill_img(104, 36, "teal", False, lab), val, NUM_PANELS, 104, 36),
+                  "Panel", f"{560 + j * 112} {y0 + 13} 104 36", focusable=False, inv=inv)
+        if k == PANEL_GEN:
+            for o in range(2):
+                x = 32 + o * 310
+                p.strip(gen_meter_strip(200, 300, ("violet", "teal")[o]), f"{x + 52} {y0 + 104} 200 300", 13, f"Gen {o + 1} Out", inv=inv)
+            box_inv(p, "Gen Rate", (712, y0 + 104, 160, 40), "violet", inv, 18.0, colour=TEXT)
+            for i, pn in enumerate(["Gen Spread", "Gen Bias", "Gen Steps", "Gen Deja Vu", "Gen Length"]):
+                cx = 690 + (i % 3) * 186; cy = y0 + 180 + (i // 3) * 150
+                knob_inv(p, pn, cx, cy, "", "violet", inv, size=70)
+            continue
         if k == PANEL_LFO:
             cw = (W - 64 - 3 * 16) // 4
             for i in range(4):
@@ -1502,6 +1556,44 @@ def mod_panel(p):
             box_inv(p, f"Mod {s_} Dest", (470, y, 330, 44), "teal", inv, 18.0, colour=TEXT)
             p.strip(amount_strip(406, 44), f"830 {y} 406 44", 49, f"Mod {s_} Amount", inv=inv)
             p.add(comp_box(406, 44, "teal", False, 18.0, TEXT), f"Mod {s_} Amount", f"830 {y} 406 44", inv=inv)
+
+
+def gen_meter_strip(w, h, acc, frames=13):
+    """GEN output: a level column with a glowing marker, one frame per 1/12 of the range."""
+    name = f"genmeter_{w}x{h}_{acc}.png"
+    if name in ASSETS:
+        return name
+    col = ACC[acc]
+    strip = Image.new("RGBA", (w, h * frames), (0, 0, 0, 0))
+    for f in range(frames):
+        v = f / (frames - 1)
+        im = Image.new("RGBA", (w, h), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+        top = int(14 + (h - 28) * (1 - v))
+        d.rounded_rectangle((w // 2 - 34, top, w // 2 + 34, h - 14), 10, fill=col + (60,))
+        glow_line(im, [(w // 2 - 70, top), (w // 2 + 70, top)], col, width=4, glow=6)
+        strip.paste(im, (0, f * h))
+    return save(strip, name)
+
+
+def gen_art(d, im):
+    for o in range(2):
+        x = 32 + o * 310
+        d.rounded_rectangle((x, 64, x + 304, H - 64 - 24), 14, fill=(21, 24, 28), outline=(38, 43, 51))
+        spaced(d, (x + 14, 76), f"GEN {o + 1}", font(14, "Bold", display=True), ACC[("violet", "teal")[o]], spacing=2)
+        d.rounded_rectangle((x + 12, 104, x + 292, 404), 8, fill=WELL, outline=WELL_EDGE)
+        d.text((x + 152, 430), "pick GEN %d as a SOURCE in a slot" % (o + 1), font=font(11), fill=MUTED, anchor="mm")
+    x0 = 672
+    d.rounded_rectangle((x0, 64, W - 32, H - 64 - 24), 14, fill=(21, 24, 28), outline=(38, 43, 51))
+    spaced(d, (x0 + 14, 76), "SHARED", font(14, "Bold", display=True), ACC["violet"], spacing=2)
+    d.rounded_rectangle((712, 104, 872, 144), 10, fill=(17, 20, 24), outline=(46, 52, 61))
+    spaced(d, (x0 + 210, 118), "RATE  (a new value every step)", font(10, "SemiBold"), MUTED, spacing=1)
+    for i, cap in enumerate(["SPREAD", "BIAS", "STEPS", "DEJA VU", "LENGTH"]):
+        cx = 690 + (i % 3) * 186; cy = 180 + (i // 3) * 150
+        spaced(d, (cx + 43, cy + 70 + 4), cap, font(10, "SemiBold"), LABEL, spacing=1, anchor="c")
+    for j, t in enumerate(["SPREAD narrow > even > the extremes.  BIAS leans low or high.",
+                           "STEPS 0 glides, 100% jumps.  DEJA VU 50% loops LENGTH steps,",
+                           "more shuffles that loop, less lets new values in."]):
+        d.text((x0 + 18, 462 + j * 20), t, font=font(11), fill=MUTED)
 
 
 def mod_rows_art(d, im, first):
