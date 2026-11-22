@@ -36,7 +36,6 @@ namespace vital {
   }
   
   void Wavetable::setNumFrames(int num_frames) {
-    contentChanged();
     VITAL_ASSERT(active_audio_data_.is_lock_free());
     VITAL_ASSERT(num_frames <= max_frames_);
     if (data_ && num_frames == data_->num_frames)
@@ -86,16 +85,17 @@ namespace vital {
     current_data_ = data_.get();
     while (active_audio_data_.load())
       std::this_thread::yield(); // Wait for audio thread to finish using old_data.
+    contentChanged();
   }
 
   void Wavetable::setFrequencyRatio(float frequency_ratio) {
-    contentChanged();
     current_data_->frequency_ratio = frequency_ratio;
+    contentChanged();
   }
 
   void Wavetable::setSampleRate(float rate) {
-    contentChanged();
     current_data_->sample_rate = rate;
+    contentChanged();
   }
 
   void Wavetable::loadWaveFrame(const WaveFrame* wave_frame) {
@@ -103,17 +103,16 @@ namespace vital {
   }
 
   void Wavetable::loadWaveFrame(const WaveFrame* wave_frame, int to_index) {
-    contentChanged();
     if (to_index >= current_data_->num_frames)
       return;
 
     loadFrequencyAmplitudes(wave_frame->frequency_domain, to_index);
     loadNormalizedFrequencies(wave_frame->frequency_domain, to_index);
     memcpy(current_data_->wave_data[to_index], wave_frame->time_domain, kWaveformSize * sizeof(mono_float));
+    contentChanged();
   }
 
   void Wavetable::postProcess(float max_span) {
-    contentChanged();
     static constexpr float kMinAmplitudePhase = 0.1f;
 
     if (max_span > 0.0f) {
@@ -160,20 +159,20 @@ namespace vital {
       for (int frame = last_min_amp_frame + 1; frame < current_data_->num_frames; ++frame)
         ((std::complex<float>*)current_data_->normalized_frequencies[frame])[i] = last_normalized_frequency;
     }
+    contentChanged();
   }
 
   void Wavetable::loadFrequencyAmplitudes(const std::complex<float>* frequencies, int to_index) {
-    contentChanged();
     mono_float* amplitudes = (mono_float*)current_data_->frequency_amplitudes[to_index];
     for (int i = 0; i < kNumHarmonics; ++i) {
       float amplitude = std::abs(frequencies[i]);
       amplitudes[2 * i] = amplitude;
       amplitudes[2 * i + 1] = amplitude;
     }
+    contentChanged();
   }
 
   void Wavetable::loadNormalizedFrequencies(const std::complex<float>* frequencies, int to_index) {
-    contentChanged();
     std::complex<float>* normalized = (std::complex<float>*)current_data_->normalized_frequencies[to_index];
     mono_float* phases = (mono_float*)current_data_->phases[to_index];
     for (int i = 0; i < kNumHarmonics; ++i) {
@@ -182,5 +181,6 @@ namespace vital {
       phases[2 * i] = arg;
       phases[2 * i + 1] = arg;
     }
+    contentChanged();
   }
 } // namespace vital

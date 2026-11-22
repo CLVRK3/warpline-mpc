@@ -1307,6 +1307,22 @@ namespace vital {
   }
 
   force_inline void SynthOscillator::setActiveOscillators(int new_active_oscillators) {
+    // MPC edition: a lane that comes back on fades from wherever its last_buffers_ points. That is usually one
+    // of another lane's two FFT frames. Upstream rebuilds both frames in turn, so either one holds that lane's
+    // current waveform; with rebuild skipping the frame not in use can be old. Point it at the owner's current
+    // buffer instead, which is what upstream played.
+    for (int i = active_oscillators_; i < new_active_oscillators; ++i) {
+      for (int k = 2 * i; k < 2 * i + 2; ++k) {
+        for (int b = 0; b < kNumBuffers; ++b) {
+          const mono_float* own1 = ((mono_float*)fourier_frames1_[b]) + poly_float::kSize - 1;
+          const mono_float* own2 = ((mono_float*)fourier_frames2_[b]) + poly_float::kSize - 1;
+          if (last_buffers_[k] == own1 || last_buffers_[k] == own2) {
+            last_buffers_[k] = wave_buffers_[b];
+            break;
+          }
+        }
+      }
+    }
     for (int i = active_oscillators_; i < new_active_oscillators; ++i) {
       wave_buffers_[2 * i] = Wavetable::null_waveform();
       wave_buffers_[2 * i + 1] = Wavetable::null_waveform();

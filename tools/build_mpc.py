@@ -6,9 +6,10 @@ include folders and ARM link flags listed in build-extra.json ("includeDirs", "a
 wrapper loads the SDK's build.py, extends its flag lists with those entries, and runs it with the same
 command-line arguments, so every other option (--target, --define, --toolchain ...) works as usual.
 
-    python plugins/Warpline/tools/build_mpc.py plugins/Warpline [build.py options]
+    python plugins/Warpline/tools/build_mpc.py [project] [build.py options]
 
-Run it from the SDK folder (or anywhere: the SDK is found two levels above this project).
+The project defaults to the folder this script is in, and a relative path works from any folder.
+The SDK is found two levels above this script's project.
 """
 import importlib.util
 import json
@@ -24,9 +25,18 @@ BUILD_PY = os.path.join(SDK, "tools", "build.py")
 def main():
     if not os.path.isfile(BUILD_PY):
         sys.exit("SDK build script not found at %s (put this project in <sdk>/plugins/)" % BUILD_PY)
-    with open(os.path.join(PROJECT, "build-extra.json"), encoding="utf-8") as f:
+    # The project named on the command line (default: the one this script is in). Made absolute here,
+    # because the SDK script runs from the SDK folder.
+    args = sys.argv[1:]
+    project = PROJECT
+    if args and not args[0].startswith("-"):
+        project = os.path.abspath(args[0])
+        args[0] = project
+    else:
+        args.insert(0, project)
+    with open(os.path.join(project, "build-extra.json"), encoding="utf-8") as f:
         extra = json.load(f)
-    include_flags = ["-I" + os.path.join(PROJECT, d.replace("/", os.sep)) for d in extra.get("includeDirs", [])]
+    include_flags = ["-I" + os.path.join(project, d.replace("/", os.sep)) for d in extra.get("includeDirs", [])]
     arm_link_flags = list(extra.get("armLinkFlags", []))
 
     spec = importlib.util.spec_from_file_location("sdk_build", BUILD_PY)
@@ -41,7 +51,7 @@ def main():
     build.Builder.common_flags = lambda self: common_flags(self) + include_flags
     build.Builder.link_flags_arm = lambda self: link_flags_arm(self) + arm_link_flags
     os.chdir(SDK)
-    return build.main(sys.argv[1:])
+    return build.main(args)
 
 
 if __name__ == "__main__":

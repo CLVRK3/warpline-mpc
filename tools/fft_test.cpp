@@ -111,6 +111,51 @@ int main() {
     run_case(name, d, k != 1024);
   }
 
+  // 5. Forward transform (wavetable frames): desktop Vital's layout, checked against a direct DFT, then a
+  //    round trip through the inverse. Inputs end with a strong Nyquist component, the bin the old code dropped.
+  {
+    std::vector<double> cos_table(kN), sin_table(kN);
+    const double two_pi = 6.283185307179586476925286766559;
+    for (int i = 0; i < kN; ++i) { cos_table[i] = std::cos(two_pi * i / kN); sin_table[i] = std::sin(two_pi * i / kN); }
+    for (int t = 0; t < 3; ++t) {
+      std::vector<float> x(kN), buf(2 * kN, 0.0f);
+      for (int n = 0; n < kN; ++n) x[n] = uni(rng) * 0.5f + ((n & 1) ? -0.4f : 0.4f);
+      std::copy(x.begin(), x.end(), buf.begin());   // as WaveFrame::toFrequencyDomain does: upper half zero
+      fft.transformRealForward(buf.data());
+
+      double peak = 0.0, err = 0.0;
+      for (int k = 0; k <= kH; ++k) {
+        double re = 0.0, im = 0.0;
+        for (int n = 0; n < kN; ++n) {
+          int a = static_cast<int>((static_cast<long long>(k) * n) % kN);
+          re += x[n] * cos_table[a];
+          im -= x[n] * sin_table[a];
+        }
+        double got_re = k == kH ? buf[kN] : buf[2 * k];
+        double got_im = (k == 0 || k == kH) ? 0.0 : buf[2 * k + 1];
+        if (k == 0 || k == kH) im = 0.0;   // real for a real input
+        peak = std::max(peak, std::hypot(re, im));
+        err = std::max(err, std::hypot(got_re - re, got_im - im));
+      }
+      bool layout_ok = buf[1] == 0.0f && buf[kN + 1] == 0.0f;
+      for (int i = kN + 2; i < 2 * kN; ++i)
+        layout_ok = layout_ok && buf[i] == 0.0f;
+      double nyquist_rel = std::fabs(buf[kN]) / peak;
+
+      fft.transformRealInverse(buf.data());
+      double rt_peak = 0.0, rt_err = 0.0;
+      for (int n = 0; n < kN; ++n) {
+        rt_peak = std::max(rt_peak, std::fabs(static_cast<double>(x[n])));
+        rt_err = std::max(rt_err, std::fabs(static_cast<double>(buf[n]) - x[n]));
+      }
+      bool pass = err / peak < 1e-5 && layout_ok && nyquist_rel > 0.1 && rt_err / rt_peak < 1e-5;
+      std::printf("%-34s vs direct DFT %6.1f dB  Nyquist bin %.3f of peak  layout %s  round trip %6.1f dB  %s\n",
+                  "forward, random + Nyquist", db(err / peak), nyquist_rel, layout_ok ? "ok" : "WRONG",
+                  db(rt_err / rt_peak), pass ? "ok" : "FAIL");
+      ok = ok && pass;
+    }
+  }
+
   // Timing (host or emulator: only the ratio means anything).
   std::vector<float> d(2 * kN, 0.0f), work(2 * kN);
   for (int k = 0; k < kH; ++k) { d[2 * k] = uni(rng) / (1 + k); d[2 * k + 1] = uni(rng) / (1 + k); }

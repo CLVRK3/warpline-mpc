@@ -404,9 +404,13 @@ namespace vital {
 
         int num_floats = size_ * 2;
         memcpy(data, buffer_.get(), num_floats * sizeof(float));
-        data[size_] = data[1];
+        // MPC edition: leave the result in desktop Vital's layout (its IPP / Accelerate code): bins 0..N/2-1 as
+        // (re, im) pairs, the Nyquist bin's real part at data[N], zero imaginary parts for DC and Nyquist, and
+        // nothing above. Bin N/2 already sits at data[N] here; the upstream fallback overwrote it with data[1]
+        // (DC's imaginary part, about 0), which dropped every wavetable frame's top harmonic.
         data[size_ + 1] = 0.0f;
         data[1] = 0.0f;
+        memset(data + size_ + 2, 0, (size_ - 2) * sizeof(float));
       }
 
       void transformRealInverse(float* data) {
