@@ -34,9 +34,16 @@ BROWSER_OPEN = "IndexedEnabling/1/2/Parameter %d" % PI["Browser"]   # visible wh
 LIVE_ON = "IndexedEnabling/1/2/Parameter %d" % PI["Live View"]   # visible while Live View is On
 TOUCH_DRAG = "IndexedEnabling/0/2/Parameter %d" % PI["List Touch"]   # list drag rows, while List Touch = Drag
 TOUCH_TAP = "IndexedEnabling/1/2/Parameter %d" % PI["List Touch"]    # plain button rows, while List Touch = Tap
-NUM_PANELS = 10
 PANEL_ARP, PANEL_GRAIN, PANEL_MOD1, PANEL_MOD2, PANEL_LFO, PANEL_GEN = 1, 2, 3, 4, 5, 6
 PANEL_TABLES1 = 7   # 7, 8, 9: the big wavetable menu for OSC 1, 2, 3
+PANEL_GENRES = 10   # the GENRE menu
+NUM_PANELS = 11
+GENRES = ["All", "Trap / Rage", "Hip-Hop", "R&B / Soul", "EDM", "House / Techno", "Pop", "Synthwave / Retro",
+          "Ambient / Cinematic", "Lo-Fi / Chill"]
+GENRE_HINTS = ["every patch", "808s, dark bells, rage leads", "keys, subs, soul samples", "Rhodes, smooth leads, pads",
+               "supersaws, drops, plucks", "acid, organ bass, stabs", "bright keys, plucks, pads", "80s polys, arps, brass",
+               "pads, strings, textures", "dusty keys, soft tones"]
+GENRE_ACC = ["mint", "violet", "amber", "pink", "teal", "blue", "coral", "pink", "blue", "amber"]
 # 1.2 wavetable picker: the display art per Osc Table value (0 = Patch keeps the column's own picture)
 TABLE_KINDS = [None, "shapes", "sine", "tri", "sawpure", "square", "pwm", "harm", "formant", "sync"]
 TABLE_NAMES = ["Patch", "Basic Shapes", "Sine", "Triangle", "Saw", "Square", "PWM", "Harmonics", "Formant", "Sync"]
@@ -235,6 +242,45 @@ def table_tile_img(w, h, acc, on, t):
     d.text((w * S / 2, h * S * 0.72), TABLE_NAMES[t], font=font(22 * S, "Bold", display=True), fill=TEXT + (255,), anchor="mm")
     d.text((w * S / 2, h * S * 0.88), TABLE_HINTS[t], font=font(12 * S), fill=MUTED + (255,), anchor="mm")
     return save(im.resize((w, h), Image.LANCZOS), name)
+
+
+def genre_tile_img(w, h, on, g):
+    name = f"gtile_{w}x{h}_{g}_{'on' if on else 'off'}.png"
+    if name in ASSETS:
+        return name
+    S = 2
+    im = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    col = ACC[GENRE_ACC[g]]
+    d.rounded_rectangle((S, S, w * S - S, h * S - S), 16 * S, fill=(30, 44, 42, 255) if on else (21, 24, 28, 255),
+                        outline=col + (255,) if on else (52, 59, 69, 255), width=(3 if on else 1) * S)
+    d.rounded_rectangle((18 * S, 18 * S, 58 * S, 24 * S), 3 * S, fill=col + (255,))
+    words = GENRES[g].split(" / ")
+    y = h * S * (0.46 if len(words) == 1 else 0.38)
+    for j, wd in enumerate(words):
+        d.text((w * S / 2, y + j * 30 * S), wd.upper() if j == 0 else "/ " + wd.upper(), font=font((24 if j == 0 else 18) * S, "Bold", display=True),
+               fill=TEXT + (255,) if j == 0 else MUTED + (255,), anchor="mm")
+    d.text((w * S / 2, h * S * 0.86), GENRE_HINTS[g], font=font(12 * S), fill=MUTED + (255,), anchor="mm")
+    return save(im.resize((w, h), Image.LANCZOS), name)
+
+
+def genres_panel(p):
+    """The GENRE menu: ten big tiles on Genre (All + 9). A pick filters every list and the arrows, then the menu closes."""
+    inv, y0 = panel_shell(p, PANEL_GENRES, "GENRE", "mint", "TAP ONE TO SHOW ONLY THOSE PATCHES")
+    tw, th, gap = 232, 230, 13
+    x_start = (W - (5 * tw + 4 * gap)) // 2
+    for g in range(len(GENRES)):
+        x = x_start + (g % 5) * (tw + gap); y = y0 + 66 + (g // 5) * (th + gap)
+        p.add(comp_button(genre_tile_img(tw, th, True, g), genre_tile_img(tw, th, False, g), g, len(GENRES), tw, th),
+              "Genre", f"{x} {y} {tw} {th}", focusable=False, inv=inv)
+
+
+def picker_box(p, pname, panel, rect, acc, size=12.0, colour=None, inv=None):
+    """A value box that opens one of the big tap menus (Panel = panel) instead of the MPC's small list."""
+    x0, y0, x1, y1 = rect
+    w, h = x1 - x0, y1 - y0
+    p.add(comp_box(w, h, acc, False, size, colour or TEXT), pname, f"{x0} {y0} {w} {h}", focusable=False, inv=inv)
+    p.add(comp_button(clear_img(w, h), clear_img(w, h), panel, NUM_PANELS, w, h), "Panel", f"{x0} {y0} {w} {h}",
+          focusable=False, inv=inv)
 
 
 def tables_panel(p):
@@ -694,6 +740,8 @@ def browser_overlay(p):
         im = Image.new("RGBA", (bw, bh), BG + (255,)); d = ImageDraw.Draw(im)
         d.rounded_rectangle((12, 4, bw - 12, bh - 12), 14, fill=PANEL, outline=BORDER, width=1)
         spaced(d, (32, 22), "BROWSE PATCHES", font(14, "Bold"), TEXT, spacing=2)
+        d.rounded_rectangle((W - 486, 14, W - 196, 54), 12, fill=(17, 20, 24), outline=ACC["mint"], width=1)
+        spaced(d, (W - 556, 27), "GENRE", font(11, "SemiBold"), LABEL, spacing=2)
         spaced(d, (32, 58), "TYPE", font(11, "SemiBold"), LABEL, spacing=2)
         spaced(d, (LX, 58), "PATCHES", font(11, "SemiBold"), LABEL, spacing=2)
         d.text((LX + LW, 64), "drag to scroll  ·  tap to load", font=font(11), fill=MUTED, anchor="rm")
@@ -712,6 +760,8 @@ def browser_overlay(p):
                              f"0 {y0} {bw} {bh}", "No", "Hide", "Always", invalidating=inv))
     p.add(comp_button(pill_img(150, 40, "mint", True, "CLOSE"), pill_img(150, 40, "mint", False, "CLOSE"), 0, 2, 150, 40),
           "Browser", f"{W - 182} {y0 + 14} 150 40", focusable=False, inv=inv)
+    # GENRE: opens the genre menu (it draws over the browser)
+    picker_box(p, "Genre", PANEL_GENRES, (W - 486, y0 + 14, W - 196, y0 + 54), "mint", 16.0, ACC["mint"], inv=inv)
     # Types: one button per type (ALL + 15), choice buttons on Category
     ty, th = y0 + 76, 29
     for i, c in enumerate(CATEGORIES):
@@ -1172,9 +1222,12 @@ for i, (nm, path, on) in enumerate([("Factory", "%d patches + Init · Content/Pa
     p.d.rounded_rectangle((28, y, 284, y + 54), 8, fill=(31, 42, 39) if on else (19, 22, 26), outline=ACC["mint"] if on else (42, 48, 56))
     spaced(p.d, (40, y + 9), nm, font(13, "SemiBold"), TEXT, spacing=0.5)
     p.note(40, y + 30, path, MUTED, 10)
-spaced(p.d, (30, 322), "TYPE FILTER", font(10, "SemiBold"), MUTED, spacing=1.5)
-p.d.rounded_rectangle((28, 340, 284, 380), 8, fill=(17, 20, 24), outline=(46, 52, 61))
-p.add(comp_box(256, 40, "mint", True, 23.0, colour=ACC["mint"]), "Category", "28 340 256 40")
+spaced(p.d, (30, 322), "TYPE", font(10, "SemiBold"), MUTED, spacing=1.5)
+spaced(p.d, (140, 322), "GENRE  (tap)", font(10, "SemiBold"), MUTED, spacing=1.5)
+p.d.rounded_rectangle((28, 340, 132, 380), 8, fill=(17, 20, 24), outline=(46, 52, 61))
+p.d.rounded_rectangle((140, 340, 284, 380), 8, fill=(17, 20, 24), outline=ACC["mint"])
+p.add(comp_box(104, 40, "mint", True, 18.0, colour=ACC["mint"]), "Category", "28 340 104 40")
+picker_box(p, "Genre", PANEL_GENRES, (140, 340, 284, 380), "mint", 11.0, ACC["mint"])
 p.slot("Category", (0, 3))
 for i, (c, n) in enumerate(zip(TYPE_CODES, TYPE_NAMES)):
     col_x = 30 + (i % 3) * 86; row_y = 392 + (i // 3) * 18
@@ -1195,7 +1248,7 @@ p.add(comp_arrow(False, 66, 82), "Next", "819 117 66 82", focusable=False)
 spaced(p.d, (406, 126), "PATCH", font(10, "SemiBold"), MUTED, spacing=2)
 p.add(comp_box(410, 50, "mint", True, 31.0, colour=TEXT), "Patch", "398 142 412 50")
 p.slot("Patch", (0, 0))
-p.note(604, 212, "Data wheel or Q-Link 1 = every patch.  Arrows = next / previous of the chosen TYPE.", MUTED, 11, anchor="c")
+p.note(604, 212, "Data wheel or Q-Link 1 = every patch.  Arrows = next / previous of the chosen TYPE and GENRE.", MUTED, 11, anchor="c")
 # status
 p.d.rounded_rectangle((322, 248, 600, 330), 10, fill=(17, 20, 24), outline=(38, 43, 51))
 spaced(p.d, (336, 258), "LOAD STATUS", font(10, "SemiBold"), MUTED, spacing=1.5)
@@ -1702,6 +1755,7 @@ for pg in PAGES:
     grain_panel(pg)
     mod_panel(pg)
     tables_panel(pg)
+    genres_panel(pg)
 
 
 # ------------------------------------------------------------------------------------------------ write
