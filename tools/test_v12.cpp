@@ -100,12 +100,19 @@ int main(int argc,char**argv){
   set("Patch",0.0f); wait(2500);
   printf("after Init: Osc1 %s Osc2 %s\n",disp("Osc1 Table").c_str(),disp("Osc2 Table").c_str());
   // 1.2 menu: a pick on the big TABLES menu closes it.
-  set("Panel",8/9.0f); wait(100); printf("menu open: Panel %s\n",disp("Panel").c_str());
+  set("Panel",8/10.0f); wait(100); printf("menu open: Panel %s\n",disp("Panel").c_str());
   set("Osc2 Table",norm("",3,10)); wait(400);
   printf("after pick: Panel %s, Osc2 Table %s\n",disp("Panel").c_str(),disp("Osc2 Table").c_str());
   // USER filter: no own patches here, so the list is empty; ALL shows factory rows without the tag.
   set("Fav Filter",1.0f); wait(300); printf("USER filter: row1 '%s' tag %s\n",disp("List 1").c_str(),disp("List User 1").c_str());
   set("Fav Filter",0.0f); wait(300); printf("ALL: row1 '%s' tag %s\n",disp("List 1").c_str(),disp("List User 1").c_str());
+  // GENRE: the menu closes on a pick, the list keeps only that genre, the arrows stay inside it.
+  set("Panel",10/10.0f); wait(100); printf("genre menu: Panel %s\n",disp("Panel").c_str());
+  set("Genre",3/9.0f); wait(400);
+  printf("genre %s: Panel %s, rows: %s | %s | %s\n",disp("Genre").c_str(),disp("Panel").c_str(),disp("List 1").c_str(),disp("List 2").c_str(),disp("List 3").c_str());
+  set("Genre",1/9.0f); wait(400); printf("genre %s rows: %s | %s\n",disp("Genre").c_str(),disp("List 1").c_str(),disp("List 2").c_str());
+  set("Fav Filter",1.0f); wait(300); printf("genre %s + USER: row1 '%s'\n",disp("Genre").c_str(),disp("List 1").c_str());
+  set("Fav Filter",0.0f); set("Genre",0.0f); wait(300);
   e->dispatcher(e,effStopProcess,0,0,0,0); e->dispatcher(e,effMainsChanged,0,0,0,0); e->dispatcher(e,effClose,0,0,0,0);
   printf("done\n"); return 0;
 }

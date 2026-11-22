@@ -29,6 +29,7 @@
 #include <condition_variable>
 #include <cstring>
 #include <fstream>
+#include <map>
 #include <filesystem>
 #include <memory>
 #include <mutex>
@@ -191,9 +192,9 @@ constexpr int kNumGrainModes = 5;
 const char* const kGrainSync[Granulator::kNumSyncRates] = { "Free", "1/4", "1/8", "1/16", "1/32", "1/8 T", "1/16 T" };
 // The overlay panels (Panel parameter).
 const char* const kPanels[] = { "Closed", "Arp", "Granulator", "Mod 1-8", "Mod 9-16", "LFOs", "Gen", "Osc1 Tables",
-                                "Osc2 Tables", "Osc3 Tables" };
+                                "Osc2 Tables", "Osc3 Tables", "Genres" };
 enum PanelId { kPanelClosed = 0, kPanelArp, kPanelGrain, kPanelMod1, kPanelMod2, kPanelLfo, kPanelGen, kPanelTables1,
-               kNumPanels = kPanelTables1 + 3 };
+               kPanelGenres = kPanelTables1 + 3, kNumPanels };
 // 1.2: the oscillator wavetable picker (VitalCore::Table order).
 const char* const kTables[] = { "Patch", "Basic Shapes", "Sine", "Triangle", "Saw", "Square", "PWM", "Harmonics",
                                 "Formant", "Sync" };
@@ -232,7 +233,13 @@ struct PatchEntry {
   std::string name;   // shown in lists, always "XX Name" (two-letter type code first)
   std::string path;   // empty = built-in Init
   int type = -1;      // index into kTypeCodes (-1 = Init)
+  uint32_t genres = 0;   // 1.2: bit g-1 = kGenres[g] (from Content/Genres.txt or <drive>/Warpline/Genres.txt)
 };
+
+// 1.2 GENRE picker. Index 0 = all; the names are the ones Genres.txt uses (tools/genres.py).
+const char* const kGenres[] = { "All", "Trap / Rage", "Hip-Hop", "R&B / Soul", "EDM", "House / Techno", "Pop",
+                                "Synthwave / Retro", "Ambient / Cinematic", "Lo-Fi / Chill" };
+constexpr int kNumGenres = sizeof(kGenres) / sizeof(kGenres[0]);
 
 // Two-letter sound-type codes. Factory patch names already start with one (tools/make_factory.cpp uses
 // the same table); your own patches get one from the patch's Vital style, its folder or its name.
@@ -1115,6 +1122,51 @@ class Warpline : public mpc::Plugin {
         scan(parent.parent_path() / "Warpline" / "Patches");
       if (const char* env = std::getenv("WARPLINE_USER_PATCHES"))
         scan(fs::path(env));
+
+      // Genres: the factory list, then your own <drive>/Warpline/Genres.txt (same format) for your patches.
+      std::map<std::string, uint32_t> genre_of;
+      readGenres(fs::path(mpc::contentFolder()) / "Genres.txt", genre_of);
+      if (parent.filename() == "VST2 Plugins" || parent.filename() == "Synths")
+        readGenres(parent.parent_path() / "Warpline" / "Genres.txt", genre_of);
+      if (const char* env = std::getenv("WARPLINE_USER_GENRES"))
+        readGenres(fs::path(env), genre_of);
+      for (PatchEntry& e : patches_) {
+        if (e.path.empty()) continue;
+        auto it = genre_of.find(lowerCase(fs::path(e.path).filename().string()));
+        if (it != genre_of.end())
+          e.genres = it->second;
+      }
+    }
+
+    // "<file name>|<genre>,<genre>" per line; # starts a comment. Names match kGenres, any case. Missing file = nothing.
+    static void readGenres(const fs::path& file, std::map<std::string, uint32_t>& out) {
+      std::ifstream in(file);
+      std::string line;
+      while (std::getline(in, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        size_t bar = line.find('|');
+        if (line.empty() || line[0] == '#' || bar == std::string::npos)
+          continue;
+        uint32_t bits = 0;
+        std::string rest = line.substr(bar + 1);
+        size_t start = 0;
+        while (start <= rest.size()) {
+          size_t comma = rest.find(',', start);
+          std::string g = rest.substr(start, comma == std::string::npos ? std::string::npos : comma - start);
+          while (!g.empty() && g.front() == ' ') g.erase(g.begin());
+          while (!g.empty() && g.back() == ' ') g.pop_back();
+          for (int k = 1; k < kNumGenres; ++k)
+            if (lowerCase(g) == lowerCase(kGenres[k]))
+              bits |= 1u << (k - 1);
+          if (comma == std::string::npos) break;
+          start = comma + 1;
+        }
+        std::string name = line.substr(0, bar);
+        while (!name.empty() && name.back() == ' ') name.pop_back();
+        if (name.size() < 6 || lowerCase(name.substr(name.size() - 6)) != ".vital")
+          name += ".vital";
+        out[lowerCase(name)] |= bits;
+      }
     }
 
     // Next / previous patch (dir = +1 / -1) from "from", staying inside the Category filter.
@@ -1138,6 +1190,9 @@ class Warpline : public mpc::Plugin {
       if (show == 1 && favourites_.count(favKey(i)) == 0)
         return false;
       if (show == 2 && i < factory_count_)
+        return false;
+      int genre = genre_.load();   // 0 = all genres (1.2)
+      if (genre > 0 && (patches_[i].genres & (1u << (genre - 1))) == 0)
         return false;
       if (!query_.empty() && search_names_[i].find(query_) == std::string::npos)
         return false;
@@ -1661,6 +1716,8 @@ class Warpline : public mpc::Plugin {
         int index = screen(mpc::choiceParam(("list_user_" + n).c_str(), ("List User " + n).c_str(), { "Factory", "User" }, 0));
         if (r == 0) list_user_first_index_ = index;
       }
+      // GENRE filter for the lists and arrows (screen: not part of the sound).
+      genre_index_ = screen(mpc::choiceParam("genre", "Genre", std::vector<std::string>(kGenres, kGenres + kNumGenres), 0));
       gen_out_index_[0] = screen(mpc::floatParam("gen_1_out", "Gen 1 Out", 0.0f, 1.0f, 0.5f));
       gen_out_index_[1] = screen(mpc::floatParam("gen_2_out", "Gen 2 Out", 0.0f, 1.0f, 0.5f));
       suffix_.resize(numParams());
@@ -1693,7 +1750,8 @@ class Warpline : public mpc::Plugin {
         int k = pos >= 0 && pos < static_cast<int>(list.size()) ? list[pos] : -1;
         int want = k >= factory_count_ ? 1 : 0;
         int index = list_user_first_index_ + r;
-        if (getInt(index) != want) {
+        if (user_marks_[r] != want) {   // only when what the row shows changed (a host may set these freely)
+          user_marks_[r] = want;
           set(index, static_cast<float>(want));
           notifyHostParameterChanged(index);
         }
@@ -1885,6 +1943,13 @@ class Warpline : public mpc::Plugin {
       if (index == fav_filter_index_) {
         show_filter_.store(static_cast<int>(std::lround(plain)));
         filterChanged();
+        return;
+      }
+      if (index == genre_index_) {
+        genre_.store(static_cast<int>(std::lround(plain)));
+        filterChanged();
+        if (panel_index_ >= 0 && getInt(panel_index_) == kPanelGenres)
+          close_tables_menu_.store(true);   // a pick on the GENRE menu closes it
         return;
       }
       if (index == fav_state_index_ || index == search_index_ || index == arp_pos_index_ ||
@@ -2167,7 +2232,7 @@ class Warpline : public mpc::Plugin {
       }
       if (close_tables_menu_.exchange(false)) {
         int p = getInt(panel_index_);
-        if (p >= kPanelTables1 && p < kPanelTables1 + VitalCore::kNumOscillators) {
+        if ((p >= kPanelTables1 && p < kPanelTables1 + VitalCore::kNumOscillators) || p == kPanelGenres) {
           set(panel_index_, static_cast<float>(kPanelClosed));
           notifyHostParameterChanged(panel_index_);
         }
@@ -2357,6 +2422,9 @@ class Warpline : public mpc::Plugin {
     std::atomic<int> arp_step_{ -1 };
     // 1.2
     int list_user_first_index_ = -1;
+    std::array<int, kListRows> user_marks_ { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+    int genre_index_ = -1;
+    std::atomic<int> genre_{ 0 };
     std::atomic<bool> close_tables_menu_{ false };
     int table_first_index_ = -1, arp_gen_first_index_ = -1, gen_first_index_ = -1;
     std::array<int, Gen::kNumOutputs> gen_out_index_ { -1, -1 };
