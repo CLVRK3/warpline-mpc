@@ -25,7 +25,7 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   - Parameters, and the patch scan with two-letter type codes.
   - A worker thread for patch loads, which stops audio briefly during each load.
   - State saving, Live View, and the scrollable patch list/browser.
-- `tools/make_factory.cpp`: generates the 300 factory patches.
+- `tools/make_factory.cpp`: generates the 360 factory patches (a table named "@n" is Warpline's own built-in table n).
   - It uses CC0 wavetables from atsushieno/open-vital-resources.
   - It sets loudness (target -16 dBFS at velocity 0.8) and velocity sensitivity by type.
   - Run: `make_factory <open-vital-resources> Content/Patches` (takes about 5 minutes).
@@ -116,7 +116,7 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
 ## 1.2.0 additions (2026-11-20, offline)
 
 - **New parameters**, after `Grain Texture`: Osc1-3 Table; Arp Chance, Arp Deja Vu, Arp Loop; Gen Rate, Gen Spread, Gen Bias,
-  Gen Steps, Gen Deja Vu, Gen Length; Gen 1 Out, Gen 2 Out (display only). 294 in total. `kModSources` gains Gen 1, Gen 2
+  Gen Steps, Gen Deja Vu, Gen Length; List User 1-12 and Gen 1 Out, Gen 2 Out (display only). 306 in total. `kModSources` gains Gen 1, Gen 2
   (16, 17, bipolar) and `kPanels` gains Gen (6), both at the end: the SDK's state loader keeps the plain value when a range
   grows, so older projects keep their choices.
 - **Wavetable picker:** `VitalCore::setWavetable(osc, table)` builds the table with `WavetableCreator` (one `WaveSource` group
@@ -131,9 +131,14 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   slot uses Gen 1/2 (`gen_in_use_`), then the render loop splits into 64-frame chunks and sets the values before each.
   Values go through SPREAD (narrow/even/extremes) and BIAS (a power curve), and glide over (1 − STEPS) of a tick.
   Saved .vital files leave out connections from `gen_*`.
+- **Tables menu, USER tags (2026-11-22, offline):** the Table box opens `Panel` 7-9 ("Osc1-3 Tables": ten tiles bound to
+  OscN Table). A pick while that panel is open closes it (`close_tables_menu_`, done by the worker). `Fav Filter` gained
+  "User" (index >= `factory_count_`). The screen params List User 1-12 (Factory/User) are kept in step with the rows by
+  `updateUserMarks()` in the worker; the skin shows a USER chip per row with IndexedEnabling. 60 new factory patches
+  (`addMore4`), 360 in all.
 - **Skin:** a Table box in each OSC header (MAIN, OSC pages). The wavetable display has one copy per table
   (`IndexedEnabling/<t>/10/Parameter <OscN Table>`); single-wave tables use a 1-frame picture and the morphing ones 16 frames, to keep
-  image memory down (all images decoded: about 259 MB, 1.1 was about 203 MB). The MOD panel has a fourth tab, GEN, with two meters
+  image memory down (all images decoded: about 280 MB with the tables menu tiles; 1.1 was about 203 MB). The MOD panel has a fourth tab, GEN, with two meters
   and the shared controls. The ARP panel's hint box became the GENERATE knobs.
 
 ## Rules that must not break
