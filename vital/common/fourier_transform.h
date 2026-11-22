@@ -198,13 +198,15 @@ namespace vital {
   #endif
   } // namespace fft_simd
 
-  // The real inverse transform with the same result as the kissfft code below (to rounding), for sizes
-  // N = 2 * 4^k (N = 2048 for the oscillators):
-  //   out[n] = (2 / N) * Re(sum over k = 0..N-1 of Y[k] e^(+2 pi i k n / N)),
-  // where Y is `data` read as N complex numbers after the kissfft code's two changes (data[0] halved, and
-  // data[1] replaced by data[N]). Only the Hermitian part of Y reaches a real output, so
-  //   Z[k] = Y[k] + conj(Y[N - k])      (twice the Hermitian part)
-  // is formed for k = 0..N/2 and folded into one complex sequence of N/2 points,
+  // The real inverse transform of desktop Vital (its JUCE, IPP and vDSP backends), for sizes N = 2 * 4^k
+  // (N = 2048 for the oscillators). `data` holds bins 0..N/2-1 as (re, im) pairs, with the Nyquist bin's real
+  // part at data[N]:
+  //   out[n] = (1 / N) * (X[0] + X[N/2] (-1)^n + 2 Re(sum over k = 1..N/2-1 of X[k] e^(+2 pi i k n / N))),
+  // with X[0] = data[0], X[N/2] = data[N] and X[k] = (data[2k], data[2k+1]). Nothing else in the buffer is read.
+  // (The kissfft code below, used before, also read the upper half of the buffer as bins N/2+1..N-1, which
+  // desktop Vital ignores; morphs that keep data there, such as Inharmonic Scale, sounded different because
+  // of it. -DWARPLINE_KISSFFT_INVERSE=1 still builds that old path.)
+  // The spectrum Z (Z[0] = X[0], Z[N/2] = X[N/2], Z[k] = X[k], Hermitian) is folded into N/2 complex points,
   //   C[k] = E[k] + i O[k],  E[k] = Z[k] + conj(Z[N/2 - k]),  O[k] = (Z[k] - conj(Z[N/2 - k])) e^(+2 pi i k / N),
   // whose inverse transform c gives out[2m] = Re(c[m]) / N and out[2m + 1] = Im(c[m]) / N.
   // The N/2-point transform is a radix-4 Stockham transform on split real/imaginary arrays, four
@@ -228,36 +230,28 @@ namespace vital {
         const float* wkr = tables_->wk_re.data();
         const float* wki = tables_->wk_im.data();
 
-        // k = 0..3 one at a time. Y[0] is (data[0] / 2, data[N]) and only its real part counts.
-        for (int k = 0; k < 4; ++k) {
-          float ykr, yki, ynr, yni, yhmr, yhmi, yhpr, yhpi;   // Y[k], Y[N-k], Y[H-k], Y[H+k]
-          if (k == 0) {
-            ykr = ynr = 0.5f * data[0]; yki = yni = 0.0f;
-            yhmr = yhpr = data[n]; yhmi = yhpi = 0.0f;
-          }
-          else {
-            ykr = data[2 * k]; yki = data[2 * k + 1];
-            ynr = data[2 * (n - k)]; yni = data[2 * (n - k) + 1];
-            yhmr = data[2 * (h - k)]; yhmi = data[2 * (h - k) + 1];
-            yhpr = data[2 * (h + k)]; yhpi = data[2 * (h + k) + 1];
-          }
-          // E = Y[k] + conj(Y[N-k]) + conj(Y[H-k]) + Y[H+k];  D = Y[k] + conj(Y[N-k]) - conj(Y[H-k]) - Y[H+k]
-          float er = ykr + ynr + yhmr + yhpr, ei = yki - yni - yhmi + yhpi;
-          float dr = ykr + ynr - yhmr - yhpr, di = yki - yni + yhmi - yhpi;
+        // k = 0: E and D are real (DC and Nyquist).
+        {
+          float dc = data[0], nyquist = data[n];
+          cre[0] = dc + nyquist;
+          cim[0] = dc - nyquist;
+        }
+        // k = 1..3 one at a time.
+        for (int k = 1; k < 4; ++k) {
+          float zkr = data[2 * k], zki = data[2 * k + 1];               // Z[k]
+          float zhr = data[2 * (h - k)], zhi = data[2 * (h - k) + 1];   // Z[H-k]
+          float er = zkr + zhr, ei = zki - zhi;                          // E = Z[k] + conj(Z[H-k])
+          float dr = zkr - zhr, di = zki + zhi;                          // D = Z[k] - conj(Z[H-k])
           float orr = dr * wkr[k] - di * wki[k], oi = dr * wki[k] + di * wkr[k];
           cre[k] = er - oi;
           cim[k] = ei + orr;
         }
         for (int k = 4; k < h; k += 4) {
-          v4 ykr, yki, ynr, yni, yhmr, yhmi, yhpr, yhpi;
-          load2(data + 2 * k, ykr, yki);
-          load2(data + 2 * (n - k - 3), ynr, yni); ynr = rev(ynr); yni = rev(yni);
-          load2(data + 2 * (h - k - 3), yhmr, yhmi); yhmr = rev(yhmr); yhmi = rev(yhmi);
-          load2(data + 2 * (h + k), yhpr, yhpi);
-          v4 sr = add(ykr, ynr), si = sub(yki, yni);       // S = Y[k] + conj(Y[N-k])
-          v4 tr = add(yhmr, yhpr), ti = sub(yhpi, yhmi);   // T = conj(Y[H-k]) + Y[H+k]
-          v4 er = add(sr, tr), ei = add(si, ti);           // E = S + T
-          v4 dr = sub(sr, tr), di = sub(si, ti);           // D = S - T
+          v4 zkr, zki, zhr, zhi;
+          load2(data + 2 * k, zkr, zki);
+          load2(data + 2 * (h - k - 3), zhr, zhi); zhr = rev(zhr); zhi = rev(zhi);
+          v4 er = add(zkr, zhr), ei = sub(zki, zhi);   // E = Z[k] + conj(Z[H-k])
+          v4 dr = sub(zkr, zhr), di = add(zki, zhi);   // D = Z[k] - conj(Z[H-k])
           v4 wr = load(wkr + k), wi = load(wki + k);
           v4 orr = sub(mul(dr, wr), mul(di, wi)), oi = add(mul(dr, wi), mul(di, wr));
           store(cre + k, sub(er, oi));
@@ -425,7 +419,7 @@ namespace vital {
         transformRealInverseKiss(data);
       }
 
-      // The original kissfft inverse (also the reference the fast path is tested against).
+      // The kissfft inverse Warpline used before (reads the whole buffer; see FastRealInverse).
       void transformRealInverseKiss(float* data) {
         data[0] *= 0.5f;
         data[1] = data[size_];

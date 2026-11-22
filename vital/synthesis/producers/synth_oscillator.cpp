@@ -803,10 +803,8 @@ namespace vital {
       key.last_harmonic = last_harmonic;
       key.morph = static_cast<int>(voice_block_.spectral_morph);
       key.formant_shift = formant_shift;
-      // Not for Shepard (its rebuilds also move the phases) or Inharmonic Scale (it keeps an index table in the
-      // upper half of the FFT buffer, which the kissfft-compatible inverse reads, so its output depends on what
-      // that buffer held before; reusing one buffer would change the sound).
-      key.valid = voice_block_.spectral_morph != kShepardTone && voice_block_.spectral_morph != kInharmonicScale;
+      // Not for Shepard: its rebuilds also move the phases.
+      key.valid = voice_block_.spectral_morph != kShepardTone;
       const mono_float* own1 = ((mono_float*)fourier_frames1_[buffer_index]) + poly_float::kSize - 1;
       const mono_float* own2 = ((mono_float*)fourier_frames2_[buffer_index]) + poly_float::kSize - 1;
       bool holds_own = wave_buffers_[buffer_index] == own1 || wave_buffers_[buffer_index] == own2;
