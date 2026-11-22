@@ -9,6 +9,11 @@ Designed for the **MPC Live III / MPC XL** (64-bit). It also builds for the 32-b
 
 ![Warpline on the MPC](docs/screenshots/warpline.png)
 
+**New in 1.2.0:** a wavetable picker on each oscillator (Basic Shapes, Sine, Triangle, Saw, Square, PWM, Harmonics, Formant and Sync
+tables, or the patch's own), generative CHANCE / DEJA VU / LOOP controls on the arpeggiator, and two random mod sources, GEN 1 and GEN 2.
+Init now starts on Basic Shapes, so WT POS sweeps sine to saw. Also: a big tap-to-pick menu for the tables, a USER tag and filter for your
+own patches in the lists, a GENRE menu for the lists, and 60 new factory patches (rage / dark trap, EDM and R&B).
+
 **New in 1.1.0:** an arpeggiator with a 16-step pattern, the GRAINZ granular effect, a 16-slot mod matrix with four LFOs of its
 own, preset search, favourites, outlined list rows, and lists you can scroll by dragging. Each of the three new sections has a chip in the header that shows
 its state and opens its panel.
@@ -25,7 +30,7 @@ Download from the [Releases](https://github.com/CLVRK3/warpline-mpc/releases) pa
   `Warpline-X.Y.Z-mpc-armv7.zip` (older Gen1 MPCs), each with its own `INSTALL.md`; or install Warpline from the
   [Open MPC catalog](https://open-mpc.github.io/).
 
-The 300 factory patches are included in the plugin folder. To add your own patches or banks, see
+The 360 factory patches are included in the plugin folder. To add your own patches or banks, see
 [Installing preset banks](#installing-preset-banks-vitalbank-and-vital) below.
 
 ## Build and install from source
@@ -132,6 +137,10 @@ Tap a chip to open its full-screen panel and tap **CLOSE** to go back. Only one 
 - **Step pattern:** 16 steps. Tap a step to change it: On > Accent > Tie (holds the note into the next step) > Off. The bar after the last step shows the length, and a marker
   under the steps shows the one that is playing.
 - With the MPC's sequencer playing, the steps lock to the song position. Otherwise they start on the first note you play.
+- **Generate (1.2):** **CHANCE** is how likely each On/Accent step is to play (100% = always). **DEJA VU** decides whether the dice
+  are new or remembered: at 0% every step rolls new dice, at 50% the last **LOOP** steps (1-16) repeat exactly, and above 50%
+  the same dice come back in a shuffled order. In Random mode the dice also pick the notes, so DEJA VU 50% turns it into a
+  repeating random melody.
 - The arp plays Warpline's own voices. MPC doesn't pass plugin MIDI on, so it can't drive other tracks.
 
 ### GRAINZ (granular effect)
@@ -166,13 +175,32 @@ GRAINZ is a granular effect on Warpline's output. It keeps the last 1.5 seconds 
 ![The mod matrix](docs/screenshots/warpline-mod.png)
 
 - **16 slots** on two pages (1-8, 9-16). Each slot has a source, a destination and an amount (-100 to +100 %).
-- **Sources:** Env 1-3, the matrix's LFO 1-4, velocity, mod wheel, aftertouch, random (a new value per note), macros 1-4.
+- **Sources:** Env 1-3, the matrix's LFO 1-4, velocity, mod wheel, aftertouch, random (a new value per note), macros 1-4, and
+  **Gen 1 / Gen 2** (1.2, see below).
 - **Destinations:** wavetable position, level, detune, warp, morph, pitch and pan of each oscillator, cutoff, reso, drive, blend and mix of both filters,
   distortion, chorus, phaser, delay and reverb amounts, the matrix LFO rates, and volume.
 - **LFOs page:** shape (sine, triangle, saw up, saw down, square), sync (seconds, tempo, dotted, triplets, keytrack), tempo, mode (trigger, sync, envelope ...)
   and rate (used when sync is set to Seconds).
+- **GEN page (1.2):** two random sources that pick a new value on every step of **RATE** (1/4 to 1/32, locked to the sequencer
+  when it plays). **SPREAD** sets how wide the values fall (narrow around the middle, even, or out at the extremes), **BIAS**
+  leans them low or high, **STEPS** goes from smooth glides (0%) to hard jumps (100%). **DEJA VU** and **LENGTH** work like the
+  arp's: 50% repeats the last LENGTH values as a loop. Both meters show the current values. Gen 1 and Gen 2 share the settings
+  but roll their own values. They are Warpline's own, so a patch saved from Warpline leaves those slots out of the .vital file.
 - The matrix comes on top of the patch's own modulation and stays the same when you change patches. Inside the engine, its LFOs are Vital's LFO 5-8.
   While a slot uses one of them, that LFO follows the matrix. When no slot uses it, it goes back to what the patch set.
+
+## Wavetable picker (1.2)
+Tap the box next to an OSC title: a full-screen menu opens with ten big tiles, each with its name and a picture of the wave.
+Tap one to use it; the menu closes. CLOSE leaves it as it was. The tables:
+- **Patch:** the table the patch brought (the default for every patch you load).
+- **Basic Shapes:** sine, rounded sine, triangle, square, pulse and saw along WT POS.
+- **Sine, Triangle, Saw, Square:** single waves (WT POS does nothing).
+- **PWM:** a pulse that narrows from 50% to 4% along WT POS. **Harmonics:** adds partials one by one, sine to a bright saw.
+  **Formant:** a vowel sweep A-E-I-O-U. **Sync:** a hard-synced saw, 1x to 7x.
+
+The picture above the knobs follows the pick. Loading another patch puts all three back to Patch, except **Init**, which starts
+OSC 1 on Basic Shapes. Picks are saved with the project. Saving a patch from Warpline stores the picked table in it. The tables
+are generated by Warpline (no samples) and take a moment to build, so the sound pauses briefly when you pick one.
 
 ## Patch browser and list
 
@@ -188,28 +216,41 @@ GRAINZ is a granular effect on Warpline's output. It keeps the last 1.5 seconds 
 - **Search:** type on the on-screen keyboard (A-Z, SPACE, DEL, CLR). The list shows the patches whose names contain the text,
   inside the chosen type. The arrows also step through those patches only.
 - **Favourites:** tap the **star** next to the patch name in the header to add or remove the patch. In the browser,
-  **SHOW: FAVOURITES** lists only those. Favourites are saved to `<drive>/Warpline/Favourites.txt` (one patch file name per
+  **SHOW: FAVS** lists only those. Favourites are saved to `<drive>/Warpline/Favourites.txt` (one patch file name per
   line), so they survive updates and work in every project.
+- **Genre (1.2):** tap **GENRE** (at the top of the browser, or next to TYPE on the PATCH page) for a menu of big tiles: All,
+  Trap / Rage, Hip-Hop, R&B / Soul, EDM, House / Techno, Pop, Synthwave / Retro, Ambient / Cinematic and Lo-Fi / Chill. A pick
+  filters the lists and the arrows, together with TYPE, search and SHOW. A patch can be in several genres. To give your own
+  patches genres, make `<drive>/Warpline/Genres.txt` with one line per patch: `<file name>|<genre>,<genre>`, for example
+  `My Bass.vital|Trap / Rage,Hip-Hop` (the genre names as above, any capitals). Patches without a line only show under All.
+- **Your own patches:** rows holding a patch from `<drive>/Warpline/Patches` carry a purple **USER** tag, and **SHOW: USER**
+  lists only those (1.2).
 - **PATCH page list:** the same list, nine rows at a time, with its own scroll bar and DRAG/TAP switch.
 - The MPC's own double-tap menus show plugin lists without any text, so Warpline does not use them. The arrows, the data wheel
   on the big PATCH box, Q-Link 1 and the MPC's preset list (every patch is a program) also change patches.
 
-## Factory patches (300)
-Init plus 300 patches in 14 types (at least 10 of each). They use about 135 different wavetables from more than 50 wavetable families, 7 of
+## Factory patches (360)
+Init plus 360 patches in 14 types (at least 10 of each). They use about 135 different wavetables from more than 50 wavetable families, 7 of
 Vital's 8 filter models, mono/legato and poly voicing, oscillator warps, spectral morphs, and tempo-synced LFOs, gates and random modulation.
 
+**New in 1.2:** 60 patches in three styles, five of each sound: **rage / dark trap** (bells, 808s, leads, dark pads: Rage Bell,
+Tonka Chime, Lux Toll, Ice Toll, Wraith Bell; Rage 808, Clip 808, Fold 808, Sub Knock 808, Growl 808; Rage Saw Lead, Siren Wail,
+Dive Lead, Fuzz Synth Lead, Hyper Glide Lead; Dark Choir, Void Organ, Ghost Strings, Haze Vox Pad, Night Swell), **EDM** (leads,
+basses, plucks, pads) and **R&B** (Rhodes, pads, leads, basses). The 808s glide in mono with a pitch knock; many use the
+wavetable picker's built-in tables.
+
 - **Arp (16):** AR Acid Arp, AR Crystal Steps, AR Dark Pulse Seq, AR Gated Choir, AR Gated Saws, AR Harp Cascade, AR Morph Steps, AR Ping Pong Bells, AR Pulse Train, AR Random Blips, AR Retro Arcade, AR Saw Sequence, AR Seq Bubbles, AR Sidechain Stabs, AR Trance Gate Pad, AR Triplet Motion
-- **Bass (27):** BS 808 Glide, BS Acid Line, BS Bit Bass, BS CZ Resonance Bass, BS Deep House Organ Bass, BS Detuned Square Bass, BS Diode Bite, BS Dubstep Yoi, BS FM Growl, BS Fat Unison Bass, BS Foldback Bass, BS Formant Growler, BS Formant Wobble, BS Garage Organ Bass, BS Liquid Sub, BS Moog Thump, BS Neuro Grind, BS Plaits Thump, BS Pluck Bass, BS Reese Pressure, BS Rubber Sub, BS Saw Stack Bass, BS Squelch 303, BS Sub Pressure, BS Sync Snarl, BS Talking Bass, BS Wobble Classic
-- **Bell (16):** BL Bowl Resonance, BL Church Bell, BL Crystal Bell, BL FM Bell Pad, BL Gamelan, BL Glass Chimes, BL Glockenspiel, BL Marimba Wood, BL Metallic Ring, BL Music Box, BL Steel Drum, BL Toy Piano, BL Tubular Chime, BL Vibes Tremolo, BL Vibraphone Soft, BL Wind Chime
+- **Bass (42):** BS 808 Glide, BS Acid Line, BS Bit Bass, BS Bounce Bass, BS Clip 808, BS CZ Resonance Bass, BS Deep House Organ Bass, BS Detuned Square Bass, BS Diode Bite, BS Dub Wobble, BS Dubstep Yoi, BS Electro Reese, BS Fat Unison Bass, BS FM Growl, BS Fold 808, BS Foldback Bass, BS Formant Growler, BS Formant Wobble, BS Funk Synth Bass, BS Garage Organ Bass, BS Growl 808, BS House Pluck Bass, BS Liquid Sub, BS Moog Thump, BS Neo Soul Sub, BS Neuro Grind, BS Plaits Thump, BS Pluck Bass, BS Rage 808, BS Reese Pressure, BS Riddim Growl, BS Round Moog Bass, BS Rubber Sub, BS Saw Stack Bass, BS Slap Synth Bass, BS Smooth Sub, BS Squelch 303, BS Sub Knock 808, BS Sub Pressure, BS Sync Snarl, BS Talking Bass, BS Wobble Classic
+- **Bell (21):** BL Bowl Resonance, BL Church Bell, BL Crystal Bell, BL FM Bell Pad, BL Gamelan, BL Glass Chimes, BL Glockenspiel, BL Ice Toll, BL Lux Toll, BL Marimba Wood, BL Metallic Ring, BL Music Box, BL Rage Bell, BL Steel Drum, BL Tonka Chime, BL Toy Piano, BL Tubular Chime, BL Vibes Tremolo, BL Vibraphone Soft, BL Wind Chime, BL Wraith Bell
 - **Brass (12):** BR Big Synth Horns, BR Brass Fanfare, BR Brass Section, BR Funk Brass Stab, BR Jump Brass, BR Muted Trumpet, BR Prophet Brass, BR Sax Synth, BR Soft French Horn, BR Swell Brass Pad, BR Synth Brass, BR Tuba Low
 - **Dreamy (22):** DY Aurora, DY Cloud Nine, DY Daydream Swell, DY Dream Piano, DY Ethereal Voices, DY Floating, DY Hazy Memories, DY Hologram, DY Lullaby, DY Lush Supersaw Pad, DY Moonlit Bells, DY Northern Lights, DY Shimmer Strings, DY Snowfall, DY Soft Focus, DY Stardust, DY Starlight Keys, DY Sunset Glow, DY Tide Pool, DY Underwater Dream, DY Velvet Haze, DY Weightless
 - **FX (16):** FX Alarm Siren, FX Dark Drone, FX Dial Up, FX Downlifter, FX Glitch Machine, FX Insect Swarm, FX Laser Zap, FX Radio Static, FX Riser Sweep, FX Robot Chatter, FX Space Bloom, FX Space Drone, FX Tape Stop, FX Underwater Sonar, FX White Noise Riser, FX Wind Tunnel
 - **Keys (33):** KY Analog Piano, KY Celeste, KY Chord Memory, KY Clav Funk, KY Clavinet Pop, KY Digi Piano 84, KY Digital Grand, KY Dream Rhodes, KY EP Tines, KY Glass Harp, KY Glass Keys, KY Glass Organ, KY Gospel Organ, KY Hammer Dulcimer, KY Harpsichord, KY House Organ Stab, KY Juno Keys, KY Lo-Fi Keys, KY M1 House Piano, KY OP Keys, KY Organ Drawbars, KY Phase Keys, KY Piano Air, KY Plastic Keys, KY Poly Synth Keys, KY Soft Stab Keys, KY Stab Chord, KY Toy Keys, KY Upright Felt, KY Vector Keys, KY Velvet Keys, KY Warm EP Pad Keys, KY Wurly Drive
-- **Lead (34):** LD Acid Lead, LD Analog Brass Lead, LD Anthem Supersaw, LD Bright Saw Lead, LD Buchla Bounce, LD Chebyshev Whistle, LD Chip Arp, LD Chip Lead, LD Crystal Lead, LD Distorted Saw Lead, LD Flute Synth, LD Folded Lead, LD Formant Lead, LD Fuzz Lead, LD G-Funk Lead, LD Glide Saw 80s, LD Hoover Lead, LD Hyper Saw, LD Modulo Lead, LD Nasal Reed, LD OP Lead, LD Ocarina, LD Plaits Lead, LD Portamento Sine, LD Screamer, LD Silk Lead, LD Soft Sine Lead, LD Square Hero, LD Sync Lead, LD Sync Scream, LD Trance Lead, LD Vocal Synth Lead, LD Wah Lead, LD Whistle Lead
-- **Pad (36):** PD 80s Poly Pad, PD Additive Choir, PD Analog Strings Pad, PD Analog Warmth, PD Breathing Pad, PD Bright Poly Pad, PD Cathedral, PD Choir of Glass, PD Choral Pad, PD Comb Shimmer, PD Dark Matter, PD Dark Strings Pad, PD Desert Wind Pad, PD Evolving Spectra, PD Glacier, PD Glass Choir Pad, PD Granular Haze, PD Granular Pad, PD Harmonic Drift, PD Ice Field, PD Night Pad, PD Organ Pad, PD PPG Sweep, PD PWM Strings, PD Phase Pad, PD Phaser Strings, PD Prophet Vector, PD Pulse Width Pad, PD Retro Sci-Fi Pad, PD Shimmer Pad, PD Silk Pad, PD Spectral Smear, PD Sunrise Sweep, PD Vowel Pad, PD Warm Analog Pad, PD Warm Blanket
+- **Lead (49):** LD Acid Lead, LD Analog Brass Lead, LD Anthem Supersaw, LD Big Room Lead, LD Bright Saw Lead, LD Buchla Bounce, LD Chebyshev Whistle, LD Chip Arp, LD Chip Lead, LD Crystal Lead, LD Distorted Saw Lead, LD Dive Lead, LD Falsetto Whistle, LD Festival Supersaw, LD Flute Synth, LD Folded Lead, LD Formant Lead, LD Future Bass Saw, LD Fuzz Lead, LD Fuzz Synth Lead, LD G-Funk Lead, LD Glide Pulse Lead, LD Glide Saw 80s, LD Hardstyle Screech, LD Hoover Lead, LD Hyper Glide Lead, LD Hyper Saw, LD Modulo Lead, LD Nasal Reed, LD Ocarina, LD OP Lead, LD Plaits Lead, LD Portamento Sine, LD Rage Saw Lead, LD Screamer, LD Silk Lead, LD Siren Wail, LD Smooth Sine Lead, LD Soft Sine Lead, LD Soft Square Lead, LD Square Hero, LD Sync Lead, LD Sync Scream, LD Talk Box Lead, LD Trance Lead, LD Uplift Trance Lead, LD Vocal Synth Lead, LD Wah Lead, LD Whistle Lead
+- **Pad (51):** PD 80s Poly Pad, PD Additive Choir, PD Analog Strings Pad, PD Analog Warmth, PD Breakdown Pad, PD Breathing Pad, PD Bright Poly Pad, PD Cathedral, PD Choir of Glass, PD Choral Pad, PD Comb Shimmer, PD Dark Choir, PD Dark Matter, PD Dark Strings Pad, PD Desert Wind Pad, PD Euphoric Pad, PD Evolving Spectra, PD Filter Rise Pad, PD Ghost Strings, PD Glacier, PD Glass Choir Pad, PD Granular Haze, PD Granular Pad, PD Harmonic Bloom, PD Harmonic Drift, PD Haze Vox Pad, PD Ice Field, PD Neo Soul Strings, PD Night Pad, PD Night Swell, PD Organ Pad, PD Phase Pad, PD Phaser Strings, PD PPG Sweep, PD Prophet Vector, PD Pulse Width Pad, PD PWM Air Pad, PD PWM Strings, PD Quiet Storm Pad, PD Retro Sci-Fi Pad, PD Satin Pad, PD Shimmer Pad, PD Sidechain Pad, PD Silk Pad, PD Spectral Smear, PD Sunrise Sweep, PD Void Organ, PD Vowel Pad, PD Warm Analog Pad, PD Warm Blanket, PD Warm Vocal Pad
 - **Perc (13):** PC Clap Room, PC Closed Hat, PC Conga Tone, PC Cowbell 80s, PC Glitch Hit, PC Kaoss Kit Hit, PC Metal Hit, PC Rim Click, PC Snare Crack, PC Synth Kick, PC Synth Tom, PC Tabla Bend, PC Tom Electro
-- **Pluck (30):** PL Bell Pluck, PL Bright Saw Pluck, PL Bubble Pluck, PL Chime Pluck, PL Deep Pluck, PL Digital Bells, PL Funky Wah Pluck, PL Future Pluck, PL Glass Pluck, PL Guitar Pick, PL Harp Glint, PL Kalimba Drop, PL Koto Pluck, PL Lush Pluck, PL Mallet Pluck, PL Marimba Pluck, PL Muted Guitar, PL Nylon Pluck, PL Pizz Pluck, PL Pizzicato Strings, PL Pluck Arp Glass, PL Rubber Pluck, PL Shamisen, PL Sitar Pluck, PL String Pluck, PL Synth Harp, PL Tropical Pluck, PL Ukulele, PL Water Drop, PL Zither
-- **Rhodes (18):** RH Rhodes Bell Mix, RH Rhodes Bell Tines, RH Rhodes Bright Bark, RH Rhodes Chorus Wide, RH Rhodes Classic, RH Rhodes Dark Velvet, RH Rhodes Dream, RH Rhodes Echo Room, RH Rhodes Hip Hop, RH Rhodes Lofi Tape, RH Rhodes Mark Drive, RH Rhodes Mellow Jazz, RH Rhodes Neo Soul, RH Rhodes Phase Ballad, RH Rhodes Stage 73, RH Rhodes Suitcase, RH Rhodes Vintage Trem, RH Rhodes Wurli Hybrid
+- **Pluck (35):** PL Bell Pluck, PL Bright Saw Pluck, PL Bubble Pluck, PL Chime Pluck, PL Chord Stab, PL Deep Pluck, PL Digital Bells, PL Drop Pluck, PL Funky Wah Pluck, PL Future Pluck, PL Glass Pluck, PL Guitar Pick, PL Harp Glint, PL Island Pluck, PL Kalimba Drop, PL Koto Pluck, PL Lush Pluck, PL Mallet Pluck, PL Marimba Pluck, PL Muted Guitar, PL Nylon Pluck, PL Pizz Pluck, PL Pizzicato Strings, PL Pluck Arp Glass, PL Progressive Pluck, PL Rubber Pluck, PL Shamisen, PL Sitar Pluck, PL String Pluck, PL Sync Pluck, PL Synth Harp, PL Tropical Pluck, PL Ukulele, PL Water Drop, PL Zither
+- **Rhodes (23):** RH Late Night Rhodes, RH Rhodes Bell Mix, RH Rhodes Bell Tines, RH Rhodes Bright Bark, RH Rhodes Chorus Wide, RH Rhodes Classic, RH Rhodes Dark Velvet, RH Rhodes Dream, RH Rhodes Echo Room, RH Rhodes Hip Hop, RH Rhodes Lofi Tape, RH Rhodes Mark Drive, RH Rhodes Mellow Jazz, RH Rhodes Neo Soul, RH Rhodes Phase Ballad, RH Rhodes Stage 73, RH Rhodes Suitcase, RH Rhodes Vintage Trem, RH Rhodes Wurli Hybrid, RH Silk Rhodes, RH Slow Jam Rhodes, RH Tape Soul Rhodes, RH Velvet Tines
 - **Strings (13):** ST Analog String Machine, ST Cello Bow, ST Chamber Strings, ST Cinematic Swell, ST Ensemble 78, ST Glass Strings, ST Low Strings, ST Solina Dream, ST Spiccato, ST String Ensemble, ST Tremolo Strings, ST Viola Warm, ST Violin Solo
 - **Vocal (14):** VX Aah Choir, VX Choir Swell, VX Eeh Choir, VX Formant Sweep Voice, VX Ghost Vowels, VX Monk Chant, VX Ooh Choir, VX Robot Voice, VX Siren Voice, VX Talk Box, VX Vocoder Lead, VX Vowel Pluck, VX Whisper Pad, VX Yah Stab
 
@@ -262,8 +303,9 @@ Good to know:
 
 ### Changes made to Vital's sources for the MPC
 All changes are marked "MPC edition" in the files: tuning-file loading was removed (tunings stored in patches still load), the old-version
-patch upgrader was split out of `load_save.cpp`, kissfft is included outside the `vital` namespace, the maximum polyphony is 16, and on
-32-bit ARM Vital's existing NEON_ARM32 fallbacks are switched on automatically. The VitalFX effects engine is not included.
+patch upgrader was split out of `load_save.cpp`, kissfft is included outside the `vital` namespace, the maximum polyphony is 16, on
+32-bit ARM Vital's existing NEON_ARM32 fallbacks are switched on automatically, and (1.2) the voice handler has two extra mono
+mod sources, `gen_1` and `gen_2`, that Warpline sets. The VitalFX effects engine is not included.
 
 ## Status / honest notes
 - Tested here: the native build passes every SDK host-simulator check at 32-, 128- and 512-frame blocks (state save/restore, parameter sweep, all-notes-off).
@@ -272,6 +314,10 @@ patch upgrader was split out of `load_save.cpp`, kissfft is included outside the
 - **Tested on an MPC Live III** (64-bit build, 1.0.0). The 32-bit build for older MPCs has not been run on hardware.
 - 1.1.0 was tested on an MPC Live III (MPC OS 3.10.1, 2026-11-20): arp, GRAINZ (all five modes, about 20-25% CPU with chords), mod matrix, search,
   favourites, drag-scrolling and tap-to-load. Before that it was tested offline with a test host and ASan.
+- 1.2.0 was tested offline (2026-11-20): a test host (`tools/test_v12.cpp`) with ASan and UBSan, every table at WT POS 0 and 1,
+  Gen 1 on Osc1 Level (random, and a locked 4-step loop at DEJA VU 50%), arp CHANCE and DEJA VU, a state round trip, and patch
+  changes resetting the picks. Then on an MPC Live III (MPC OS 3.10.1, 2026-11-22): the wavetable picker and its menu, generative
+  arp, GEN sources, USER tags and filter, the GENRE menu and the new patches all worked as intended.
 - The skin is checked with the SDK's `validate.py` (versions, indices, images) and rendered as previews here. Check it on the MPC's screen too.
 
 ## Licence

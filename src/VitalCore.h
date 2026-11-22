@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-namespace vital { class SoundEngine; class Value; }
+namespace vital { class SoundEngine; class Value; namespace cr { class Value; } }
 class WavetableCreator;
 class Tuning;
 
@@ -96,6 +96,16 @@ class VitalCore {
     // Off the audio thread (or paused): put LFO 0..7 back to the shape the loaded patch gave it.
     void restoreLfoShape(int lfo);
 
+    // Off the audio thread (or paused): oscillator 0..2's wavetable. 0 = the one the patch brought, the
+    // others are built here (kTableNames). Patch loads store their tables first, so 0 always goes back.
+    enum Table { kTablePatch = 0, kTableShapes, kTableSine, kTableTriangle, kTableSaw, kTableSquare, kTablePwm,
+                 kTableHarmonics, kTableFormant, kTableSync, kNumTables };
+    void setWavetable(int osc, int table);
+
+    // Audio thread: the plugin's two generated mod sources ("gen_1", "gen_2"), 0..1.
+    static constexpr int kNumGen = 2;
+    void setGenValue(int index, float value);
+
   private:
     std::unique_ptr<vital::SoundEngine> engine_;
     std::unique_ptr<Tuning> tuning_;
@@ -107,6 +117,10 @@ class VitalCore {
     void connectUserModulations();
     struct UserModulation { std::string source, destination; bool bipolar = false; };
     std::array<UserModulation, kNumUserModulations> user_modulations_;
+    std::array<std::string, kNumOscillators> patch_tables_;         // the loaded patch's wavetables (JSON)
+    std::array<int, kNumOscillators> table_choice_ {};
+    std::array<vital::cr::Value*, kNumGen> gen_ {};
+    void rememberPatchTables();
     std::vector<std::string> patch_lfos_;                            // the loaded patch's LFO shapes (JSON)
     bool connectModulation(int bank_index, const std::string& source, const std::string& destination);
     vital::Value* findControl(const std::string& name) const;

@@ -45,6 +45,11 @@ class Arp {
       int length = 16;       // 1..16 steps
       float accent = 0.5f;   // how much an Accent step raises velocity (0..1 of the headroom)
       std::array<int, kMaxSteps> steps {};
+      // Generative (1.2): each On/Accent step plays with this chance; DÉJÀ VU replays the last LOOP
+      // steps' dice (which steps play, and Random mode's notes) instead of rolling new ones.
+      float chance = 1.0f;   // 0..1
+      float deja_vu = 0.0f;  // 0..1 (see Gen.h: below half = chance of replay, above = locked + shuffled)
+      int loop = 8;          // 1..16
     };
 
     template <typename NoteFn>
@@ -58,6 +63,7 @@ class Arp {
       s_ = s;
       s_.octaves = std::clamp(s_.octaves, 1, 4);
       s_.length = std::clamp(s_.length, 1, kMaxSteps);
+      s_.loop = std::clamp(s_.loop, 1, kMaxSteps);
     }
     const Settings& settings() const { return s_; }
 
@@ -257,6 +263,12 @@ class Arp {
       if (state == kStepOff || state == kStepTie)
         return;   // a rest, or the earlier note carries on (its length already covers this step)
 
+      // The dice for this step: new ones, or the ones from LOOP steps ago (déjà vu).
+      float dice_gate, dice_note;
+      roll(dice_gate, dice_note);
+      if (dice_gate >= s_.chance)
+        return;   // skipped this time (Chance)
+
       // Length: the gate, stretched over the Tie steps that follow.
       int ties = 0;
       for (int k = 1; k < s_.length; ++k) {
@@ -289,14 +301,39 @@ class Arp {
       }
       int index;
       if (s_.mode == kRandom) {
-        rng_ = rng_ * 1664525u + 1013904223u;
-        index = static_cast<int>((rng_ >> 8) % static_cast<uint32_t>(count));
+        index = std::min(count - 1, static_cast<int>(dice_note * count));
       }
       else {
         note_index_ = (note_index_ + 1) % count;
         index = note_index_;
       }
       start(seq[index].note, velocityFor(seq[index].velocity), length, send);
+    }
+
+    float uniform() {
+      rng_ = rng_ * 1664525u + 1013904223u;
+      return static_cast<float>(rng_ >> 8) / 16777216.0f;
+    }
+
+    void roll(float& gate, float& note) {
+      int len = s_.loop;
+      float dv = s_.deja_vu;
+      bool replay = dv > 0.0f && (dv >= 0.5f || uniform() < dv * 2.0f) && dice_filled_ >= len;
+      if (replay) {
+        int read = dice_pos_ % len;
+        if (dv > 0.5f && uniform() < (dv - 0.5f) * 2.0f)
+          read = static_cast<int>(uniform() * len) % len;
+        gate = dice_gate_[read];
+        note = dice_note_[read];
+      }
+      else {
+        gate = uniform();
+        note = uniform();
+        dice_gate_[dice_pos_ % len] = gate;
+        dice_note_[dice_pos_ % len] = note;
+        dice_filled_ = std::min(kMaxSteps, dice_filled_ + 1);
+      }
+      dice_pos_ = (dice_pos_ + 1) % len;
     }
 
     template <typename NoteFn>
@@ -324,6 +361,8 @@ class Arp {
     int note_index_ = -1;
     int current_step_ = -1;
     uint32_t rng_ = 0x1234567u;
+    std::array<float, kMaxSteps> dice_gate_ {}, dice_note_ {};
+    int dice_pos_ = 0, dice_filled_ = 0;
 
     std::array<Held, kMaxHeld> held_ {};
     int held_count_ = 0;

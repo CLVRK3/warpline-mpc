@@ -1,7 +1,7 @@
 {
   "name": "Warpline",
   "manufacturer": "CLVRKE",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "format": "vst2",
   "kind": "instrument",
   "uid": "CvVm",
@@ -10,7 +10,7 @@
   "category": "Synth",
   "file32": "VST/warpline-arm32.so",
   "file64": "VST/warpline-arm64.so",
-  "description": "Warpline: the Vital spectral-warping wavetable synth engine on MPC standalone. 3 wavetable oscillators, 2 filters, envelopes, LFOs, mod matrix and FX. Loads .vital patches.",
+  "description": "Warpline: the Vital spectral-warping wavetable synth engine on MPC standalone. 3 wavetable oscillators with a table picker, 2 filters, envelopes, LFOs, arp, mod matrix with random sources, GRAINZ and FX. Loads .vital patches.",
   "author": "CLVRKE",
   "url": "https://github.com/mtytel/vital",
   "license": "GPL-3.0-or-later"

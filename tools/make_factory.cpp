@@ -808,6 +808,210 @@ static void addMore3(std::vector<PatchDef>& d) {
   d.push_back(P("Formant Sweep Voice", "Vocal", { T("FormantStep", 0) }, cat({ osc(1, 0.55f), uni(1, 4, 1.2f), filt(5, 0, 96, 0.3f), kEnvPad, kHall, lfoHz(1, -1.0f) }), { { "lfo_1", "osc_1_wave_frame", 1.0f, false } }));
 }
 
+
+// ---------------- 1.2: RAGE, EDM and R&B sets (5 per sound) ----------------
+// "@n" as a table = Warpline's own built-in table n (VitalCore::Table: 2 sine, 3 triangle, 4 saw, 5 square, 6 PWM, ...).
+static const C kEnv808 = { { "env_1_attack", 0.0f }, { "env_1_decay", 1.35f }, { "env_1_sustain", 0.55f }, { "env_1_release", 0.55f },
+                           { "env_2_attack", 0.0f }, { "env_2_decay", 0.32f }, { "env_2_sustain", 0.0f } };
+static const C kEnvBellLong = { { "env_1_attack", 0.0f }, { "env_1_decay", 1.45f }, { "env_1_sustain", 0.0f }, { "env_1_release", 1.3f },
+                                { "env_2_attack", 0.0f }, { "env_2_decay", 0.8f }, { "env_2_sustain", 0.0f } };
+static const C kEnvChoir = { { "env_1_attack", 0.9f }, { "env_1_decay", 1.3f }, { "env_1_sustain", 1.0f }, { "env_1_release", 1.35f },
+                             { "env_2_attack", 1.0f }, { "env_2_decay", 1.4f }, { "env_2_sustain", 0.7f } };
+static const C kEnvFestival = { { "env_1_attack", 0.05f }, { "env_1_decay", 1.0f }, { "env_1_sustain", 1.0f }, { "env_1_release", 0.7f },
+                                { "env_2_attack", 0.0f }, { "env_2_decay", 0.75f }, { "env_2_sustain", 0.2f } };
+static const C kSlide808 = { { "polyphony", 1 }, { "legato", 0 }, { "portamento_time", -3.5f }, { "portamento_slope", 0.0f } };
+static const Mod kDrop808 = { "env_2", "osc_1_transpose", 0.11f, false };   // the "knock": about an octave down at the start
+
+static void addMore4(std::vector<PatchDef>& d) {
+  // ---- RAGE: bells (5)
+  d.push_back({ "Rage Bell", "Bell", { T("Additive Synth", 0) },
+    cat({ osc(1, 0.7f), filt(0, 0, 112, 0.1f), kEnvBellLong, dist(0, 9), kHall, kDelayDot }),
+    { { "env_2", "osc_1_wave_frame", 0.35f, false }, { "velocity", "distortion_drive", 0.1f, false } } });
+  d.push_back({ "Tonka Chime", "Bell", { T("Digitone", 1) },
+    cat({ osc(1, 0.65f, 12), uni(1, 2, 0.3f), filt(0, 0, 118, 0.1f), kEnvBellLong, dist(1, 6), kShimmer, kDelay8 }),
+    { { "env_2", "osc_1_wave_frame", 0.45f, false } } });
+  d.push_back({ "Lux Toll", "Bell", { T("PM[Simple]", 4) },
+    cat({ osc(1, 0.65f), osc(2, 0.3f, 19), filt(1, 0, 104, 0.2f, 4), kEnvBellLong, dist(0, 12), kVast }),
+    { { "env_2", "osc_2_level", 0.3f, false }, { "lfo_1", "osc_1_tune", 0.03f, true } } });
+  d.push_back({ "Ice Toll", "Bell", { T("FM", 12) },
+    cat({ osc(1, 0.6f, 12), filt(0, 2, 70, 0.2f), kEnvBellLong, dist(4, 0), { { "distortion_mix", 0.35f } }, kHall, kDelayDot }),
+    { { "env_2", "osc_1_wave_frame", 0.3f, false } } });
+  d.push_back({ "Wraith Bell", "Bell", { T("Additive Synth", 7) },
+    cat({ osc(1, 0.65f), uni(1, 3, 0.6f), filt(0, 0, 98, 0.1f), kEnvBellLong, dist(3, 5), kVast, lfoHz(1, 1.2f) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.1f, true }, { "env_2", "filter_1_cutoff", 0.2f, false } }, { 1 } });
+  // ---- RAGE: 808s (5)
+  d.push_back({ "Rage 808", "Bass", { "@2" },
+    cat({ osc(1, 0.8f), filt(0, 0, 110, 0.0f), kEnv808, kSlide808, kDry, dist(0, 14), kComp }), { kDrop808 } });
+  d.push_back({ "Clip 808", "Bass", { "@2" },
+    cat({ osc(1, 0.8f), filt(0, 0, 100, 0.0f), kEnv808, kSlide808, kDry, dist(1, 20), kComp }), { kDrop808 } });
+  d.push_back({ "Fold 808", "Bass", { "@2" },
+    cat({ osc(1, 0.8f), warp(1, 6, 0.25f), filt(0, 0, 96, 0.1f), kEnv808, kSlide808, kDry, dist(3, 8) }),
+    { kDrop808, { "velocity", "osc_1_distortion_amount", 0.2f, false } } });
+  d.push_back({ "Sub Knock 808", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 80, 0.0f), kEnv808, kSlide808, kDry, dist(0, 4), kComp }),
+    { { "env_2", "osc_1_transpose", 0.16f, false } } });
+  d.push_back({ "Growl 808", "Bass", { "@2", "@4" },
+    cat({ osc(1, 0.75f), osc(2, 0.25f, 12), filt(2, 0, 78, 0.3f, 6), kEnv808, kSlide808, kDry, dist(0, 12) }),
+    { kDrop808, { "env_2", "filter_1_cutoff", 0.3f, false } } });
+  // ---- RAGE: leads (5)
+  d.push_back({ "Rage Saw Lead", "Lead", { "@4" },
+    cat({ osc(1, 0.6f), uni(1, 7, 3.2f), filt(0, 1, 104, 0.15f), kEnvFestival, kMonoGlide, dist(0, 10), kHall, kDelay16 }),
+    { { "lfo_1", "osc_1_tune", 0.02f, true } } });
+  d.push_back({ "Siren Wail", "Lead", { "@6" },
+    cat({ osc(1, 0.65f, 0, 120), uni(1, 3, 1.2f), filt(1, 1, 96, 0.3f, 6), kEnvLead, kMonoGlide, dist(0, 8), kHall, lfoHz(1, 2.2f) }),
+    { { "lfo_1", "osc_1_tune", 0.06f, true }, { "env_2", "osc_1_wave_frame", 0.3f, false } }, { 1 } });
+  d.push_back({ "Dive Lead", "Lead", { T("AnalogFour", 1) },
+    cat({ osc(1, 0.65f), uni(1, 5, 2.4f), filt(0, 1, 100, 0.2f), kEnvFestival, kMono, dist(1, 7), kRoom }),
+    { { "env_2", "osc_1_transpose", 0.06f, false } } });
+  d.push_back({ "Fuzz Synth Lead", "Lead", { "@5" },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.8f), filt(2, 0, 90, 0.35f, 10), kEnvLead, kMonoGlide, dist(2, 10), kRoom, kDelay16 }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Hyper Glide Lead", "Lead", { "@9" },
+    cat({ osc(1, 0.6f, 0, 60), uni(1, 5, 2.0f), filt(0, 1, 108, 0.1f), kEnvLead, kMonoGlide, dist(0, 9), kHall }),
+    { { "env_2", "osc_1_wave_frame", 0.5f, false } } });
+  // ---- RAGE: pads (5)
+  d.push_back({ "Dark Choir", "Pad", { T("GMa Vowel", 0) },
+    cat({ osc(1, 0.6f, 0, 60), uni(1, 5, 1.6f), filt(0, 0, 82, 0.15f), kEnvChoir, dist(0, 6), kVast, lfoHz(1, -2.0f) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.35f, false } } });
+  d.push_back({ "Void Organ", "Pad", { T("Walsh Function", 2) },
+    cat({ osc(1, 0.6f), osc(2, 0.3f, -12), filt(0, 0, 86, 0.1f), kEnvChoir, dist(0, 10), kVast }), {} });
+  d.push_back({ "Ghost Strings", "Pad", { "@4" },
+    cat({ osc(1, 0.55f), uni(1, 7, 2.8f), filt(0, 0, 74, 0.1f), kEnvChoir, kChorus, kVast, lfoHz(1, -1.6f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.08f, true } } });
+  d.push_back({ "Haze Vox Pad", "Pad", { T("Formant", 2) },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.4f), filt(5, 0, 88, 0.2f), kEnvChoir, dist(5, 0), { { "distortion_mix", 0.25f } }, kVast, lfoHz(1, -2.4f) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.6f, false } } });
+  d.push_back({ "Night Swell", "Pad", { "@7" },
+    cat({ osc(1, 0.6f), uni(1, 5, 2.0f), filt(0, 0, 80, 0.15f), kEnvSwell, dist(0, 8), kVast }),
+    { { "env_2", "osc_1_wave_frame", 0.7f, false } } });
+
+  // ---- EDM: leads (5)
+  d.push_back({ "Festival Supersaw", "Lead", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 3.8f), osc(2, 0.35f, 12), uni(2, 5, 3.0f), filt(0, 1, 116, 0.1f), kEnvFestival, kHall, kDelayDot }), {} });
+  d.push_back({ "Big Room Lead", "Lead", { "@5", "@4" },
+    cat({ osc(1, 0.5f), uni(1, 7, 2.6f), osc(2, 0.4f, -12), uni(2, 4, 2.0f), filt(0, 1, 110, 0.2f), kEnvFestival, dist(0, 6), kRoom }),
+    { { "env_2", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Uplift Trance Lead", "Lead", { "@4" },
+    cat({ osc(1, 0.6f), uni(1, 7, 3.0f), filt(0, 1, 92, 0.25f), kEnvLead, kHall, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.3f, false } } });
+  d.push_back({ "Future Bass Saw", "Lead", { "@4" },
+    cat({ osc(1, 0.6f), uni(1, 8, 3.4f), filt(0, 1, 104, 0.15f), kEnvFestival, kChorus, kHall, lfoTempo(1, 7) }),
+    { { "lfo_1", "osc_1_level", 0.3f, false } }, { 4 } });
+  d.push_back({ "Hardstyle Screech", "Lead", { "@9" },
+    cat({ osc(1, 0.6f, 0, 140), uni(1, 5, 2.4f), filt(0, 1, 100, 0.3f), kEnvFestival, kMonoGlide, dist(1, 14), kRoom }),
+    { { "env_2", "osc_1_wave_frame", 0.25f, false } } });
+  // ---- EDM: basses (5)
+  d.push_back({ "Riddim Growl", "Bass", { T("Hardcore FM", 1) },
+    cat({ osc(1, 0.7f), filt(1, 0, 84, 0.45f, 8), kEnvBass, kMono, kDry, dist(2, 10), lfoTempo(1, 10) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.7f, false }, { "lfo_1", "filter_1_cutoff", 0.25f, false } }, { 3 } });
+  d.push_back({ "Bounce Bass", "Bass", { "@5" },
+    cat({ osc(1, 0.7f), osc(2, 0.4f, -12), filt(0, 0, 70, 0.3f), kEnvPluck, kMono, kDry, kComp }),
+    { { "env_2", "filter_1_cutoff", 0.4f, false } } });
+  d.push_back({ "Electro Reese", "Bass", { "@4" },
+    cat({ osc(1, 0.65f), uni(1, 6, 2.2f), filt(2, 1, 74, 0.25f, 6), kEnvBass, kMono, kDry, dist(0, 6), lfoHz(1, -1.8f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.15f, true } } });
+  d.push_back({ "Dub Wobble", "Bass", { T("FormantStep", 1) },
+    cat({ osc(1, 0.7f), osc(2, 0.4f, -12), filt(1, 1, 70, 0.5f, 6), kEnvBass, kMono, kDry, dist(0, 7), lfoTempo(1, 9) }),
+    { { "lfo_1", "filter_1_cutoff", 0.4f, false }, { "lfo_1", "osc_1_wave_frame", 0.5f, false } }, { 1 } });
+  d.push_back({ "House Pluck Bass", "Bass", { "@8" },
+    cat({ osc(1, 0.7f, 0, 80), filt(0, 0, 76, 0.25f), kEnvPluck, kMono, kRoom }),
+    { { "env_2", "filter_1_cutoff", 0.35f, false }, { "env_2", "osc_1_wave_frame", 0.4f, false } } });
+  // ---- EDM: plucks (5)
+  d.push_back({ "Drop Pluck", "Pluck", { "@4" },
+    cat({ osc(1, 0.6f), uni(1, 6, 2.6f), filt(0, 0, 70, 0.2f), kEnvPluck, kChorus, kHall, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.45f, false } } });
+  d.push_back({ "Island Pluck", "Pluck", { T("Mod Sine", 3) },
+    cat({ osc(1, 0.7f, 12), filt(0, 0, 100, 0.1f), kEnvPluck, kRoom, kDelay8 }),
+    { { "env_2", "osc_1_wave_frame", 0.4f, false } } });
+  d.push_back({ "Progressive Pluck", "Pluck", { "@5", "@4" },
+    cat({ osc(1, 0.55f), osc(2, 0.4f, 12), uni(2, 3, 1.2f), filt(0, 0, 66, 0.3f), kEnvPluck, kHall, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.5f, false } } });
+  d.push_back({ "Chord Stab", "Pluck", { "@4" },
+    cat({ osc(1, 0.6f), uni(1, 7, 3.0f), filt(0, 0, 80, 0.15f), { { "env_1_attack", 0.0f }, { "env_1_decay", 0.7f }, { "env_1_sustain", 0.0f }, { "env_1_release", 0.5f },
+        { "env_2_attack", 0.0f }, { "env_2_decay", 0.5f }, { "env_2_sustain", 0.0f } }, kHall, kComp }),
+    { { "env_2", "filter_1_cutoff", 0.35f, false } } });
+  d.push_back({ "Sync Pluck", "Pluck", { "@9" },
+    cat({ osc(1, 0.6f), uni(1, 3, 1.4f), filt(0, 0, 108, 0.1f), kEnvPluck, kRoom, kDelay16 }),
+    { { "env_2", "osc_1_wave_frame", 0.8f, false } } });
+  // ---- EDM: pads (5)
+  d.push_back({ "Euphoric Pad", "Pad", { "@4", "@4" },
+    cat({ osc(1, 0.5f), uni(1, 8, 3.2f), osc(2, 0.35f, 12), uni(2, 5, 2.6f), filt(0, 0, 96, 0.1f), kEnvPad, kChorus, kVast }), {} });
+  d.push_back({ "Sidechain Pad", "Pad", { "@4" },
+    cat({ osc(1, 0.55f), uni(1, 7, 3.0f), filt(0, 0, 92, 0.1f), kEnvPad, kHall, lfoTempo(1, 7) }),
+    { { "lfo_1", "osc_1_level", 0.55f, false } }, { 4 } });
+  d.push_back({ "Breakdown Pad", "Pad", { "@7" },
+    cat({ osc(1, 0.55f, 0, 160), uni(1, 6, 2.4f), filt(0, 0, 84, 0.1f), kEnvSwell, kShimmer }),
+    { { "env_2", "filter_1_cutoff", 0.25f, false } } });
+  d.push_back({ "PWM Air Pad", "Pad", { "@6" },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.8f), filt(0, 0, 90, 0.1f), kEnvPad, kChorus, kVast, lfoHz(1, -1.4f) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.5f, false } }, { 1 } });
+  d.push_back({ "Filter Rise Pad", "Pad", { "@4" },
+    cat({ osc(1, 0.55f), uni(1, 7, 3.0f), filt(0, 0, 50, 0.3f), kEnvSwell, kHall }),
+    { { "env_2", "filter_1_cutoff", 0.6f, false } } });
+
+  // ---- R&B: Rhodes (5)
+  d.push_back({ "Silk Rhodes", "Rhodes", { T("FM", 1) },
+    cat({ osc(1, 0.7f), filt(0, 0, 92, 0.1f), kEnvRhodes, kChorus, kRoom, lfoHz(1, 2.2f) }),
+    { { "velocity", "osc_1_wave_frame", 0.4f, false }, { "lfo_1", "osc_1_level", 0.12f, true } }, { 1 } });
+  d.push_back({ "Late Night Rhodes", "Rhodes", { T("PM[Simple]", 2) },
+    cat({ osc(1, 0.7f), filt(0, 0, 84, 0.1f), kEnvRhodes, kPhaser, kHall, dist(0, 2) }),
+    { { "velocity", "osc_1_wave_frame", 0.45f, false } } });
+  d.push_back({ "Slow Jam Rhodes", "Rhodes", { T("Phase", 5) },
+    cat({ osc(1, 0.7f), uni(1, 2, 0.3f), filt(0, 0, 88, 0.1f), kEnvRhodes, kChorus, kHall, lfoHz(1, 2.6f) }),
+    { { "velocity", "osc_1_wave_frame", 0.35f, false }, { "lfo_1", "osc_1_level", 0.2f, true } }, { 1 } });
+  d.push_back({ "Velvet Tines", "Rhodes", { T("Digitone", 1), "@2" },
+    cat({ osc(1, 0.55f), osc(2, 0.35f), filt(0, 0, 96, 0.1f), kEnvRhodes, kChorus, kRoom }),
+    { { "velocity", "osc_1_wave_frame", 0.5f, false } } });
+  d.push_back({ "Tape Soul Rhodes", "Rhodes", { T("FM", 4) },
+    cat({ osc(1, 0.7f), filt(0, 0, 80, 0.1f), kEnvRhodes, dist(5, 0), { { "distortion_mix", 0.25f } }, kChorus, kRoom, lfoHz(1, 0.5f) }),
+    { { "velocity", "osc_1_wave_frame", 0.35f, false }, { "lfo_1", "osc_1_tune", 0.04f, true } } });
+  // ---- R&B: pads (5)
+  d.push_back({ "Satin Pad", "Pad", { "@3" },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.4f), filt(0, 0, 86, 0.1f), kEnvPad, kChorus, kHall }), {} });
+  d.push_back({ "Quiet Storm Pad", "Pad", { "@6" },
+    cat({ osc(1, 0.55f), uni(1, 5, 1.8f), filt(0, 0, 78, 0.1f), kEnvPad, kChorus, kVast, lfoHz(1, -2.2f) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.4f, false } }, { 1 } });
+  d.push_back({ "Neo Soul Strings", "Pad", { "@4" },
+    cat({ osc(1, 0.55f), uni(1, 6, 2.0f), filt(0, 0, 76, 0.1f), kEnvPad, kChorus, kHall }),
+    { { "velocity", "filter_1_cutoff", 0.1f, false } } });
+  d.push_back({ "Warm Vocal Pad", "Pad", { T("GMa Vowel", 0) },
+    cat({ osc(1, 0.55f, 0, 30), uni(1, 3, 1.0f), filt(0, 0, 90, 0.1f), kEnvPad, kChorus, kHall, lfoHz(1, -2.6f) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.25f, false } } });
+  d.push_back({ "Harmonic Bloom", "Pad", { "@7" },
+    cat({ osc(1, 0.55f), uni(1, 4, 1.4f), filt(0, 0, 88, 0.1f), kEnvSwell, kChorus, kVast }),
+    { { "env_2", "osc_1_wave_frame", 0.55f, false } } });
+  // ---- R&B: leads (5)
+  d.push_back({ "Falsetto Whistle", "Lead", { "@2" },
+    cat({ osc(1, 0.7f, 12), filt(0, 0, 120, 0.0f), kEnvSoftLead, kMonoGlide, kHall, kDelayDot, lfoHz(1, 2.4f) }),
+    { { "lfo_1", "osc_1_tune", 0.03f, true } }, { 1 } });
+  d.push_back({ "Smooth Sine Lead", "Lead", { "@2", "@3" },
+    cat({ osc(1, 0.6f), osc(2, 0.25f, 12), filt(0, 0, 110, 0.0f), kEnvSoftLead, kMonoGlide, kChorus, kHall }), {} });
+  d.push_back({ "Talk Box Lead", "Lead", { T("Formant", 0) },
+    cat({ osc(1, 0.65f), filt(5, 0, 92, 0.3f), kEnvSoftLead, kMonoGlide, kRoom }),
+    { { "mod_wheel", "osc_1_wave_frame", 0.7f, false }, { "env_2", "osc_1_wave_frame", 0.3f, false } } });
+  d.push_back({ "Soft Square Lead", "Lead", { "@5" },
+    cat({ osc(1, 0.6f), filt(0, 0, 76, 0.1f), kEnvSoftLead, kMonoGlide, kChorus, kHall }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Glide Pulse Lead", "Lead", { "@6" },
+    cat({ osc(1, 0.6f, 0, 90), uni(1, 2, 0.4f), filt(0, 0, 90, 0.1f), kEnvSoftLead, kMonoGlide, kHall, kDelay8 }),
+    { { "lfo_1", "osc_1_wave_frame", 0.2f, true } }, { 1 } });
+  // ---- R&B: basses (5)
+  d.push_back({ "Smooth Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 70, 0.0f), kEnvBass, kMonoGlide, kDry, dist(0, 2) }), {} });
+  d.push_back({ "Funk Synth Bass", "Bass", { "@5" },
+    cat({ osc(1, 0.7f), filt(0, 0, 62, 0.4f), kEnvPluck, kMono, kDry, kComp }),
+    { { "env_2", "filter_1_cutoff", 0.35f, false }, { "velocity", "filter_1_cutoff", 0.1f, false } } });
+  d.push_back({ "Round Moog Bass", "Bass", { "@4" },
+    cat({ osc(1, 0.7f), osc(2, 0.4f, -12), filt(0, 0, 58, 0.25f, 3), kEnvBass, kMonoGlide, kDry }),
+    { { "env_2", "filter_1_cutoff", 0.2f, false } } });
+  d.push_back({ "Neo Soul Sub", "Bass", { "@3" },
+    cat({ osc(1, 0.8f), filt(0, 0, 80, 0.0f), kEnvBass, kMonoGlide, kDry, dist(0, 3) }),
+    { { "velocity", "osc_1_level", 0.15f, false } } });
+  d.push_back({ "Slap Synth Bass", "Bass", { "@6" },
+    cat({ osc(1, 0.7f, 0, 120), filt(0, 0, 70, 0.3f), kEnvPluck, kMono, kDry, kComp }),
+    { { "env_2", "filter_1_cutoff", 0.45f, false }, { "env_2", "osc_1_wave_frame", 0.3f, false } } });
+}
+
 int main(int argc, char** argv) {
   if (argc < 3) {
     std::fprintf(stderr, "usage: make_factory <open-vital-resources> <out Patches folder>\n");
@@ -954,6 +1158,7 @@ int main(int argc, char** argv) {
   addMore(defs);
   addMore2(defs);
   addMore3(defs);
+  addMore4(defs);
   {
     std::map<std::string, int> seen;
     for (const PatchDef& d : defs)
@@ -970,6 +1175,10 @@ int main(int argc, char** argv) {
 
     for (size_t t = 0; t < def.tables.size() && t < 3; ++t) {
       if (def.tables[t].empty()) continue;
+      if (def.tables[t][0] == '@') {   // Warpline's own generated table
+        core.setWavetable(static_cast<int>(t), std::stoi(def.tables[t].substr(1)));
+        continue;
+      }
       fs::path p = res / def.tables[t];
       int pick = 0;
       size_t hash = def.tables[t].find("/#");

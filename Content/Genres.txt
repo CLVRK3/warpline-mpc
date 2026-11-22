@@ -1,0 +1,361 @@
+# Warpline factory genres: <patch file>|<genre>,<genre>   (made by tools/genres.py)
+AR Acid Arp.vital|House / Techno
+AR Crystal Steps.vital|EDM
+AR Dark Pulse Seq.vital|Trap / Rage,House / Techno
+AR Gated Choir.vital|Ambient / Cinematic
+AR Gated Saws.vital|EDM
+AR Harp Cascade.vital|Ambient / Cinematic
+AR Morph Steps.vital|House / Techno
+AR Ping Pong Bells.vital|EDM
+AR Pulse Train.vital|House / Techno,Synthwave / Retro
+AR Random Blips.vital|House / Techno
+AR Retro Arcade.vital|Synthwave / Retro
+AR Saw Sequence.vital|EDM,Synthwave / Retro
+AR Seq Bubbles.vital|House / Techno,Lo-Fi / Chill
+AR Sidechain Stabs.vital|EDM,House / Techno
+AR Trance Gate Pad.vital|EDM
+AR Triplet Motion.vital|EDM
+BL Bowl Resonance.vital|Trap / Rage,Ambient / Cinematic
+BL Church Bell.vital|Trap / Rage,Hip-Hop
+BL Crystal Bell.vital|Pop
+BL FM Bell Pad.vital|Ambient / Cinematic
+BL Gamelan.vital|Ambient / Cinematic
+BL Glass Chimes.vital|Pop
+BL Glockenspiel.vital|Trap / Rage
+BL Ice Toll.vital|Trap / Rage
+BL Lux Toll.vital|Trap / Rage
+BL Marimba Wood.vital|Hip-Hop,Lo-Fi / Chill
+BL Metallic Ring.vital|House / Techno
+BL Music Box.vital|Trap / Rage,Hip-Hop,Lo-Fi / Chill
+BL Rage Bell.vital|Trap / Rage
+BL Steel Drum.vital|House / Techno
+BL Tonka Chime.vital|Trap / Rage
+BL Toy Piano.vital|Hip-Hop,Lo-Fi / Chill
+BL Tubular Chime.vital|Trap / Rage,Ambient / Cinematic
+BL Vibes Tremolo.vital|R&B / Soul,Lo-Fi / Chill
+BL Vibraphone Soft.vital|Hip-Hop,R&B / Soul,Lo-Fi / Chill
+BL Wind Chime.vital|Ambient / Cinematic
+BL Wraith Bell.vital|Trap / Rage
+BR Big Synth Horns.vital|EDM,Synthwave / Retro
+BR Brass Fanfare.vital|Pop
+BR Brass Section.vital|Hip-Hop
+BR Funk Brass Stab.vital|Hip-Hop
+BR Jump Brass.vital|Pop
+BR Muted Trumpet.vital|Hip-Hop,R&B / Soul
+BR Prophet Brass.vital|Synthwave / Retro
+BR Sax Synth.vital|Hip-Hop,R&B / Soul
+BR Soft French Horn.vital|R&B / Soul,Ambient / Cinematic
+BR Swell Brass Pad.vital|Ambient / Cinematic
+BR Synth Brass.vital|Pop,Synthwave / Retro
+BR Tuba Low.vital|Ambient / Cinematic
+BS 808 Glide.vital|Trap / Rage,Hip-Hop
+BS Acid Line.vital|House / Techno
+BS Bit Bass.vital|House / Techno,Synthwave / Retro
+BS Bounce Bass.vital|EDM
+BS CZ Resonance Bass.vital|House / Techno,Synthwave / Retro
+BS Clip 808.vital|Trap / Rage
+BS Deep House Organ Bass.vital|House / Techno
+BS Detuned Square Bass.vital|House / Techno,Pop
+BS Diode Bite.vital|EDM
+BS Dub Wobble.vital|EDM
+BS Dubstep Yoi.vital|EDM
+BS Electro Reese.vital|EDM
+BS FM Growl.vital|EDM
+BS Fat Unison Bass.vital|EDM,Pop
+BS Fold 808.vital|Trap / Rage
+BS Foldback Bass.vital|EDM
+BS Formant Growler.vital|EDM
+BS Formant Wobble.vital|EDM
+BS Funk Synth Bass.vital|R&B / Soul
+BS Garage Organ Bass.vital|House / Techno
+BS Growl 808.vital|Trap / Rage
+BS House Pluck Bass.vital|House / Techno
+BS Liquid Sub.vital|Hip-Hop,R&B / Soul,Lo-Fi / Chill
+BS Moog Thump.vital|Hip-Hop,House / Techno,Synthwave / Retro
+BS Neo Soul Sub.vital|R&B / Soul
+BS Neuro Grind.vital|EDM
+BS Plaits Thump.vital|House / Techno
+BS Pluck Bass.vital|House / Techno,Pop
+BS Rage 808.vital|Trap / Rage
+BS Reese Pressure.vital|EDM
+BS Riddim Growl.vital|EDM
+BS Round Moog Bass.vital|R&B / Soul
+BS Rubber Sub.vital|Trap / Rage,Hip-Hop,Pop
+BS Saw Stack Bass.vital|EDM,Synthwave / Retro
+BS Slap Synth Bass.vital|R&B / Soul
+BS Smooth Sub.vital|R&B / Soul,Lo-Fi / Chill
+BS Squelch 303.vital|House / Techno
+BS Sub Knock 808.vital|Trap / Rage
+BS Sub Pressure.vital|Trap / Rage,Hip-Hop
+BS Sync Snarl.vital|EDM
+BS Talking Bass.vital|Hip-Hop
+BS Wobble Classic.vital|EDM
+DY Aurora.vital|Ambient / Cinematic
+DY Cloud Nine.vital|Ambient / Cinematic
+DY Daydream Swell.vital|Ambient / Cinematic
+DY Dream Piano.vital|Ambient / Cinematic,Lo-Fi / Chill
+DY Ethereal Voices.vital|Ambient / Cinematic
+DY Floating.vital|Ambient / Cinematic
+DY Hazy Memories.vital|Ambient / Cinematic,Lo-Fi / Chill
+DY Hologram.vital|Ambient / Cinematic
+DY Lullaby.vital|Ambient / Cinematic,Lo-Fi / Chill
+DY Lush Supersaw Pad.vital|EDM,Ambient / Cinematic
+DY Moonlit Bells.vital|Ambient / Cinematic
+DY Northern Lights.vital|Ambient / Cinematic
+DY Shimmer Strings.vital|Ambient / Cinematic
+DY Snowfall.vital|Ambient / Cinematic
+DY Soft Focus.vital|Ambient / Cinematic,Lo-Fi / Chill
+DY Stardust.vital|Ambient / Cinematic
+DY Starlight Keys.vital|Ambient / Cinematic
+DY Sunset Glow.vital|Ambient / Cinematic,Lo-Fi / Chill
+DY Tide Pool.vital|Ambient / Cinematic,Lo-Fi / Chill
+DY Underwater Dream.vital|Ambient / Cinematic
+DY Velvet Haze.vital|Ambient / Cinematic,Lo-Fi / Chill
+DY Weightless.vital|Ambient / Cinematic
+FX Alarm Siren.vital|Ambient / Cinematic
+FX Dark Drone.vital|House / Techno,Ambient / Cinematic
+FX Dial Up.vital|Synthwave / Retro
+FX Downlifter.vital|EDM
+FX Glitch Machine.vital|EDM
+FX Insect Swarm.vital|Ambient / Cinematic
+FX Laser Zap.vital|EDM,Synthwave / Retro
+FX Radio Static.vital|House / Techno,Lo-Fi / Chill
+FX Riser Sweep.vital|EDM
+FX Robot Chatter.vital|House / Techno
+FX Space Bloom.vital|Ambient / Cinematic
+FX Space Drone.vital|Ambient / Cinematic
+FX Tape Stop.vital|EDM,Lo-Fi / Chill
+FX Underwater Sonar.vital|Ambient / Cinematic
+FX White Noise Riser.vital|EDM
+FX Wind Tunnel.vital|Ambient / Cinematic
+KY Analog Piano.vital|Hip-Hop,Lo-Fi / Chill
+KY Celeste.vital|Ambient / Cinematic
+KY Chord Memory.vital|House / Techno
+KY Clav Funk.vital|Hip-Hop
+KY Clavinet Pop.vital|Pop
+KY Digi Piano 84.vital|Synthwave / Retro
+KY Digital Grand.vital|Pop
+KY Dream Rhodes.vital|R&B / Soul
+KY EP Tines.vital|R&B / Soul
+KY Glass Harp.vital|Ambient / Cinematic
+KY Glass Keys.vital|Pop
+KY Glass Organ.vital|Ambient / Cinematic
+KY Gospel Organ.vital|R&B / Soul
+KY Hammer Dulcimer.vital|Ambient / Cinematic
+KY Harpsichord.vital|Ambient / Cinematic
+KY House Organ Stab.vital|House / Techno
+KY Juno Keys.vital|Pop,Synthwave / Retro
+KY Lo-Fi Keys.vital|Hip-Hop,Lo-Fi / Chill
+KY M1 House Piano.vital|House / Techno
+KY OP Keys.vital|Synthwave / Retro
+KY Organ Drawbars.vital|R&B / Soul
+KY Phase Keys.vital|Synthwave / Retro
+KY Piano Air.vital|Pop
+KY Plastic Keys.vital|Pop
+KY Poly Synth Keys.vital|Pop,Synthwave / Retro
+KY Soft Stab Keys.vital|House / Techno
+KY Stab Chord.vital|House / Techno
+KY Toy Keys.vital|Lo-Fi / Chill
+KY Upright Felt.vital|Hip-Hop,Lo-Fi / Chill
+KY Vector Keys.vital|Synthwave / Retro
+KY Velvet Keys.vital|R&B / Soul
+KY Warm EP Pad Keys.vital|R&B / Soul
+KY Wurly Drive.vital|Hip-Hop,Lo-Fi / Chill
+LD Acid Lead.vital|House / Techno
+LD Analog Brass Lead.vital|Synthwave / Retro
+LD Anthem Supersaw.vital|EDM
+LD Big Room Lead.vital|EDM
+LD Bright Saw Lead.vital|EDM,Pop
+LD Buchla Bounce.vital|House / Techno
+LD Chebyshev Whistle.vital|Lo-Fi / Chill
+LD Chip Arp.vital|Synthwave / Retro
+LD Chip Lead.vital|Synthwave / Retro
+LD Crystal Lead.vital|EDM
+LD Distorted Saw Lead.vital|Trap / Rage
+LD Dive Lead.vital|Trap / Rage
+LD Falsetto Whistle.vital|R&B / Soul
+LD Festival Supersaw.vital|EDM
+LD Flute Synth.vital|Trap / Rage,Lo-Fi / Chill
+LD Folded Lead.vital|House / Techno
+LD Formant Lead.vital|EDM
+LD Future Bass Saw.vital|EDM,Pop
+LD Fuzz Lead.vital|Trap / Rage
+LD Fuzz Synth Lead.vital|Trap / Rage
+LD G-Funk Lead.vital|Hip-Hop
+LD Glide Pulse Lead.vital|R&B / Soul
+LD Glide Saw 80s.vital|Synthwave / Retro
+LD Hardstyle Screech.vital|EDM
+LD Hoover Lead.vital|EDM,Synthwave / Retro
+LD Hyper Glide Lead.vital|Trap / Rage
+LD Hyper Saw.vital|Trap / Rage
+LD Modulo Lead.vital|House / Techno
+LD Nasal Reed.vital|Lo-Fi / Chill
+LD OP Lead.vital|Synthwave / Retro
+LD Ocarina.vital|Trap / Rage,Lo-Fi / Chill
+LD Plaits Lead.vital|House / Techno
+LD Portamento Sine.vital|Trap / Rage,Hip-Hop
+LD Rage Saw Lead.vital|Trap / Rage
+LD Screamer.vital|Trap / Rage,EDM
+LD Silk Lead.vital|R&B / Soul,Pop
+LD Siren Wail.vital|Trap / Rage
+LD Smooth Sine Lead.vital|R&B / Soul
+LD Soft Sine Lead.vital|Hip-Hop,R&B / Soul,Lo-Fi / Chill
+LD Soft Square Lead.vital|R&B / Soul
+LD Square Hero.vital|Pop,Synthwave / Retro
+LD Sync Lead.vital|EDM
+LD Sync Scream.vital|EDM
+LD Talk Box Lead.vital|R&B / Soul
+LD Trance Lead.vital|EDM
+LD Uplift Trance Lead.vital|EDM
+LD Vocal Synth Lead.vital|Pop
+LD Wah Lead.vital|House / Techno
+LD Whistle Lead.vital|Hip-Hop,R&B / Soul
+PC Clap Room.vital|Trap / Rage,Hip-Hop,EDM,House / Techno
+PC Closed Hat.vital|Trap / Rage,Hip-Hop,House / Techno
+PC Conga Tone.vital|Hip-Hop,Lo-Fi / Chill
+PC Cowbell 80s.vital|Hip-Hop,House / Techno,Synthwave / Retro
+PC Glitch Hit.vital|House / Techno
+PC Kaoss Kit Hit.vital|House / Techno
+PC Metal Hit.vital|House / Techno
+PC Rim Click.vital|Trap / Rage,Hip-Hop,House / Techno,Lo-Fi / Chill
+PC Snare Crack.vital|Trap / Rage,Hip-Hop
+PC Synth Kick.vital|Hip-Hop,EDM,House / Techno
+PC Synth Tom.vital|House / Techno,Synthwave / Retro
+PC Tabla Bend.vital|Ambient / Cinematic
+PC Tom Electro.vital|House / Techno,Synthwave / Retro
+PD 80s Poly Pad.vital|Synthwave / Retro
+PD Additive Choir.vital|Ambient / Cinematic
+PD Analog Strings Pad.vital|Synthwave / Retro
+PD Analog Warmth.vital|Synthwave / Retro
+PD Breakdown Pad.vital|EDM
+PD Breathing Pad.vital|R&B / Soul,Ambient / Cinematic
+PD Bright Poly Pad.vital|EDM,Pop
+PD Cathedral.vital|Ambient / Cinematic
+PD Choir of Glass.vital|Synthwave / Retro,Ambient / Cinematic
+PD Choral Pad.vital|Trap / Rage
+PD Comb Shimmer.vital|Ambient / Cinematic
+PD Dark Choir.vital|Trap / Rage,Ambient / Cinematic
+PD Dark Matter.vital|Trap / Rage,Ambient / Cinematic
+PD Dark Strings Pad.vital|Trap / Rage
+PD Desert Wind Pad.vital|Ambient / Cinematic
+PD Euphoric Pad.vital|EDM
+PD Evolving Spectra.vital|Ambient / Cinematic
+PD Filter Rise Pad.vital|EDM
+PD Ghost Strings.vital|Trap / Rage,Ambient / Cinematic
+PD Glacier.vital|Ambient / Cinematic
+PD Glass Choir Pad.vital|Ambient / Cinematic
+PD Granular Haze.vital|Ambient / Cinematic
+PD Granular Pad.vital|Ambient / Cinematic
+PD Harmonic Bloom.vital|R&B / Soul
+PD Harmonic Drift.vital|Ambient / Cinematic
+PD Haze Vox Pad.vital|Trap / Rage,Ambient / Cinematic
+PD Ice Field.vital|Ambient / Cinematic
+PD Neo Soul Strings.vital|R&B / Soul
+PD Night Pad.vital|Trap / Rage,Ambient / Cinematic
+PD Night Swell.vital|Trap / Rage,Ambient / Cinematic
+PD Organ Pad.vital|House / Techno
+PD PPG Sweep.vital|Synthwave / Retro
+PD PWM Air Pad.vital|EDM
+PD PWM Strings.vital|Synthwave / Retro
+PD Phase Pad.vital|Ambient / Cinematic
+PD Phaser Strings.vital|Synthwave / Retro
+PD Prophet Vector.vital|Synthwave / Retro
+PD Pulse Width Pad.vital|Synthwave / Retro
+PD Quiet Storm Pad.vital|R&B / Soul
+PD Retro Sci-Fi Pad.vital|Synthwave / Retro
+PD Satin Pad.vital|R&B / Soul,Lo-Fi / Chill
+PD Shimmer Pad.vital|EDM,Pop
+PD Sidechain Pad.vital|EDM
+PD Silk Pad.vital|R&B / Soul,Pop
+PD Spectral Smear.vital|Ambient / Cinematic
+PD Sunrise Sweep.vital|Ambient / Cinematic
+PD Void Organ.vital|Trap / Rage,Ambient / Cinematic
+PD Vowel Pad.vital|Ambient / Cinematic
+PD Warm Analog Pad.vital|Pop,Synthwave / Retro
+PD Warm Blanket.vital|R&B / Soul,Lo-Fi / Chill
+PD Warm Vocal Pad.vital|R&B / Soul
+PL Bell Pluck.vital|Pop
+PL Bright Saw Pluck.vital|EDM
+PL Bubble Pluck.vital|House / Techno
+PL Chime Pluck.vital|Pop
+PL Chord Stab.vital|EDM,Pop
+PL Deep Pluck.vital|House / Techno
+PL Digital Bells.vital|Pop
+PL Drop Pluck.vital|EDM
+PL Funky Wah Pluck.vital|House / Techno
+PL Future Pluck.vital|EDM
+PL Glass Pluck.vital|Pop
+PL Guitar Pick.vital|Hip-Hop,Lo-Fi / Chill
+PL Harp Glint.vital|Trap / Rage,Lo-Fi / Chill
+PL Island Pluck.vital|EDM,Pop
+PL Kalimba Drop.vital|Trap / Rage,Hip-Hop,Lo-Fi / Chill
+PL Koto Pluck.vital|Trap / Rage,Ambient / Cinematic
+PL Lush Pluck.vital|EDM,Pop
+PL Mallet Pluck.vital|Pop
+PL Marimba Pluck.vital|Pop
+PL Muted Guitar.vital|Hip-Hop,Lo-Fi / Chill
+PL Nylon Pluck.vital|Hip-Hop,Lo-Fi / Chill
+PL Pizz Pluck.vital|Hip-Hop
+PL Pizzicato Strings.vital|Trap / Rage
+PL Pluck Arp Glass.vital|EDM
+PL Progressive Pluck.vital|EDM
+PL Rubber Pluck.vital|House / Techno
+PL Shamisen.vital|Ambient / Cinematic
+PL Sitar Pluck.vital|Trap / Rage
+PL String Pluck.vital|Pop
+PL Sync Pluck.vital|EDM
+PL Synth Harp.vital|Trap / Rage
+PL Tropical Pluck.vital|EDM,Pop
+PL Ukulele.vital|Pop
+PL Water Drop.vital|Pop,Lo-Fi / Chill
+PL Zither.vital|Ambient / Cinematic
+RH Late Night Rhodes.vital|R&B / Soul,Lo-Fi / Chill
+RH Rhodes Bell Mix.vital|R&B / Soul
+RH Rhodes Bell Tines.vital|R&B / Soul
+RH Rhodes Bright Bark.vital|R&B / Soul
+RH Rhodes Chorus Wide.vital|R&B / Soul
+RH Rhodes Classic.vital|Hip-Hop,R&B / Soul
+RH Rhodes Dark Velvet.vital|R&B / Soul
+RH Rhodes Dream.vital|R&B / Soul
+RH Rhodes Echo Room.vital|R&B / Soul,Lo-Fi / Chill
+RH Rhodes Hip Hop.vital|Hip-Hop,Lo-Fi / Chill
+RH Rhodes Lofi Tape.vital|Hip-Hop,Lo-Fi / Chill
+RH Rhodes Mark Drive.vital|Hip-Hop
+RH Rhodes Mellow Jazz.vital|R&B / Soul,Lo-Fi / Chill
+RH Rhodes Neo Soul.vital|R&B / Soul
+RH Rhodes Phase Ballad.vital|R&B / Soul
+RH Rhodes Stage 73.vital|R&B / Soul
+RH Rhodes Suitcase.vital|Hip-Hop,Lo-Fi / Chill
+RH Rhodes Vintage Trem.vital|R&B / Soul
+RH Rhodes Wurli Hybrid.vital|R&B / Soul
+RH Silk Rhodes.vital|R&B / Soul
+RH Slow Jam Rhodes.vital|R&B / Soul
+RH Tape Soul Rhodes.vital|R&B / Soul,Lo-Fi / Chill
+RH Velvet Tines.vital|R&B / Soul
+ST Analog String Machine.vital|Synthwave / Retro
+ST Cello Bow.vital|Trap / Rage,Ambient / Cinematic
+ST Chamber Strings.vital|Hip-Hop,Ambient / Cinematic
+ST Cinematic Swell.vital|Hip-Hop,Ambient / Cinematic
+ST Ensemble 78.vital|Synthwave / Retro
+ST Glass Strings.vital|Ambient / Cinematic
+ST Low Strings.vital|Trap / Rage,Ambient / Cinematic
+ST Solina Dream.vital|Synthwave / Retro
+ST Spiccato.vital|Pop
+ST String Ensemble.vital|Hip-Hop,Pop
+ST Tremolo Strings.vital|Ambient / Cinematic
+ST Viola Warm.vital|Ambient / Cinematic
+ST Violin Solo.vital|Hip-Hop,Ambient / Cinematic
+VX Aah Choir.vital|Trap / Rage,Pop
+VX Choir Swell.vital|R&B / Soul,Ambient / Cinematic
+VX Eeh Choir.vital|House / Techno
+VX Formant Sweep Voice.vital|Ambient / Cinematic
+VX Ghost Vowels.vital|Trap / Rage,Ambient / Cinematic
+VX Monk Chant.vital|Trap / Rage,Ambient / Cinematic
+VX Ooh Choir.vital|Hip-Hop,R&B / Soul,Pop
+VX Robot Voice.vital|House / Techno,Synthwave / Retro
+VX Siren Voice.vital|Ambient / Cinematic
+VX Talk Box.vital|Hip-Hop,R&B / Soul
+VX Vocoder Lead.vital|Hip-Hop,EDM,Synthwave / Retro
+VX Vowel Pluck.vital|EDM,Pop
+VX Whisper Pad.vital|R&B / Soul,Ambient / Cinematic
+VX Yah Stab.vital|Hip-Hop,EDM,Pop

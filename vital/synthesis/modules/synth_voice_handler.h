@@ -113,6 +113,7 @@ namespace vital {
       LineMap* pitch_wheel_mapping_;
 
       cr::Value* stereo_;
+      cr::Value* gen_values_[2];   // MPC edition: "gen_1", "gen_2" (set from outside)
       cr::Multiply* note_percentage_;
 
       Multiply* output_;

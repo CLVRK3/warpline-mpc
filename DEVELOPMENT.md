@@ -16,6 +16,7 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   - The kissfft include in `fourier_transform.h` moved outside the namespace.
   - `kMaxPolyphony` is 17 (was 33), to save memory.
   - `poly_values.h` defines `NEON_ARM32` on 32-bit ARM.
+  - (1.2) `SynthVoiceHandler` registers two idle mono `cr::Value` mod sources, `gen_1` and `gen_2`. `VitalCore::setGenValue` sets them.
   - `fourier_transform.h`: the real inverse transform is `FastRealInverse`, a SIMD (NEON / SSE / scalar) version
     of what desktop Vital's IPP and Accelerate backends compute. It reads bins 0..N/2-1 and the Nyquist bin at
     `data[N]`, and nothing else. The kissfft forward transform leaves desktop Vital's layout too (Nyquist kept).
@@ -33,7 +34,8 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   - Parameters, and the patch scan with two-letter type codes.
   - A worker thread for patch loads, which stops audio briefly during each load.
   - State saving, Live View, and the scrollable patch list/browser.
-- `tools/make_factory.cpp`: generates the 300 factory patches.
+- `tools/genres.py`: writes `Content/Genres.txt`, the factory patches' genres. Run it after adding patches.
+- `tools/make_factory.cpp`: generates the 360 factory patches (a table named "@n" is Warpline's own built-in table n).
   - It uses CC0 wavetables from atsushieno/open-vital-resources.
   - It sets loudness (target -16 dBFS at velocity 0.8) and velocity sensitivity by type.
   - Run: `make_factory <open-vital-resources> Content/Patches` (takes about 5 minutes).
@@ -120,6 +122,39 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
 - **Device check, 2026-11-20, MPC Live III, MPC OS 3.10.1:** all five GRAINZ modes work. With chords playing, the MPC's CPU
   meter showed about 20-25%, close to where Warpline already sat without GRAINZ. The Windows native build needs
   `_USE_MATH_DEFINES` (MSVC) for the processor's `M_PI`.
+
+## 1.2.0 additions (2026-11-20, offline)
+
+- **New parameters**, after `Grain Texture`: Osc1-3 Table; Arp Chance, Arp Deja Vu, Arp Loop; Gen Rate, Gen Spread, Gen Bias,
+  Gen Steps, Gen Deja Vu, Gen Length; List User 1-12, Genre and Gen 1 Out, Gen 2 Out (screen only). 307 in total. `kModSources` gains Gen 1, Gen 2
+  (16, 17, bipolar) and `kPanels` gains Gen (6), both at the end: the SDK's state loader keeps the plain value when a range
+  grows, so older projects keep their choices.
+- **Wavetable picker:** `VitalCore::setWavetable(osc, table)` builds the table with `WavetableCreator` (one `WaveSource` group
+  of time-domain frames; Basic Shapes = `initPredefinedWaves()`), or restores the patch's own, which every patch load and Init
+  stores as JSON first (`rememberPatchTables`). Changes go to the worker with audio paused (`tables_dirty_`). `loadPatchIndex`
+  resets the picks (`resetTablesFor`: Patch, or Basic Shapes on OSC 1 for Init) before loading; `loadIntoCore` applies the
+  current picks, so a project restore gets its saved ones. Projects saved before 1.2 have fewer parameters, so `loadExtraState`
+  puts their tables back to Patch. A new instance sets OSC 1 to Basic Shapes.
+- **Arp generate:** `Arp::roll()` gives each played step a gate die and a note die (Random mode). Deja vu below 0.5 = chance of
+  replaying the die from LOOP steps ago; at or above 0.5 always replays, and above it may jump to another place in the loop.
+- **Gen** (`Gen.h`): two outputs, ticked by the rate (transport position while playing, free otherwise). It runs only when a
+  slot uses Gen 1/2 (`gen_in_use_`), then the render loop splits into 64-frame chunks and sets the values before each.
+  Values go through SPREAD (narrow/even/extremes) and BIAS (a power curve), and glide over (1 − STEPS) of a tick.
+  Saved .vital files leave out connections from `gen_*`.
+- **Tables menu, USER tags (2026-11-22, offline):** the Table box opens `Panel` 7-9 ("Osc1-3 Tables": ten tiles bound to
+  OscN Table). A pick while that panel is open closes it (`close_tables_menu_`, done by the worker). `Fav Filter` gained
+  "User" (index >= `factory_count_`). The screen params List User 1-12 (Factory/User) are kept in step with the rows by
+  `updateUserMarks()` in the worker; the skin shows a USER chip per row with IndexedEnabling. 60 new factory patches
+  (`addMore4`), 360 in all.
+- **Genres (2026-11-22, offline):** `Content/Genres.txt` (made by `tools/genres.py`, which fails if a factory patch has no
+  genre) and `<drive>/Warpline/Genres.txt` give each `PatchEntry` a genre bit mask; `WARPLINE_USER_GENRES` points the test
+  host at another file. The screen param Genre (after List User 1-12) filters in `passesFilter`; `Panel` 10 is the GENRE menu,
+  closed by a pick. List User N only changes when its row's patch changes (`user_marks_`), so a host's state round trip keeps
+  what it set.
+- **Skin:** a Table box in each OSC header (MAIN, OSC pages). The wavetable display has one copy per table
+  (`IndexedEnabling/<t>/10/Parameter <OscN Table>`); single-wave tables use a 1-frame picture and the morphing ones 16 frames, to keep
+  image memory down (all images decoded: about 288 MB with the tables and genre menu tiles; 1.1 was about 203 MB). The MOD panel has a fourth tab, GEN, with two meters
+  and the shared controls. The ARP panel's hint box became the GENERATE knobs.
 
 ## Rules that must not break
 

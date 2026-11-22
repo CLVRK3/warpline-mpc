@@ -29,6 +29,7 @@
 #include <condition_variable>
 #include <cstring>
 #include <fstream>
+#include <map>
 #include <filesystem>
 #include <memory>
 #include <mutex>
@@ -38,6 +39,7 @@
 #include <vector>
 
 #include "Arp.h"
+#include "Gen.h"
 #include "Granulator.h"
 #include "GrainzClouds.h"
 #include "VitalCore.h"
@@ -142,6 +144,7 @@ const Named kModSources[] = {
   { "LFO 1", "lfo_5" }, { "LFO 2", "lfo_6" }, { "LFO 3", "lfo_7" }, { "LFO 4", "lfo_8" },
   { "Velocity", "velocity" }, { "Mod Wheel", "mod_wheel" }, { "Aftertouch", "aftertouch" }, { "Random", "random" },
   { "Macro 1", "macro_control_1" }, { "Macro 2", "macro_control_2" }, { "Macro 3", "macro_control_3" }, { "Macro 4", "macro_control_4" },
+  { "Gen 1", "gen_1" }, { "Gen 2", "gen_2" },   // 1.2: the GEN panel's random sources
 };
 constexpr int kNumModSources = sizeof(kModSources) / sizeof(kModSources[0]);
 const Named kModDestinations[] = {
@@ -170,7 +173,8 @@ const Named kModDestinations[] = {
 constexpr int kNumModDestinations = sizeof(kModDestinations) / sizeof(kModDestinations[0]);
 constexpr int kNumModSlots = VitalCore::kNumUserModulations;
 // Sources that swing both ways: their modulation is centred on the knob (Vital's "bipolar").
-bool bipolarSource(int s) { return (s >= 4 && s <= 7) || s == 11; }
+bool bipolarSource(int s) { return (s >= 4 && s <= 7) || s == 11 || s == 16 || s == 17; }
+constexpr int kFirstGenSource = 16;
 
 const char* const kLfoShapes[] = { "Sine", "Triangle", "Saw Up", "Saw Down", "Square" };
 constexpr int kNumLfoShapes = 5;
@@ -187,8 +191,14 @@ const char* const kGrainModesShort[] = { "MIX", "PARTICLE", "STRETCH", "LOOP", "
 constexpr int kNumGrainModes = 5;
 const char* const kGrainSync[Granulator::kNumSyncRates] = { "Free", "1/4", "1/8", "1/16", "1/32", "1/8 T", "1/16 T" };
 // The overlay panels (Panel parameter).
-const char* const kPanels[] = { "Closed", "Arp", "Granulator", "Mod 1-8", "Mod 9-16", "LFOs" };
-enum PanelId { kPanelClosed = 0, kPanelArp, kPanelGrain, kPanelMod1, kPanelMod2, kPanelLfo, kNumPanels };
+const char* const kPanels[] = { "Closed", "Arp", "Granulator", "Mod 1-8", "Mod 9-16", "LFOs", "Gen", "Osc1 Tables",
+                                "Osc2 Tables", "Osc3 Tables", "Genres" };
+enum PanelId { kPanelClosed = 0, kPanelArp, kPanelGrain, kPanelMod1, kPanelMod2, kPanelLfo, kPanelGen, kPanelTables1,
+               kPanelGenres = kPanelTables1 + 3, kNumPanels };
+// 1.2: the oscillator wavetable picker (VitalCore::Table order).
+const char* const kTables[] = { "Patch", "Basic Shapes", "Sine", "Triangle", "Saw", "Square", "PWM", "Harmonics",
+                                "Formant", "Sync" };
+constexpr int kNumTables = sizeof(kTables) / sizeof(kTables[0]);
 // The browser's search keyboard.
 const char* const kKeys = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 constexpr int kNumLetterKeys = 26;
@@ -223,7 +233,13 @@ struct PatchEntry {
   std::string name;   // shown in lists, always "XX Name" (two-letter type code first)
   std::string path;   // empty = built-in Init
   int type = -1;      // index into kTypeCodes (-1 = Init)
+  uint32_t genres = 0;   // 1.2: bit g-1 = kGenres[g] (from Content/Genres.txt or <drive>/Warpline/Genres.txt)
 };
+
+// 1.2 GENRE picker. Index 0 = all; the names are the ones Genres.txt uses (tools/genres.py).
+const char* const kGenres[] = { "All", "Trap / Rage", "Hip-Hop", "R&B / Soul", "EDM", "House / Techno", "Pop",
+                                "Synthwave / Retro", "Ambient / Cinematic", "Lo-Fi / Chill" };
+constexpr int kNumGenres = sizeof(kGenres) / sizeof(kGenres[0]);
 
 // Two-letter sound-type codes. Factory patch names already start with one (tools/make_factory.cpp uses
 // the same table); your own patches get one from the patch's Vital style, its folder or its name.
@@ -484,7 +500,7 @@ class Warpline : public mpc::Plugin {
       info.name = "Warpline";
       info.vendor = "CLVRKE";
       info.uniqueId = MPC_FOURCC('C', 'v', 'V', 'm');
-      info.version = 1100;
+      info.version = 1200;
       info.isInstrument = true;
       info.numInputs = 0;
       info.numOutputs = 2;
@@ -641,9 +657,14 @@ class Warpline : public mpc::Plugin {
       wet_l_.assign(kWetChunk, 0.0f);
       wet_r_.assign(kWetChunk, 0.0f);
       arp_.setSampleRate(44100.0);
+      gen_.setSampleRate(44100.0);
       rememberPatchLimits();
       applyEcoSettings();
       pullParamsFromCore();
+      // A new instance starts on Init: OSC 1 gets Basic Shapes (see resetTablesFor).
+      set(table_first_index_, static_cast<float>(VitalCore::kTableShapes));
+      tables_dirty_.store(false);
+      core_->setWavetable(0, VitalCore::kTableShapes);
 
       worker_ = std::thread([this] { workerLoop(); });
     }
@@ -668,6 +689,7 @@ class Warpline : public mpc::Plugin {
       textures_.prepare(sample_rate);
       sample_rate_ = sample_rate;
       arp_.setSampleRate(sample_rate);
+      gen_.setSampleRate(sample_rate);
       arp_dirty_.store(true);
       grain_dirty_.store(true);
       resumeAudio();
@@ -680,6 +702,7 @@ class Warpline : public mpc::Plugin {
         core_->allSoundsOff();
         granulator_.reset();
         textures_.reset();
+        gen_.reset();
       }
     }
 
@@ -717,6 +740,10 @@ class Warpline : public mpc::Plugin {
       if (arp_dirty_.exchange(false))
         arp_.setSettings(arpSettings(), send);
       arp_.beginBlock(bpm, playing, playing ? ctx.transport.ppqPos : 0.0);
+      if (gen_dirty_.exchange(false))
+        gen_.setSettings(genSettings());
+      bool gen_on = gen_in_use_.load();
+      double gen_beats = Arp::beatsPerStep(gen_.settings().rate);
 
       // Render between MIDI events and arp steps so notes land on the right sample.
       int pos = 0;
@@ -729,6 +756,13 @@ class Warpline : public mpc::Plugin {
         if (e < ctx.numMidiEvents)
           next = std::min(next, std::max(pos + 1, ctx.midi[e].sampleOffset));
         next = std::min(next, pos + std::max(1, arp_.samplesToNextEvent()));
+        if (gen_on) {   // the Gen sources move on in short steps, so their glides stay smooth
+          next = std::min(next, pos + kGenChunk);
+          double ppq = playing ? ctx.transport.ppqPos + pos / sample_rate_ * bpm / 60.0 : 0.0;
+          gen_.advance(next - pos, bpm, playing, ppq, gen_beats);
+          for (int o = 0; o < Gen::kNumOutputs; ++o)
+            core_->setGenValue(o, gen_.value(o));
+        }
         core_->render(left + pos, right + pos, next - pos);
         arp_.advance(next - pos);
         pos = next;
@@ -736,6 +770,8 @@ class Warpline : public mpc::Plugin {
       while (e < ctx.numMidiEvents)
         handleMidi(ctx.midi[e++], send);
       arp_step_.store(arp_.running() ? arp_.currentStep() : -1);
+      for (int o = 0; o < Gen::kNumOutputs; ++o)
+        gen_out_[o].store(gen_.value(o));
 
       if (grain_dirty_.exchange(false)) {
         granulator_.setSettings(grainSettings());
@@ -970,6 +1006,12 @@ class Warpline : public mpc::Plugin {
       bool found_by_path = index >= 0 && !path.empty();
       if (!found_by_path && n > static_cast<uint32_t>(kPatch))
         index = static_cast<int>(std::lround(param(kPatch).toPlain(values[kPatch])));
+      if (table_first_index_ >= 0 && n <= static_cast<uint32_t>(table_first_index_)) {
+        // A project from before the wavetable picker: its patches play their own tables.
+        for (int o = 0; o < VitalCore::kNumOscillators; ++o)
+          set(table_first_index_ + o, static_cast<float>(VitalCore::kTablePatch));
+        tables_dirty_.store(false);
+      }
       {
         std::lock_guard<std::mutex> load_lock(load_mutex_);
         pauseAudio();
@@ -1080,6 +1122,51 @@ class Warpline : public mpc::Plugin {
         scan(parent.parent_path() / "Warpline" / "Patches");
       if (const char* env = std::getenv("WARPLINE_USER_PATCHES"))
         scan(fs::path(env));
+
+      // Genres: the factory list, then your own <drive>/Warpline/Genres.txt (same format) for your patches.
+      std::map<std::string, uint32_t> genre_of;
+      readGenres(fs::path(mpc::contentFolder()) / "Genres.txt", genre_of);
+      if (parent.filename() == "VST2 Plugins" || parent.filename() == "Synths")
+        readGenres(parent.parent_path() / "Warpline" / "Genres.txt", genre_of);
+      if (const char* env = std::getenv("WARPLINE_USER_GENRES"))
+        readGenres(fs::path(env), genre_of);
+      for (PatchEntry& e : patches_) {
+        if (e.path.empty()) continue;
+        auto it = genre_of.find(lowerCase(fs::path(e.path).filename().string()));
+        if (it != genre_of.end())
+          e.genres = it->second;
+      }
+    }
+
+    // "<file name>|<genre>,<genre>" per line; # starts a comment. Names match kGenres, any case. Missing file = nothing.
+    static void readGenres(const fs::path& file, std::map<std::string, uint32_t>& out) {
+      std::ifstream in(file);
+      std::string line;
+      while (std::getline(in, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        size_t bar = line.find('|');
+        if (line.empty() || line[0] == '#' || bar == std::string::npos)
+          continue;
+        uint32_t bits = 0;
+        std::string rest = line.substr(bar + 1);
+        size_t start = 0;
+        while (start <= rest.size()) {
+          size_t comma = rest.find(',', start);
+          std::string g = rest.substr(start, comma == std::string::npos ? std::string::npos : comma - start);
+          while (!g.empty() && g.front() == ' ') g.erase(g.begin());
+          while (!g.empty() && g.back() == ' ') g.pop_back();
+          for (int k = 1; k < kNumGenres; ++k)
+            if (lowerCase(g) == lowerCase(kGenres[k]))
+              bits |= 1u << (k - 1);
+          if (comma == std::string::npos) break;
+          start = comma + 1;
+        }
+        std::string name = line.substr(0, bar);
+        while (!name.empty() && name.back() == ' ') name.pop_back();
+        if (name.size() < 6 || lowerCase(name.substr(name.size() - 6)) != ".vital")
+          name += ".vital";
+        out[lowerCase(name)] |= bits;
+      }
     }
 
     // Next / previous patch (dir = +1 / -1) from "from", staying inside the Category filter.
@@ -1099,7 +1186,13 @@ class Warpline : public mpc::Plugin {
       int filter = category_.load();   // 0 = all, else type + 1
       if (filter != 0 && patches_[i].type != filter - 1)
         return false;
-      if (fav_only_.load() && favourites_.count(favKey(i)) == 0)
+      int show = show_filter_.load();   // 0 all, 1 favourites, 2 your own (1.2)
+      if (show == 1 && favourites_.count(favKey(i)) == 0)
+        return false;
+      if (show == 2 && i < factory_count_)
+        return false;
+      int genre = genre_.load();   // 0 = all genres (1.2)
+      if (genre > 0 && (patches_[i].genres & (1u << (genre - 1))) == 0)
         return false;
       if (!query_.empty() && search_names_[i].find(query_) == std::string::npos)
         return false;
@@ -1209,6 +1302,8 @@ class Warpline : public mpc::Plugin {
       applyEcoSettings(&report);
       lfo_applied_mask_ = 0;          // the patch brought its own LFO 5-8
       syncMatrixLocked();
+      if (table_first_index_ >= 0)
+        applyTablesLocked();
       core_->warmUp();
       return ok;
     }
@@ -1334,6 +1429,7 @@ class Warpline : public mpc::Plugin {
       if (!patches_[index].path.empty() && !mpc::readTextFile(patches_[index].path, text))
         text.clear();
 
+      resetTablesFor(text.empty());
       PatchReport report;
       {
         std::lock_guard<std::mutex> load_lock(load_mutex_);
@@ -1475,7 +1571,7 @@ class Warpline : public mpc::Plugin {
       fav_toggle_index_ = screen(mpc::boolParam("fav_toggle", "Favourite", false));
       first_v11_index_ = fav_toggle_index_;
       fav_state_index_ = screen(mpc::choiceParam("fav_state", "Fav State", { "Off", "On" }, 0));
-      fav_filter_index_ = screen(mpc::choiceParam("fav_filter", "Fav Filter", { "All", "Favourites" }, 0));
+      fav_filter_index_ = screen(mpc::choiceParam("fav_filter", "Fav Filter", { "All", "Favourites", "User" }, 0));   // "User" since 1.2
       search_index_ = screen(mpc::floatParam("search", "Search", 0.0f, 1.0f, 0.0f));
       for (int k = 0; k < kNumKeys; ++k) {
         std::string id = "key_" + std::to_string(k + 1);
@@ -1593,8 +1689,93 @@ class Warpline : public mpc::Plugin {
       suffix_.resize(numParams());
       signed_.resize(numParams(), false);
       suffix_[grain_texture_index_] = "%";
+
+      // ----- 1.2 -----
+      // Wavetable picker, one per oscillator (Patch = the patch's own table).
+      std::vector<std::string> tables(kTables, kTables + kNumTables);
+      for (int o = 0; o < VitalCore::kNumOscillators; ++o) {
+        std::string n = std::to_string(o + 1);
+        int index = addParam(mpc::choiceParam(("osc_" + n + "_table").c_str(), ("Osc" + n + " Table").c_str(), tables, 0));
+        if (o == 0) table_first_index_ = index;
+      }
+      // Arp: generative chance, déjà vu and loop.
+      arp_gen_first_index_ = addParam(mpc::floatParam("arp_chance", "Arp Chance", 0.0f, 100.0f, 100.0f, "", 0));
+      addParam(mpc::floatParam("arp_dejavu", "Arp Deja Vu", 0.0f, 100.0f, 0.0f, "", 0));
+      addParam(mpc::intParam("arp_loop", "Arp Loop", 1, Arp::kMaxSteps, 8));
+      // Gen 1 / Gen 2: the matrix's random sources.
+      gen_first_index_ = addParam(mpc::choiceParam("gen_rate", "Gen Rate",
+                                                   std::vector<std::string>(kArpRates, kArpRates + Arp::kNumRates), 3));
+      addParam(mpc::floatParam("gen_spread", "Gen Spread", 0.0f, 100.0f, 50.0f, "", 0));
+      addParam(mpc::floatParam("gen_bias", "Gen Bias", 0.0f, 100.0f, 50.0f, "", 0));
+      addParam(mpc::floatParam("gen_steps", "Gen Steps", 0.0f, 100.0f, 100.0f, "", 0));
+      addParam(mpc::floatParam("gen_dejavu", "Gen Deja Vu", 0.0f, 100.0f, 0.0f, "", 0));
+      addParam(mpc::intParam("gen_length", "Gen Length", 1, Gen::kMaxLength, 8));
+      // Row marks for your own patches (1 = a patch from <drive>/Warpline/Patches), one per list row.
+      for (int r = 0; r < kListRows; ++r) {
+        std::string n = std::to_string(r + 1);
+        int index = screen(mpc::choiceParam(("list_user_" + n).c_str(), ("List User " + n).c_str(), { "Factory", "User" }, 0));
+        if (r == 0) list_user_first_index_ = index;
+      }
+      // GENRE filter for the lists and arrows (screen: not part of the sound).
+      genre_index_ = screen(mpc::choiceParam("genre", "Genre", std::vector<std::string>(kGenres, kGenres + kNumGenres), 0));
+      gen_out_index_[0] = screen(mpc::floatParam("gen_1_out", "Gen 1 Out", 0.0f, 1.0f, 0.5f));
+      gen_out_index_[1] = screen(mpc::floatParam("gen_2_out", "Gen 2 Out", 0.0f, 1.0f, 0.5f));
       suffix_.resize(numParams());
       signed_.resize(numParams(), false);
+      for (int i : { arp_gen_first_index_, arp_gen_first_index_ + 1, gen_first_index_ + 1, gen_first_index_ + 2,
+                     gen_first_index_ + 3, gen_first_index_ + 4 })
+        suffix_[i] = "%";
+    }
+
+    Gen::Settings genSettings() const {
+      Gen::Settings g;
+      int i = gen_first_index_;
+      g.rate = getInt(i);
+      g.spread = get(i + 1) / 100.0f;
+      g.bias = get(i + 2) / 100.0f;
+      g.steps = get(i + 3) / 100.0f;
+      g.deja_vu = get(i + 4) / 100.0f;
+      g.length = getInt(i + 5);
+      return g;
+    }
+
+    // Worker: the USER tags on the list rows follow what the rows show.
+    void updateUserMarks() {
+      if (list_user_first_index_ < 0)
+        return;
+      std::vector<int> list = filteredPatches();
+      int top = list_top_.load();
+      for (int r = 0; r < kListRows; ++r) {
+        int pos = top + r;
+        int k = pos >= 0 && pos < static_cast<int>(list.size()) ? list[pos] : -1;
+        int want = k >= factory_count_ ? 1 : 0;
+        int index = list_user_first_index_ + r;
+        if (user_marks_[r] != want) {   // only when what the row shows changed (a host may set these freely)
+          user_marks_[r] = want;
+          set(index, static_cast<float>(want));
+          notifyHostParameterChanged(index);
+        }
+      }
+    }
+
+    // Worker (or paused): the oscillators' picked wavetables.
+    void applyTablesLocked() {
+      for (int o = 0; o < VitalCore::kNumOscillators; ++o)
+        core_->setWavetable(o, getInt(table_first_index_ + o));
+    }
+
+    // Before a patch you picked loads: the tables go back to the patch's own, except Init, whose
+    // single saw becomes Basic Shapes on OSC 1 (WT POS then sweeps sine .. saw).
+    void resetTablesFor(bool init) {
+      for (int o = 0; o < VitalCore::kNumOscillators; ++o) {
+        int want = (init && o == 0) ? VitalCore::kTableShapes : VitalCore::kTablePatch;
+        int index = table_first_index_ + o;
+        if (getInt(index) != want) {
+          set(index, static_cast<float>(want));
+          notifyHostParameterChanged(index);
+        }
+      }
+      tables_dirty_.store(false);
     }
 
     // Host thread: one event of a touch on a list strip (which = 0 browser, 1 PATCH page).
@@ -1712,6 +1893,25 @@ class Warpline : public mpc::Plugin {
     }
 
     void parameterChangedV11(int index, float plain) {
+      if (table_first_index_ >= 0 && index >= table_first_index_ && index < table_first_index_ + VitalCore::kNumOscillators) {
+        // A pick on the big TABLES menu closes it (the worker does it, off the host's call).
+        if (panel_index_ >= 0 && getInt(panel_index_) == kPanelTables1 + (index - table_first_index_))
+          close_tables_menu_.store(true);
+        tables_dirty_.store(true);
+        worker_cv_.notify_all();
+        return;
+      }
+      if (arp_gen_first_index_ >= 0 && index >= arp_gen_first_index_ && index < arp_gen_first_index_ + 3) {
+        arp_dirty_.store(true);
+        return;
+      }
+      if (gen_first_index_ >= 0 && index >= gen_first_index_ && index < gen_first_index_ + 6) {
+        gen_dirty_.store(true);
+        return;
+      }
+      if (index == gen_out_index_[0] || index == gen_out_index_[1] ||
+          (list_user_first_index_ >= 0 && index >= list_user_first_index_ && index < list_user_first_index_ + kListRows))
+        return;   // display only
       if (index == fav_toggle_index_) {
         momentary(index, plain, [this] {
           std::string key = favKey(requested_patch_.load());
@@ -1721,7 +1921,7 @@ class Warpline : public mpc::Plugin {
               favourites_.insert(key);
           }
           fav_save_.store(true);
-          if (fav_only_.load())
+          if (show_filter_.load() == 1)
             filterChanged();
           display_dirty_.store(true);
           worker_cv_.notify_all();
@@ -1741,8 +1941,15 @@ class Warpline : public mpc::Plugin {
       if (index == list_touch_index_)
         return;
       if (index == fav_filter_index_) {
-        fav_only_.store(plain > 0.5f);
+        show_filter_.store(static_cast<int>(std::lround(plain)));
         filterChanged();
+        return;
+      }
+      if (index == genre_index_) {
+        genre_.store(static_cast<int>(std::lround(plain)));
+        filterChanged();
+        if (panel_index_ >= 0 && getInt(panel_index_) == kPanelGenres)
+          close_tables_menu_.store(true);   // a pick on the GENRE menu closes it
         return;
       }
       if (index == fav_state_index_ || index == search_index_ || index == arp_pos_index_ ||
@@ -1889,6 +2096,11 @@ class Warpline : public mpc::Plugin {
       a.latch = getInt(i + 6) != 0;
       a.length = getInt(i + 7);
       a.accent = get(i + 8) / 100.0f;
+      if (arp_gen_first_index_ >= 0) {
+        a.chance = get(arp_gen_first_index_) / 100.0f;
+        a.deja_vu = get(arp_gen_first_index_ + 1) / 100.0f;
+        a.loop = getInt(arp_gen_first_index_ + 2);
+      }
       for (int k = 0; k < Arp::kMaxSteps; ++k)
         a.steps[k] = getInt(arp_step_first_index_ + k);
       return a;
@@ -1960,6 +2172,7 @@ class Warpline : public mpc::Plugin {
     // Connects the matrix slots and the matrix LFOs in the engine. Caller holds load_mutex_ with audio paused.
     void syncMatrixLocked() {
       int in_use = 0;
+      bool gen_used = false;
       for (int s = 0; s < kNumModSlots; ++s) {
         int src = getInt(modSourceIndex(s));
         int dst = getInt(modDestIndex(s));
@@ -1967,6 +2180,8 @@ class Warpline : public mpc::Plugin {
           src = dst = 0;
         if (src >= 4 && src <= 7)
           in_use |= 1 << (src - 4);
+        if (src >= kFirstGenSource)
+          gen_used = true;
         if (src != applied_src_[s] || dst != applied_dst_[s]) {
           core_->setUserModulation(s, kModSources[src].vital, kModDestinations[dst].vital, bipolarSource(src));
           applied_src_[s] = src;
@@ -1998,6 +2213,7 @@ class Warpline : public mpc::Plugin {
       }
       lfo_applied_mask_ = in_use;
       lfo_in_use_.store(in_use);
+      gen_in_use_.store(gen_used);
     }
 
     // Worker thread, every tick.
@@ -2007,6 +2223,31 @@ class Warpline : public mpc::Plugin {
         pauseAudio();
         syncMatrixLocked();
         paused_.store(false);   // no markAllDirty: nothing else changed
+      }
+      if (tables_dirty_.exchange(false)) {
+        std::lock_guard<std::mutex> load_lock(load_mutex_);
+        pauseAudio();
+        applyTablesLocked();
+        paused_.store(false);
+      }
+      if (close_tables_menu_.exchange(false)) {
+        int p = getInt(panel_index_);
+        if ((p >= kPanelTables1 && p < kPanelTables1 + VitalCore::kNumOscillators) || p == kPanelGenres) {
+          set(panel_index_, static_cast<float>(kPanelClosed));
+          notifyHostParameterChanged(panel_index_);
+        }
+      }
+      updateUserMarks();
+      // GEN panel meters, only while it is open.
+      for (int o = 0; o < Gen::kNumOutputs; ++o) {
+        int index = gen_out_index_[o];
+        if (index < 0 || getInt(panel_index_) != kPanelGen)
+          continue;
+        float v = gen_out_[o].load();
+        if (std::fabs(v - getNormalised(index)) < 0.5f / 12.0f)
+          continue;
+        setNormalised(index, v);
+        notifyHostParameterChanged(index);
       }
       if (fav_save_.exchange(false))
         saveFavourites();
@@ -2173,12 +2414,26 @@ class Warpline : public mpc::Plugin {
     mutable std::mutex filter_mutex_;
     std::string query_;
     std::set<std::string> favourites_;
-    std::atomic<bool> fav_only_{ false };
+    std::atomic<int> show_filter_{ 0 };
     std::atomic<bool> fav_save_{ false };
     Arp arp_;
     int arp_channel_ = 0;
     std::atomic<bool> arp_dirty_{ true };
     std::atomic<int> arp_step_{ -1 };
+    // 1.2
+    int list_user_first_index_ = -1;
+    std::array<int, kListRows> user_marks_ { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+    int genre_index_ = -1;
+    std::atomic<int> genre_{ 0 };
+    std::atomic<bool> close_tables_menu_{ false };
+    int table_first_index_ = -1, arp_gen_first_index_ = -1, gen_first_index_ = -1;
+    std::array<int, Gen::kNumOutputs> gen_out_index_ { -1, -1 };
+    std::atomic<bool> tables_dirty_{ false };
+    Gen gen_;
+    std::atomic<bool> gen_dirty_{ true };
+    std::atomic<bool> gen_in_use_{ false };
+    std::array<std::atomic<float>, Gen::kNumOutputs> gen_out_ {};
+    static constexpr int kGenChunk = 64;
     Granulator granulator_;
     GrainzClouds textures_;
     static constexpr int kWetChunk = 4096;

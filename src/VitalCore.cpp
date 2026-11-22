@@ -13,6 +13,12 @@
 #include "sample_source.h"
 #include "tuning.h"
 #include "wavetable_creator.h"
+#include "wavetable_group.h"
+#include "wave_source.h"
+#include "wave_frame.h"
+#include "value.h"
+
+#include <cmath>
 
 VitalCore::VitalCore() {
   engine_ = std::make_unique<vital::SoundEngine>();
@@ -29,7 +35,152 @@ VitalCore::VitalCore() {
 
   vital::control_map controls = engine_->getControls();
   controls_.assign(controls.begin(), controls.end());   // std::map is already sorted
+  for (int i = 0; i < kNumGen; ++i) {
+    vital::Output* out = engine_->getModulationSource("gen_" + std::to_string(i + 1));
+    gen_[i] = out ? dynamic_cast<vital::cr::Value*>(out->owner) : nullptr;
+  }
   loadInit();
+}
+
+void VitalCore::setGenValue(int index, float value) {
+  if (index >= 0 && index < kNumGen && gen_[index])
+    gen_[index]->set(std::clamp(value, 0.0f, 1.0f));
+}
+
+void VitalCore::rememberPatchTables() {
+  for (int i = 0; i < kNumOscillators; ++i) {
+    patch_tables_[i] = wavetable_creators_[i] ? wavetable_creators_[i]->stateToJson().dump() : std::string();
+    table_choice_[i] = kTablePatch;
+  }
+}
+
+// ----- built-in wavetables -----------------------------------------------------------------------
+// Each one is a list of single-cycle frames (2048 samples) spread over Vital's 257 frame positions;
+// Vital interpolates between them and band-limits on playback. My own generators, no samples.
+namespace {
+  constexpr int kFrame = vital::WaveFrame::kWaveformSize;
+  constexpr double kTau = 6.283185307179586;
+
+  double polyNaive(int shape, double t, double k) {   // k = position in the table 0..1
+    switch (shape) {
+      case VitalCore::kTableSine: return std::sin(kTau * t);
+      case VitalCore::kTableTriangle: return t < 0.25 ? 4.0 * t : (t < 0.75 ? 2.0 - 4.0 * t : 4.0 * t - 4.0);
+      case VitalCore::kTableSaw: return 1.0 - 2.0 * t;
+      case VitalCore::kTableSquare: return t < 0.5 ? 1.0 : -1.0;
+      case VitalCore::kTablePwm: {            // pulse width 50% -> 4%
+        double width = 0.5 - 0.46 * k;
+        return t < width ? 1.0 : -1.0;
+      }
+      case VitalCore::kTableHarmonics: {      // adds harmonics one by one: sine -> bright saw (32 partials)
+        double partials = 1.0 + 31.0 * k;
+        double v = 0.0;
+        for (int h = 1; h <= 32; ++h) {
+          double g = std::clamp(partials - (h - 1), 0.0, 1.0);
+          if (g <= 0.0) break;
+          v += g * std::sin(kTau * h * t) / h;
+        }
+        return v;
+      }
+      case VitalCore::kTableFormant: {        // a saw through two vowel formants, A > E > I > O > U
+        static const double kF1[] = { 800, 400, 300, 450, 330 }, kF2[] = { 1150, 2000, 2300, 800, 700 };
+        double x = k * 4.0;
+        int a = std::min(3, static_cast<int>(x));
+        double f = x - a;
+        double f1 = kF1[a] + (kF1[a + 1] - kF1[a]) * f, f2 = kF2[a] + (kF2[a + 1] - kF2[a]) * f;
+        const double base = 110.0;   // the frame is one cycle of a 110 Hz note
+        double v = 0.0;
+        for (int h = 1; h <= 64; ++h) {
+          double hz = base * h;
+          double g = 1.0 / (1.0 + std::pow((hz - f1) / 90.0, 2)) + 0.6 / (1.0 + std::pow((hz - f2) / 130.0, 2));
+          v += g * std::sin(kTau * h * t) / std::sqrt(static_cast<double>(h));
+        }
+        return v;
+      }
+      case VitalCore::kTableSync: {           // hard sync: a saw at 1x -> 7x the cycle, reset every cycle
+        double ratio = 1.0 + 6.0 * k;
+        double ph = t * ratio;
+        ph -= std::floor(ph);
+        return 1.0 - 2.0 * ph;
+      }
+      default: return 0.0;
+    }
+  }
+
+  int framesFor(int table) {
+    switch (table) {
+      case VitalCore::kTableSine: case VitalCore::kTableTriangle: case VitalCore::kTableSaw: case VitalCore::kTableSquare:
+        return 1;
+      case VitalCore::kTableHarmonics: return 32;
+      case VitalCore::kTableFormant: return 17;
+      default: return 65;
+    }
+  }
+
+  const char* tableName(int table) {
+    static const char* const kNames[] = { "Patch", "Basic Shapes", "Sine", "Triangle", "Saw", "Square", "PWM",
+                                          "Harmonics", "Formant", "Sync" };
+    return kNames[std::clamp(table, 0, VitalCore::kNumTables - 1)];
+  }
+
+  void buildTable(WavetableCreator& creator, int table) {
+    if (table == VitalCore::kTableShapes) {
+      creator.initPredefinedWaves();
+      creator.setName(tableName(table));
+      return;
+    }
+    creator.clear();
+    WavetableGroup* group = new WavetableGroup();
+    WaveSource* source = new WaveSource();
+    int frames = framesFor(table);
+    std::vector<float> buffer(kFrame);
+    for (int f = 0; f < frames; ++f) {
+      double k = frames > 1 ? static_cast<double>(f) / (frames - 1) : 0.0;
+      int position = frames > 1 ? static_cast<int>(std::lround(k * (vital::kNumOscillatorWaveFrames - 1))) : 0;
+      double peak = 1e-9;
+      for (int i = 0; i < kFrame; ++i) {
+        buffer[i] = static_cast<float>(polyNaive(table, static_cast<double>(i) / kFrame, k));
+        peak = std::max(peak, static_cast<double>(std::fabs(buffer[i])));
+      }
+      for (float& v : buffer)
+        v = static_cast<float>(v / peak);
+      source->insertNewKeyframe(position);
+      WaveSourceKeyframe* keyframe = source->getKeyframe(f);
+      keyframe->wave_frame()->loadTimeDomain(buffer.data());
+    }
+    // Pulse widths and sync ratios cross-fade badly in the spectrum: move through them in time instead.
+    source->setInterpolationStyle(frames > 1 ? WavetableComponent::kLinear : WavetableComponent::kNone);
+    if (table == VitalCore::kTablePwm || table == VitalCore::kTableSync)
+      source->setInterpolationMode(WaveSource::kTime);
+    group->addComponent(source);
+    creator.addGroup(group);
+    creator.setName(tableName(table));
+    creator.render();
+  }
+} // namespace
+
+void VitalCore::setWavetable(int osc, int table) {
+  if (osc < 0 || osc >= kNumOscillators || !wavetable_creators_[osc])
+    return;
+  table = std::clamp(table, 0, kNumTables - 1);
+  if (table == table_choice_[osc])
+    return;
+  table_choice_[osc] = table;
+  WavetableCreator& creator = *wavetable_creators_[osc];
+  if (table == kTablePatch) {
+    try {
+      if (patch_tables_[osc].empty())
+        creator.init();
+      else {
+        creator.jsonToState(json::parse(patch_tables_[osc]));
+        creator.render();
+      }
+    }
+    catch (const std::exception&) {
+      creator.init();
+    }
+    return;
+  }
+  buildTable(creator, table);
 }
 
 VitalCore::~VitalCore() = default;
@@ -76,6 +227,7 @@ void VitalCore::loadInit() {
   clearModulations();
   connectUserModulations();
   engine_->checkOversampling();
+  rememberPatchTables();
 }
 
 void VitalCore::prepare(double sample_rate) {
@@ -375,6 +527,7 @@ bool VitalCore::loadPatch(const std::string& text, PatchReport& report) {
         i++;
       }
     }
+    rememberPatchTables();
 
     // LFO shapes.
     patch_lfos_.assign(vital::kNumLfos, std::string());
@@ -447,8 +600,9 @@ std::string VitalCore::savePatch(const std::string& name, const std::string& aut
   for (int i = 0; i < vital::kMaxModulationConnections; ++i) {
     vital::ModulationConnection* connection = bank.atIndex(i);
     json modulation_data;
-    modulation_data["source"] = connection->source_name;
-    modulation_data["destination"] = connection->destination_name;
+    bool own = connection->source_name.rfind("gen_", 0) == 0;   // Warpline-only sources: not in a .vital file
+    modulation_data["source"] = own ? std::string() : connection->source_name;
+    modulation_data["destination"] = own ? std::string() : connection->destination_name;
     LineGenerator* line_mapping = connection->modulation_processor->lineMapGenerator();
     if (!line_mapping->linear())
       modulation_data["line_mapping"] = line_mapping->stateToJson();
