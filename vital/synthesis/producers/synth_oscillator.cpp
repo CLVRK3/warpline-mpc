@@ -23,6 +23,11 @@
 
 #include <climits>
 
+// MPC edition: build with -DWARPLINE_REUSE_WAVEFORMS=0 to rebuild every waveform as upstream does.
+#ifndef WARPLINE_REUSE_WAVEFORMS
+#define WARPLINE_REUSE_WAVEFORMS 1
+#endif
+
 namespace vital {
   namespace {
     constexpr int kNumVoicesPerProcess = poly_float::kSize / 2;
@@ -790,13 +795,33 @@ namespace vital {
       int last_harmonic = std::max<int>(0, WaveFrame::kWaveformSize * futils::exp2(-bin_shift));
       last_harmonic = std::min(last_harmonic, WaveFrame::kWaveformSize / 2);
 
-      spectralMorph(wavetable_data, table_index, fourier_buffer,
-                    fourier_transform_.get(), shift, last_harmonic, RandomValues::instance()->buffer());
-      wave_buffers_[buffer_index] = ((mono_float*)fourier_buffer) + poly_float::kSize - 1;
+      RebuildKey key;
+      key.data = wavetable_data;
+      key.serial = wavetable_->contentSerial();
+      key.table_index = table_index;
+      key.shift = shift;
+      key.last_harmonic = last_harmonic;
+      key.morph = static_cast<int>(voice_block_.spectral_morph);
+      key.formant_shift = formant_shift;
+      // Not for Shepard (its rebuilds also move the phases) or Inharmonic Scale (it keeps an index table in the
+      // upper half of the FFT buffer, which the kissfft-compatible inverse reads, so its output depends on what
+      // that buffer held before; reusing one buffer would change the sound).
+      key.valid = voice_block_.spectral_morph != kShepardTone && voice_block_.spectral_morph != kInharmonicScale;
+      const mono_float* own1 = ((mono_float*)fourier_frames1_[buffer_index]) + poly_float::kSize - 1;
+      const mono_float* own2 = ((mono_float*)fourier_frames2_[buffer_index]) + poly_float::kSize - 1;
+      bool holds_own = wave_buffers_[buffer_index] == own1 || wave_buffers_[buffer_index] == own2;
+
+      if (!(reuse_unchanged_waveforms_ && holds_own && key.matches(rebuild_keys_[buffer_index]))) {
+        spectralMorph(wavetable_data, table_index, fourier_buffer,
+                      fourier_transform_.get(), shift, last_harmonic, RandomValues::instance()->buffer());
+        wave_buffers_[buffer_index] = ((mono_float*)fourier_buffer) + poly_float::kSize - 1;
+        rebuild_keys_[buffer_index] = key;
+      }
 
       if (i == index && morph_amount[i] == morph_amount[i + 1] && wave_index[i] == wave_index[i + 1]) {
         last_buffers_[buffer_index + 1] = wave_buffers_[buffer_index + 1];
         wave_buffers_[buffer_index + 1] = wave_buffers_[buffer_index];
+        rebuild_keys_[buffer_index + 1].valid = false;   // shares the first lane's buffer
         return;
       }
     }
@@ -1422,10 +1447,12 @@ namespace vital {
       if (shepard && new_buffer_mask.anyMask())
         doShepardWrap(new_buffer_mask, transpose_quantize_);
 
+      reuse_unchanged_waveforms_ = WARPLINE_REUSE_WAVEFORMS;
       if (new_buffer_mask[0])
         setWaveBuffers(buffer_phase_inc, 0);
       if (new_buffer_mask[2])
         setWaveBuffers(buffer_phase_inc, 2);
+      reuse_unchanged_waveforms_ = false;
 
       VITAL_ASSERT((int)voice_block_.current_buffer_sample[0] < voice_block_.num_buffer_samples);
       VITAL_ASSERT((int)voice_block_.current_buffer_sample[2] < voice_block_.num_buffer_samples);
