@@ -190,8 +190,10 @@ const char* const kGrainModesShort[] = { "MIX", "PARTICLE", "STRETCH", "LOOP", "
 constexpr int kNumGrainModes = 5;
 const char* const kGrainSync[Granulator::kNumSyncRates] = { "Free", "1/4", "1/8", "1/16", "1/32", "1/8 T", "1/16 T" };
 // The overlay panels (Panel parameter).
-const char* const kPanels[] = { "Closed", "Arp", "Granulator", "Mod 1-8", "Mod 9-16", "LFOs", "Gen" };
-enum PanelId { kPanelClosed = 0, kPanelArp, kPanelGrain, kPanelMod1, kPanelMod2, kPanelLfo, kPanelGen, kNumPanels };
+const char* const kPanels[] = { "Closed", "Arp", "Granulator", "Mod 1-8", "Mod 9-16", "LFOs", "Gen", "Osc1 Tables",
+                                "Osc2 Tables", "Osc3 Tables" };
+enum PanelId { kPanelClosed = 0, kPanelArp, kPanelGrain, kPanelMod1, kPanelMod2, kPanelLfo, kPanelGen, kPanelTables1,
+               kNumPanels = kPanelTables1 + 3 };
 // 1.2: the oscillator wavetable picker (VitalCore::Table order).
 const char* const kTables[] = { "Patch", "Basic Shapes", "Sine", "Triangle", "Saw", "Square", "PWM", "Harmonics",
                                 "Formant", "Sync" };
@@ -1132,7 +1134,10 @@ class Warpline : public mpc::Plugin {
       int filter = category_.load();   // 0 = all, else type + 1
       if (filter != 0 && patches_[i].type != filter - 1)
         return false;
-      if (fav_only_.load() && favourites_.count(favKey(i)) == 0)
+      int show = show_filter_.load();   // 0 all, 1 favourites, 2 your own (1.2)
+      if (show == 1 && favourites_.count(favKey(i)) == 0)
+        return false;
+      if (show == 2 && i < factory_count_)
         return false;
       if (!query_.empty() && search_names_[i].find(query_) == std::string::npos)
         return false;
@@ -1511,7 +1516,7 @@ class Warpline : public mpc::Plugin {
       fav_toggle_index_ = screen(mpc::boolParam("fav_toggle", "Favourite", false));
       first_v11_index_ = fav_toggle_index_;
       fav_state_index_ = screen(mpc::choiceParam("fav_state", "Fav State", { "Off", "On" }, 0));
-      fav_filter_index_ = screen(mpc::choiceParam("fav_filter", "Fav Filter", { "All", "Favourites" }, 0));
+      fav_filter_index_ = screen(mpc::choiceParam("fav_filter", "Fav Filter", { "All", "Favourites", "User" }, 0));   // "User" since 1.2
       search_index_ = screen(mpc::floatParam("search", "Search", 0.0f, 1.0f, 0.0f));
       for (int k = 0; k < kNumKeys; ++k) {
         std::string id = "key_" + std::to_string(k + 1);
@@ -1650,6 +1655,12 @@ class Warpline : public mpc::Plugin {
       addParam(mpc::floatParam("gen_steps", "Gen Steps", 0.0f, 100.0f, 100.0f, "", 0));
       addParam(mpc::floatParam("gen_dejavu", "Gen Deja Vu", 0.0f, 100.0f, 0.0f, "", 0));
       addParam(mpc::intParam("gen_length", "Gen Length", 1, Gen::kMaxLength, 8));
+      // Row marks for your own patches (1 = a patch from <drive>/Warpline/Patches), one per list row.
+      for (int r = 0; r < kListRows; ++r) {
+        std::string n = std::to_string(r + 1);
+        int index = screen(mpc::choiceParam(("list_user_" + n).c_str(), ("List User " + n).c_str(), { "Factory", "User" }, 0));
+        if (r == 0) list_user_first_index_ = index;
+      }
       gen_out_index_[0] = screen(mpc::floatParam("gen_1_out", "Gen 1 Out", 0.0f, 1.0f, 0.5f));
       gen_out_index_[1] = screen(mpc::floatParam("gen_2_out", "Gen 2 Out", 0.0f, 1.0f, 0.5f));
       suffix_.resize(numParams());
@@ -1669,6 +1680,24 @@ class Warpline : public mpc::Plugin {
       g.deja_vu = get(i + 4) / 100.0f;
       g.length = getInt(i + 5);
       return g;
+    }
+
+    // Worker: the USER tags on the list rows follow what the rows show.
+    void updateUserMarks() {
+      if (list_user_first_index_ < 0)
+        return;
+      std::vector<int> list = filteredPatches();
+      int top = list_top_.load();
+      for (int r = 0; r < kListRows; ++r) {
+        int pos = top + r;
+        int k = pos >= 0 && pos < static_cast<int>(list.size()) ? list[pos] : -1;
+        int want = k >= factory_count_ ? 1 : 0;
+        int index = list_user_first_index_ + r;
+        if (getInt(index) != want) {
+          set(index, static_cast<float>(want));
+          notifyHostParameterChanged(index);
+        }
+      }
     }
 
     // Worker (or paused): the oscillators' picked wavetables.
@@ -1807,6 +1836,9 @@ class Warpline : public mpc::Plugin {
 
     void parameterChangedV11(int index, float plain) {
       if (table_first_index_ >= 0 && index >= table_first_index_ && index < table_first_index_ + VitalCore::kNumOscillators) {
+        // A pick on the big TABLES menu closes it (the worker does it, off the host's call).
+        if (panel_index_ >= 0 && getInt(panel_index_) == kPanelTables1 + (index - table_first_index_))
+          close_tables_menu_.store(true);
         tables_dirty_.store(true);
         worker_cv_.notify_all();
         return;
@@ -1819,7 +1851,8 @@ class Warpline : public mpc::Plugin {
         gen_dirty_.store(true);
         return;
       }
-      if (index == gen_out_index_[0] || index == gen_out_index_[1])
+      if (index == gen_out_index_[0] || index == gen_out_index_[1] ||
+          (list_user_first_index_ >= 0 && index >= list_user_first_index_ && index < list_user_first_index_ + kListRows))
         return;   // display only
       if (index == fav_toggle_index_) {
         momentary(index, plain, [this] {
@@ -1830,7 +1863,7 @@ class Warpline : public mpc::Plugin {
               favourites_.insert(key);
           }
           fav_save_.store(true);
-          if (fav_only_.load())
+          if (show_filter_.load() == 1)
             filterChanged();
           display_dirty_.store(true);
           worker_cv_.notify_all();
@@ -1850,7 +1883,7 @@ class Warpline : public mpc::Plugin {
       if (index == list_touch_index_)
         return;
       if (index == fav_filter_index_) {
-        fav_only_.store(plain > 0.5f);
+        show_filter_.store(static_cast<int>(std::lround(plain)));
         filterChanged();
         return;
       }
@@ -2132,6 +2165,14 @@ class Warpline : public mpc::Plugin {
         applyTablesLocked();
         paused_.store(false);
       }
+      if (close_tables_menu_.exchange(false)) {
+        int p = getInt(panel_index_);
+        if (p >= kPanelTables1 && p < kPanelTables1 + VitalCore::kNumOscillators) {
+          set(panel_index_, static_cast<float>(kPanelClosed));
+          notifyHostParameterChanged(panel_index_);
+        }
+      }
+      updateUserMarks();
       // GEN panel meters, only while it is open.
       for (int o = 0; o < Gen::kNumOutputs; ++o) {
         int index = gen_out_index_[o];
@@ -2308,13 +2349,15 @@ class Warpline : public mpc::Plugin {
     mutable std::mutex filter_mutex_;
     std::string query_;
     std::set<std::string> favourites_;
-    std::atomic<bool> fav_only_{ false };
+    std::atomic<int> show_filter_{ 0 };
     std::atomic<bool> fav_save_{ false };
     Arp arp_;
     int arp_channel_ = 0;
     std::atomic<bool> arp_dirty_{ true };
     std::atomic<int> arp_step_{ -1 };
     // 1.2
+    int list_user_first_index_ = -1;
+    std::atomic<bool> close_tables_menu_{ false };
     int table_first_index_ = -1, arp_gen_first_index_ = -1, gen_first_index_ = -1;
     std::array<int, Gen::kNumOutputs> gen_out_index_ { -1, -1 };
     std::atomic<bool> tables_dirty_{ false };

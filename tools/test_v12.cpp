@@ -99,6 +99,13 @@ int main(int argc,char**argv){
   printf("after patch change: Osc1 %s Osc2 %s\n",disp("Osc1 Table").c_str(),disp("Osc2 Table").c_str());
   set("Patch",0.0f); wait(2500);
   printf("after Init: Osc1 %s Osc2 %s\n",disp("Osc1 Table").c_str(),disp("Osc2 Table").c_str());
+  // 1.2 menu: a pick on the big TABLES menu closes it.
+  set("Panel",8/9.0f); wait(100); printf("menu open: Panel %s\n",disp("Panel").c_str());
+  set("Osc2 Table",norm("",3,10)); wait(400);
+  printf("after pick: Panel %s, Osc2 Table %s\n",disp("Panel").c_str(),disp("Osc2 Table").c_str());
+  // USER filter: no own patches here, so the list is empty; ALL shows factory rows without the tag.
+  set("Fav Filter",1.0f); wait(300); printf("USER filter: row1 '%s' tag %s\n",disp("List 1").c_str(),disp("List User 1").c_str());
+  set("Fav Filter",0.0f); wait(300); printf("ALL: row1 '%s' tag %s\n",disp("List 1").c_str(),disp("List User 1").c_str());
   e->dispatcher(e,effStopProcess,0,0,0,0); e->dispatcher(e,effMainsChanged,0,0,0,0); e->dispatcher(e,effClose,0,0,0,0);
   printf("done\n"); return 0;
 }
