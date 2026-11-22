@@ -316,7 +316,8 @@ mod sources, `gen_1` and `gen_2`, that Warpline sets. The VitalFX effects engine
   favourites, drag-scrolling and tap-to-load. Before that it was tested offline with a test host and ASan.
 - 1.2.0 was tested offline (2026-11-20): a test host (`tools/test_v12.cpp`) with ASan and UBSan, every table at WT POS 0 and 1,
   Gen 1 on Osc1 Level (random, and a locked 4-step loop at DEJA VU 50%), arp CHANCE and DEJA VU, a state round trip, and patch
-  changes resetting the picks. **Not yet run on the MPC.**
+  changes resetting the picks. Then on an MPC Live III (MPC OS 3.10.1, 2026-11-22): the wavetable picker and its menu, generative
+  arp, GEN sources, USER tags and filter, the GENRE menu and the new patches all worked as intended.
 - The skin is checked with the SDK's `validate.py` (versions, indices, images) and rendered as previews here. Check it on the MPC's screen too.
 
 ## Licence
