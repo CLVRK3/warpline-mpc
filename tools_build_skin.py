@@ -34,10 +34,14 @@ BROWSER_OPEN = "IndexedEnabling/1/2/Parameter %d" % PI["Browser"]   # visible wh
 LIVE_ON = "IndexedEnabling/1/2/Parameter %d" % PI["Live View"]   # visible while Live View is On
 TOUCH_DRAG = "IndexedEnabling/0/2/Parameter %d" % PI["List Touch"]   # list drag rows, while List Touch = Drag
 TOUCH_TAP = "IndexedEnabling/1/2/Parameter %d" % PI["List Touch"]    # plain button rows, while List Touch = Tap
-NUM_PANELS = 7
+NUM_PANELS = 10
 PANEL_ARP, PANEL_GRAIN, PANEL_MOD1, PANEL_MOD2, PANEL_LFO, PANEL_GEN = 1, 2, 3, 4, 5, 6
+PANEL_TABLES1 = 7   # 7, 8, 9: the big wavetable menu for OSC 1, 2, 3
 # 1.2 wavetable picker: the display art per Osc Table value (0 = Patch keeps the column's own picture)
 TABLE_KINDS = [None, "shapes", "sine", "tri", "sawpure", "square", "pwm", "harm", "formant", "sync"]
+TABLE_NAMES = ["Patch", "Basic Shapes", "Sine", "Triangle", "Saw", "Square", "PWM", "Harmonics", "Formant", "Sync"]
+TABLE_HINTS = ["the patch's own", "sine to saw", "pure", "soft", "bright", "hollow", "narrowing pulse", "adds partials",
+               "vowels A-U", "hard sync"]
 NUM_TABLES = len(TABLE_KINDS)
 def panel_on(k):
     return "IndexedEnabling/%d/%d/Parameter %d" % (k, NUM_PANELS, PI["Panel"])
@@ -196,6 +200,67 @@ def arrow_img(left, on, w=44, h=42):
 # ---------- wavetable displays (the mockup's 3D frame stack; the lit frame follows WT POS)
 WT_W, WT_H = 279, 150
 WT_FRAMES = 8
+def table_box(p, n, rect, acc):
+    """OSC n's table name; a tap opens the big TABLES menu (Panel = PANEL_TABLES1 + n - 1) instead of the small list."""
+    x0, y0, x1, y1 = rect
+    p.tagbox(rect)
+    p.add(comp_box(x1 - x0, y1 - y0, acc, False, 12.0, TEXT), f"Osc{n} Table", f"{x0} {y0} {x1 - x0} {y1 - y0}", focusable=False)
+    w, h = x1 - x0, y1 - y0
+    p.add(comp_button(clear_img(w, h), clear_img(w, h), PANEL_TABLES1 + n - 1, NUM_PANELS, w, h), "Panel",
+          f"{x0} {y0} {w} {h}", focusable=False)
+    p.slot(f"Osc{n} Table", None)
+
+
+def table_tile_img(w, h, acc, on, t):
+    name = f"ttile_{w}x{h}_{acc}_{t}_{'on' if on else 'off'}.png"
+    if name in ASSETS:
+        return name
+    S = 2
+    im = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    col = ACC[acc]
+    d.rounded_rectangle((S, S, w * S - S, h * S - S), 16 * S, fill=(30, 44, 42, 255) if on else (21, 24, 28, 255),
+                        outline=col + (255,) if on else (52, 59, 69, 255), width=(3 if on else 1) * S)
+    # a small picture of the wave (Patch: a question of the patch, so three faint lines)
+    gx0, gy0, gx1, gy1 = 18 * S, 16 * S, w * S - 18 * S, int(h * 0.56) * S
+    kind = TABLE_KINDS[t]
+    ks = [0.0, 0.5, 1.0] if kind not in (None, "sine", "tri", "sawpure", "square") else [0.0]
+    for j, k in enumerate(ks):
+        pts = []
+        for i in range(97):
+            x = i / 96
+            v = wave_value(kind or "saw", k, x) if kind else math.sin(2 * math.pi * x) * (0.3 + 0.3 * j)
+            pts.append((gx0 + (gx1 - gx0) * x, (gy0 + gy1) / 2 - v * (gy1 - gy0) / 2 * 0.9))
+        a = 255 if j == len(ks) - 1 else 110
+        d.line(pts, fill=(col if kind else MUTED) + (a,), width=int(2.5 * S), joint="curve")
+    d.text((w * S / 2, h * S * 0.72), TABLE_NAMES[t], font=font(22 * S, "Bold", display=True), fill=TEXT + (255,), anchor="mm")
+    d.text((w * S / 2, h * S * 0.88), TABLE_HINTS[t], font=font(12 * S), fill=MUTED + (255,), anchor="mm")
+    return save(im.resize((w, h), Image.LANCZOS), name)
+
+
+def tables_panel(p):
+    """The big wavetable menu, one per oscillator: ten tiles, tap one to pick it (the plugin then closes the menu)."""
+    for o in range(3):
+        n = o + 1; acc = OSC_ACC[o]
+        inv, y0 = panel_shell(p, PANEL_TABLES1 + o, f"OSC {n} WAVETABLE", acc, "TAP A TABLE TO USE IT")
+        tw, th, gap = 232, 230, 13
+        x_start = (W - (5 * tw + 4 * gap)) // 2
+        for t in range(NUM_TABLES):
+            x = x_start + (t % 5) * (tw + gap); y = y0 + 66 + (t // 5) * (th + gap)
+            p.add(comp_button(table_tile_img(tw, th, acc, True, t), table_tile_img(tw, th, acc, False, t), t, NUM_TABLES, tw, th),
+                  f"Osc{n} Table", f"{x} {y} {tw} {th}", focusable=False, inv=inv)
+
+
+def user_chip_img(w, h):
+    name = f"userchip_{w}x{h}.png"
+    if name in ASSETS:
+        return name
+    S = 3
+    im = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    d.rounded_rectangle((S, S, w * S - S, h * S - S), (h // 2) * S, fill=ACC["violet"] + (60,), outline=ACC["violet"] + (255,), width=S)
+    d.text((w * S / 2, h * S / 2), "USER", font=font(int(h * 0.5 * S), "Bold"), fill=ACC["violet"] + (255,), anchor="mm")
+    return save(im.resize((w, h), Image.LANCZOS), name)
+
+
 def wave_value(kind, k, t):
     import math as _m
     tri = lambda x: 4 * x if x < 0.25 else (2 - 4 * x if x < 0.75 else 4 * x - 4)
@@ -556,6 +621,11 @@ def patch_list(p, x, y, w, row_h, rows, size, inv=None, drag="List Drag"):
         p.entries.append(G.entry(f"mark {r}", "Image", G.obj(("version", 2), ("imageType", "Regular"), ("colour", "0"), ("image", row_mark_img(rw, row_h - 2 * gap))),
                                  f"{x} {ry + gap} {rw} {row_h - 2 * gap}", "No", "Hide", "Always",
                                  invalidating=(inv or []) + ["IndexedEnabling/%d/%d/Parameter %d" % (r, NUM_LIST_ROWS + 1, cur)]))
+        # USER tag on rows that hold one of your own patches (List User N, set by the plugin), under the touch layers.
+        cw_, ch_ = 54, min(22, row_h - 2 * gap - 8)
+        p.entries.append(G.entry(f"user {r}", "Image", G.obj(("version", 2), ("imageType", "Regular"), ("colour", "0"), ("image", user_chip_img(cw_, ch_))),
+                                 f"{x + rw - cw_ - 10} {ry + (row_h - ch_) // 2} {cw_} {ch_}", "No", "Hide", "Always",
+                                 invalidating=(inv or []) + ["IndexedEnabling/1/2/Parameter %d" % PI["List User %d" % (r + 1)]]))
         p.add(comp_row(rw, row_h - 2 * gap, argb(TEXT), size), "List %d" % (r + 1), f"{x} {ry + gap} {rw} {row_h - 2 * gap}",
               focusable=False, inv=(inv or []) + [TOUCH_TAP])
         p.entries.append(G.entry("List %d drag" % (r + 1), comp_row_drag(rw, row_h, gap, argb(TEXT), size), G.obj(("version", 1), ("handleName", "Data")),
@@ -666,7 +736,7 @@ def browser_overlay(p):
         p.add(comp_button(key_img(w_, kh, k, True), key_img(w_, kh, k, False), 1, 1, w_, kh), "Key " + k, f"{kx} {ky} {w_} {kh}", focusable=False, inv=inv)
         col += span
     # Favourites view and list touch mode
-    p.seg_inv("Fav Filter", KX, y0 + 438, ["ALL", "FAVOURITES"], "amber", (KW - 8) // 2, 38, 8, inv)
+    p.seg_inv("Fav Filter", KX, y0 + 438, ["ALL", "FAVS", "USER"], "amber", (KW - 16) // 3, 38, 8, inv)
     p.seg_inv("List Touch", KX, y0 + 502, ["DRAG", "TAP"], "mint", (KW - 8) // 2, 34, 8, inv)
 
 
@@ -918,7 +988,7 @@ p = Page("MAIN", "MAIN", 0)
 for o in range(3):
     acc = OSC_ACC[o]; n = o + 1
     x0, x1 = column(p, o, f"OSC {n}", acc)
-    p.box(f"Osc{n} Table", (x0 + 80, PANEL_Y0 + 9, x1 - 124, PANEL_Y0 + 33), acc, size=12.0, colour=TEXT)
+    table_box(p, n, (x0 + 80, PANEL_Y0 + 9, x1 - 124, PANEL_Y0 + 33), acc)
     p.box(f"Osc{n} Warp Mode", (x1 - 116, PANEL_Y0 + 9, x1 - 12, PANEL_Y0 + 33), acc, size=12.0, colour=(197, 204, 213))
     p.wavetable(n, (x0 + 12, PANEL_Y0 + 44, x1 - 12, PANEL_Y0 + 194), acc, WAVE_KIND[o])
     p.knob_row(x0 + 12, PANEL_Y0 + 208, [(f"Osc{n} WT Pos", "WT POS"), (f"Osc{n} Unison", "UNISON"), (f"Osc{n} Detune", "DETUNE"), (f"Osc{n} Level", "LEVEL")], acc, gidx=o)
@@ -949,7 +1019,7 @@ p = Page("OSC", "OSCILLATORS", 1)
 for o in range(3):
     acc = OSC_ACC[o]; n = o + 1
     x0, x1 = column(p, o, f"OSC {n}", acc)
-    p.box(f"Osc{n} Table", (x0 + 80, PANEL_Y0 + 9, x1 - 124, PANEL_Y0 + 33), acc, size=12.0, colour=TEXT)
+    table_box(p, n, (x0 + 80, PANEL_Y0 + 9, x1 - 124, PANEL_Y0 + 33), acc)
     p.box(f"Osc{n} Warp Mode", (x1 - 116, PANEL_Y0 + 9, x1 - 12, PANEL_Y0 + 33), acc, size=12.0, colour=(197, 204, 213))
     p.wavetable(n, (x0 + 12, PANEL_Y0 + 44, x1 - 12, PANEL_Y0 + 194), acc, WAVE_KIND[o])
     p.knob_row(x0 + 12, PANEL_Y0 + 208, [(f"Osc{n} Transp", "TRANSP", True), (f"Osc{n} Fine", "FINE", True), (f"Osc{n} Warp", "WARP"), (f"Osc{n} Morph", "MORPH")], acc, gidx=o)
@@ -1631,6 +1701,7 @@ for pg in PAGES:
     arp_panel(pg)
     grain_panel(pg)
     mod_panel(pg)
+    tables_panel(pg)
 
 
 # ------------------------------------------------------------------------------------------------ write
