@@ -83,6 +83,7 @@ BS Round Moog Bass.vital|R&B / Soul
 BS Rubber Sub.vital|Trap / Rage,Hip-Hop,Pop
 BS Saw Stack Bass.vital|EDM,Synthwave / Retro
 BS Slap Synth Bass.vital|R&B / Soul
+BS Slime Reese Bass.vital|Trap / Rage,Hip-Hop
 BS Smooth Sub.vital|R&B / Soul,Lo-Fi / Chill
 BS Squelch 303.vital|House / Techno
 BS Sub Knock 808.vital|Trap / Rage
@@ -157,6 +158,7 @@ KY Soft Stab Keys.vital|House / Techno
 KY Stab Chord.vital|House / Techno
 KY Toy Keys.vital|Lo-Fi / Chill
 KY Upright Felt.vital|Hip-Hop,Lo-Fi / Chill
+KY Vamp Organ.vital|Trap / Rage,Hip-Hop
 KY Vector Keys.vital|Synthwave / Retro
 KY Velvet Keys.vital|R&B / Soul
 KY Warm EP Pad Keys.vital|R&B / Soul
@@ -167,10 +169,13 @@ LD Anthem Supersaw.vital|EDM
 LD Big Room Lead.vital|EDM
 LD Bright Saw Lead.vital|EDM,Pop
 LD Buchla Bounce.vital|House / Techno
+LD Chaos Screech.vital|Trap / Rage,EDM
 LD Chebyshev Whistle.vital|Lo-Fi / Chill
 LD Chip Arp.vital|Synthwave / Retro
 LD Chip Lead.vital|Synthwave / Retro
+LD Clipped Saw Lead.vital|Trap / Rage
 LD Crystal Lead.vital|EDM
+LD Distorted Brass Lead.vital|Trap / Rage
 LD Distorted Saw Lead.vital|Trap / Rage
 LD Dive Lead.vital|Trap / Rage
 LD Falsetto Whistle.vital|R&B / Soul
@@ -184,24 +189,31 @@ LD Fuzz Synth Lead.vital|Trap / Rage
 LD G-Funk Lead.vital|Hip-Hop
 LD Glide Pulse Lead.vital|R&B / Soul
 LD Glide Saw 80s.vital|Synthwave / Retro
+LD Glitch Crush Lead.vital|Trap / Rage
 LD Hardstyle Screech.vital|EDM
 LD Hoover Lead.vital|EDM,Synthwave / Retro
+LD Hyper Detune Lead.vital|Trap / Rage
 LD Hyper Glide Lead.vital|Trap / Rage
 LD Hyper Saw.vital|Trap / Rage
 LD Modulo Lead.vital|House / Techno
 LD Nasal Reed.vital|Lo-Fi / Chill
 LD OP Lead.vital|Synthwave / Retro
 LD Ocarina.vital|Trap / Rage,Lo-Fi / Chill
+LD Pitch Snap Lead.vital|Trap / Rage
 LD Plaits Lead.vital|House / Techno
 LD Portamento Sine.vital|Trap / Rage,Hip-Hop
+LD Punk Fuzz Lead.vital|Trap / Rage
+LD Rage Anthem Lead.vital|Trap / Rage,EDM
 LD Rage Saw Lead.vital|Trap / Rage
 LD Screamer.vital|Trap / Rage,EDM
 LD Silk Lead.vital|R&B / Soul,Pop
 LD Siren Wail.vital|Trap / Rage
+LD Sky Arp Lead.vital|Trap / Rage,Hip-Hop
 LD Smooth Sine Lead.vital|R&B / Soul
 LD Soft Sine Lead.vital|Hip-Hop,R&B / Soul,Lo-Fi / Chill
 LD Soft Square Lead.vital|R&B / Soul
 LD Square Hero.vital|Pop,Synthwave / Retro
+LD Square Rage Lead.vital|Trap / Rage
 LD Sync Lead.vital|EDM
 LD Sync Scream.vital|EDM
 LD Talk Box Lead.vital|R&B / Soul
@@ -209,6 +221,7 @@ LD Trance Lead.vital|EDM
 LD Uplift Trance Lead.vital|EDM
 LD Vocal Synth Lead.vital|Pop
 LD Wah Lead.vital|House / Techno
+LD Wavy Saw Lead.vital|Trap / Rage,Hip-Hop
 LD Whistle Lead.vital|Hip-Hop,R&B / Soul
 PC Clap Room.vital|Trap / Rage,Hip-Hop,EDM,House / Techno
 PC Closed Hat.vital|Trap / Rage,Hip-Hop,House / Techno
@@ -227,12 +240,14 @@ PD 80s Poly Pad.vital|Synthwave / Retro
 PD Additive Choir.vital|Ambient / Cinematic
 PD Analog Strings Pad.vital|Synthwave / Retro
 PD Analog Warmth.vital|Synthwave / Retro
+PD Bitcrush Chords.vital|Trap / Rage
 PD Breakdown Pad.vital|EDM
 PD Breathing Pad.vital|R&B / Soul,Ambient / Cinematic
 PD Bright Poly Pad.vital|EDM,Pop
 PD Cathedral.vital|Ambient / Cinematic
 PD Choir of Glass.vital|Synthwave / Retro,Ambient / Cinematic
 PD Choral Pad.vital|Trap / Rage
+PD Cloud Rage Chords.vital|Trap / Rage
 PD Comb Shimmer.vital|Ambient / Cinematic
 PD Dark Choir.vital|Trap / Rage,Ambient / Cinematic
 PD Dark Matter.vital|Trap / Rage,Ambient / Cinematic
@@ -241,6 +256,7 @@ PD Desert Wind Pad.vital|Ambient / Cinematic
 PD Euphoric Pad.vital|EDM
 PD Evolving Spectra.vital|Ambient / Cinematic
 PD Filter Rise Pad.vital|EDM
+PD Gated Hyper Saw.vital|Trap / Rage,EDM
 PD Ghost Strings.vital|Trap / Rage,Ambient / Cinematic
 PD Glacier.vital|Ambient / Cinematic
 PD Glass Choir Pad.vital|Ambient / Cinematic
@@ -249,10 +265,12 @@ PD Granular Pad.vital|Ambient / Cinematic
 PD Harmonic Bloom.vital|R&B / Soul
 PD Harmonic Drift.vital|Ambient / Cinematic
 PD Haze Vox Pad.vital|Trap / Rage,Ambient / Cinematic
+PD Hyper Detune Chords.vital|Trap / Rage,EDM
 PD Ice Field.vital|Ambient / Cinematic
 PD Neo Soul Strings.vital|R&B / Soul
 PD Night Pad.vital|Trap / Rage,Ambient / Cinematic
 PD Night Swell.vital|Trap / Rage,Ambient / Cinematic
+PD Opium Chords.vital|Trap / Rage,Hip-Hop
 PD Organ Pad.vital|House / Techno
 PD PPG Sweep.vital|Synthwave / Retro
 PD PWM Air Pad.vital|EDM
@@ -262,6 +280,8 @@ PD Phaser Strings.vital|Synthwave / Retro
 PD Prophet Vector.vital|Synthwave / Retro
 PD Pulse Width Pad.vital|Synthwave / Retro
 PD Quiet Storm Pad.vital|R&B / Soul
+PD Rage Gate Chords.vital|Trap / Rage
+PD Rage Supersaw Chords.vital|Trap / Rage
 PD Retro Sci-Fi Pad.vital|Synthwave / Retro
 PD Satin Pad.vital|R&B / Soul,Lo-Fi / Chill
 PD Shimmer Pad.vital|EDM,Pop
@@ -279,14 +299,19 @@ PL Bright Saw Pluck.vital|EDM
 PL Bubble Pluck.vital|House / Techno
 PL Chime Pluck.vital|Pop
 PL Chord Stab.vital|EDM,Pop
+PL Clipped Pluck.vital|Trap / Rage
 PL Deep Pluck.vital|House / Techno
+PL Detuned Stab Pluck.vital|Trap / Rage,EDM
 PL Digital Bells.vital|Pop
+PL Distorted Chord Stab.vital|Trap / Rage
+PL Dreamy Rage Pluck.vital|Trap / Rage,Hip-Hop
 PL Drop Pluck.vital|EDM
 PL Funky Wah Pluck.vital|House / Techno
 PL Future Pluck.vital|EDM
 PL Glass Pluck.vital|Pop
 PL Guitar Pick.vital|Hip-Hop,Lo-Fi / Chill
 PL Harp Glint.vital|Trap / Rage,Lo-Fi / Chill
+PL Hyper Pluck.vital|Trap / Rage
 PL Island Pluck.vital|EDM,Pop
 PL Kalimba Drop.vital|Trap / Rage,Hip-Hop,Lo-Fi / Chill
 PL Koto Pluck.vital|Trap / Rage,Ambient / Cinematic
@@ -295,13 +320,18 @@ PL Mallet Pluck.vital|Pop
 PL Marimba Pluck.vital|Pop
 PL Muted Guitar.vital|Hip-Hop,Lo-Fi / Chill
 PL Nylon Pluck.vital|Hip-Hop,Lo-Fi / Chill
+PL Overdrive Stab.vital|Trap / Rage
 PL Pizz Pluck.vital|Hip-Hop
 PL Pizzicato Strings.vital|Trap / Rage
 PL Pluck Arp Glass.vital|EDM
 PL Progressive Pluck.vital|EDM
+PL Punch Saw Pluck.vital|Trap / Rage,EDM
+PL Rage Chord Pluck.vital|Trap / Rage
+PL Rage Pluck.vital|Trap / Rage
 PL Rubber Pluck.vital|House / Techno
 PL Shamisen.vital|Ambient / Cinematic
 PL Sitar Pluck.vital|Trap / Rage
+PL Snap Pluck.vital|Trap / Rage
 PL String Pluck.vital|Pop
 PL Sync Pluck.vital|EDM
 PL Synth Harp.vital|Trap / Rage

@@ -821,68 +821,207 @@ static const C kEnvFestival = { { "env_1_attack", 0.05f }, { "env_1_decay", 1.0f
                                 { "env_2_attack", 0.0f }, { "env_2_decay", 0.75f }, { "env_2_sustain", 0.2f } };
 static const C kSlide808 = { { "polyphony", 1 }, { "legato", 0 }, { "portamento_time", -3.5f }, { "portamento_slope", 0.0f } };
 static const Mod kDrop808 = { "env_2", "osc_1_transpose", 0.11f, false };   // the "knock": about an octave down at the start
+// Rage sound: OTT-style multiband compression (Vital's compressor defaults, fully wet, a bit harder), wide unison,
+// poly for chords, an instant envelope that holds, and a big but short-ish reverb.
+static const C kRageBus = { { "compressor_on", 1 }, { "compressor_mix", 1.0f }, { "compressor_band_gain", 14.0f },
+                            { "compressor_high_gain", 18.0f } };
+static const C kRageSpread = { { "osc_1_stereo_spread", 1.0f }, { "osc_2_stereo_spread", 1.0f }, { "osc_1_unison_blend", 0.9f },
+                               { "osc_2_unison_blend", 0.9f } };
+static const C kRagePoly = { { "polyphony", 8 }, { "legato", 0 }, { "portamento_time", -10.0f } };
+static const C kEnvRageChord = { { "env_1_attack", 0.0f }, { "env_1_decay", 1.0f }, { "env_1_sustain", 1.0f }, { "env_1_release", 0.55f },
+                                 { "env_2_attack", 0.0f }, { "env_2_decay", 0.8f }, { "env_2_sustain", 0.4f } };
+static const C kRageVerb = { { "reverb_dry_wet", 0.3f }, { "reverb_size", 0.8f }, { "reverb_decay_time", 0.9f } };
+// Punch: env 2 snaps the filter open and the pitch up a little for the first few milliseconds.
+static const C kEnvPunch = { { "env_1_attack", 0.0f }, { "env_1_decay", 0.9f }, { "env_1_sustain", 0.85f }, { "env_1_release", 0.5f },
+                             { "env_2_attack", 0.0f }, { "env_2_decay", 0.36f }, { "env_2_sustain", 0.0f } };
+static const C kEnvPunchPluck = { { "env_1_attack", 0.0f }, { "env_1_decay", 0.72f }, { "env_1_sustain", 0.0f }, { "env_1_release", 0.5f },
+                                  { "env_2_attack", 0.0f }, { "env_2_decay", 0.42f }, { "env_2_sustain", 0.0f } };
+static const Mod kPunchFilter = { "env_2", "filter_1_cutoff", 0.18f, false };
+static const Mod kPunchSnap = { "env_2", "osc_1_transpose", 0.04f, false };   // about 4 semitones down into the note
 
 static void addMore4(std::vector<PatchDef>& d) {
+  // ---- RAGE (1.3 rework): wide detuned saws through soft clip and OTT-style multiband compression (kRageBus),
+  //      poly so they play chords; 808s clipped hard; bells and pads distorted. Plus the supersaw chord set.
+  // ---- RAGE: supersaw chords (8)
+  d.push_back({ "Rage Supersaw Chords", "Pad", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 5.8f), osc(2, 0.35f, 12), uni(2, 7, 4.8f), kRageSpread, filt(0, 0, 134, 0.0f), kEnvRageChord,
+          kRagePoly, kRageBus, dist(0, 22), kRageVerb }), {} });
+  d.push_back({ "Opium Chords", "Pad", { "@4", "@5" },
+    cat({ osc(1, 0.55f), uni(1, 9, 6.4f), osc(2, 0.3f, 12), uni(2, 7, 5.4f), kRageSpread, filt(0, 0, 116, 0.15f, 6), kEnvRageChord,
+          kRagePoly, kRageBus, dist(1, 24), kChorus, kVast }), {} });
+  d.push_back({ "Distorted Chord Stab", "Pluck", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 6.0f), osc(2, 0.35f, 12), uni(2, 7, 5.0f), kRageSpread, filt(0, 0, 124, 0.1f),
+          { { "env_1_attack", 0.0f }, { "env_1_decay", 0.85f }, { "env_1_sustain", 0.15f }, { "env_1_release", 0.45f },
+            { "env_2_attack", 0.0f }, { "env_2_decay", 0.55f }, { "env_2_sustain", 0.0f } },
+          kRagePoly, kRageBus, dist(1, 26), kRageVerb, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.12f, false } } });
+  d.push_back({ "Rage Gate Chords", "Pad", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 5.6f), osc(2, 0.35f, 12), uni(2, 7, 4.6f), kRageSpread, filt(0, 0, 132, 0.0f), kEnvRageChord,
+          kRagePoly, kRageBus, dist(0, 22), kRageVerb, lfoTempo(1, 10) }),
+    { { "lfo_1", "osc_1_level", 0.55f, false }, { "lfo_1", "osc_2_level", 0.35f, false } }, { 4 } });
+  d.push_back({ "Hyper Detune Chords", "Pad", { "@4", "@9" },
+    cat({ osc(1, 0.55f), uni(1, 9, 8.2f), osc(2, 0.3f, 12, 90), uni(2, 7, 6.5f), kRageSpread, filt(0, 0, 136, 0.0f), kEnvRageChord,
+          kRagePoly, kRageBus, dist(0, 20), kRageVerb }), {} });
+  d.push_back({ "Bitcrush Chords", "Pad", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 6.0f), osc(2, 0.35f, 12), uni(2, 7, 5.0f), kRageSpread, filt(0, 0, 130, 0.0f), kEnvRageChord,
+          kRagePoly, kRageBus, dist(4, 0), { { "distortion_mix", 0.45f } }, kRageVerb }), {} });
+  d.push_back({ "Cloud Rage Chords", "Pad", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 6.2f), osc(2, 0.35f, 12), uni(2, 7, 5.2f), kRageSpread, filt(0, 0, 128, 0.0f),
+          { { "env_1_attack", 0.45f }, { "env_1_decay", 1.0f }, { "env_1_sustain", 1.0f }, { "env_1_release", 1.0f },
+            { "env_2_attack", 0.0f }, { "env_2_decay", 1.0f }, { "env_2_sustain", 1.0f } },
+          kRagePoly, kRageBus, dist(0, 18), kShimmer }), {} });
+  d.push_back({ "Rage Chord Pluck", "Pluck", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 5.8f), osc(2, 0.35f, 12), uni(2, 5, 3.2f), kRageSpread, filt(0, 0, 112, 0.15f), kEnvPluck,
+          kRagePoly, kRageBus, dist(0, 22), kRageVerb, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.3f, false } } });
+  // ---- RAGE / SUPERSAW: leads with punch (6) - a quick pitch snap and filter hit on the attack, then wide and loud
+  d.push_back({ "Rage Anthem Lead", "Lead", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 6.2f), osc(2, 0.35f, 12), uni(2, 7, 5.0f), kRageSpread, filt(0, 0, 118, 0.1f), kEnvPunch,
+          kRagePoly, kRageBus, dist(0, 24), kRageVerb, kDelay16 }), { kPunchFilter, kPunchSnap } });
+  d.push_back({ "Hyper Detune Lead", "Lead", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 8.0f), osc(2, 0.35f, 12), uni(2, 7, 6.5f), kRageSpread, filt(0, 0, 124, 0.0f), kEnvPunch,
+          kRagePoly, kRageBus, dist(0, 22), kRageVerb }), { kPunchFilter } });
+  d.push_back({ "Clipped Saw Lead", "Lead", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 5.8f), osc(2, 0.3f, -12), uni(2, 5, 3.0f), kRageSpread, filt(0, 0, 120, 0.15f), kEnvPunch,
+          kRagePoly, kRageBus, dist(1, 30), kRoom, kDelay16 }), { kPunchFilter, kPunchSnap } });
+  d.push_back({ "Square Rage Lead", "Lead", { "@5", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 5.5f), osc(2, 0.3f, 12), uni(2, 7, 5.0f), kRageSpread, filt(0, 0, 116, 0.2f), kEnvPunch,
+          kRagePoly, kRageBus, dist(0, 24), kRageVerb }), { kPunchFilter } });
+  d.push_back({ "Pitch Snap Lead", "Lead", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 6.0f), osc(2, 0.35f, 12), uni(2, 7, 5.0f), kRageSpread, filt(0, 0, 126, 0.0f), kEnvPunch,
+          kRagePoly, kRageBus, dist(0, 24), kRageVerb, kDelayDot }),
+    { { "env_2", "osc_1_transpose", 0.13f, false }, { "env_2", "osc_2_transpose", 0.13f, false } } });
+  d.push_back({ "Distorted Brass Lead", "Lead", { "@4", "@6" },
+    cat({ osc(1, 0.55f), uni(1, 7, 5.0f), osc(2, 0.35f, 0, 80), uni(2, 5, 4.0f), kRageSpread, filt(0, 1, 96, 0.25f, 8), kEnvPunch,
+          kRagePoly, kRageBus, dist(1, 24), kRageVerb }),
+    { { "env_2", "filter_1_cutoff", 0.4f, false }, kPunchSnap } });
+  // ---- RAGE / SUPERSAW: plucks with punch (6)
+  d.push_back({ "Punch Saw Pluck", "Pluck", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 6.0f), osc(2, 0.35f, 12), uni(2, 7, 5.0f), kRageSpread, filt(0, 0, 100, 0.2f), kEnvPunchPluck,
+          kRagePoly, kRageBus, dist(0, 24), kRageVerb, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.4f, false }, kPunchSnap } });
+  d.push_back({ "Rage Pluck", "Pluck", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 6.6f), osc(2, 0.35f, 12), uni(2, 7, 5.4f), kRageSpread, filt(0, 0, 108, 0.1f), kEnvPunchPluck,
+          kRagePoly, kRageBus, dist(1, 26), kRageVerb, kDelay16 }),
+    { { "env_2", "filter_1_cutoff", 0.3f, false } } });
+  d.push_back({ "Snap Pluck", "Pluck", { "@4", "@5" },
+    cat({ osc(1, 0.55f), uni(1, 7, 5.0f), osc(2, 0.3f, 12), uni(2, 5, 4.0f), kRageSpread, filt(0, 0, 96, 0.25f), kEnvPunchPluck,
+          kRagePoly, kRageBus, dist(0, 22), kRoom, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.45f, false }, { "env_2", "osc_1_transpose", 0.13f, false } } });
+  d.push_back({ "Clipped Pluck", "Pluck", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 5.6f), osc(2, 0.3f, -12), filt(0, 0, 104, 0.15f), kEnvPunchPluck,
+          kRagePoly, kRageBus, dist(1, 30), kRoom }),
+    { { "env_2", "filter_1_cutoff", 0.35f, false }, kPunchSnap } });
+  d.push_back({ "Detuned Stab Pluck", "Pluck", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 7.5f), osc(2, 0.35f, 12), uni(2, 7, 6.0f), kRageSpread, filt(0, 0, 112, 0.1f), kEnvPunchPluck,
+          kRagePoly, kRageBus, dist(0, 24), kRageVerb }),
+    { { "env_2", "filter_1_cutoff", 0.25f, false } } });
+  d.push_back({ "Hyper Pluck", "Pluck", { "@9", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 7, 5.0f), osc(2, 0.35f, 12), uni(2, 7, 5.0f), kRageSpread, filt(0, 0, 118, 0.0f), kEnvPunchPluck,
+          kRagePoly, kRageBus, dist(0, 22), kRageVerb, kDelayDot }),
+    { { "env_2", "osc_1_wave_frame", 0.6f, false }, kPunchSnap } });
+  // ---- RAGE: punk / hyper / melodic styles (10)
+  d.push_back({ "Vamp Organ", "Keys", { T("Walsh Function", 2), "@5" },
+    cat({ osc(1, 0.6f), uni(1, 3, 0.8f), osc(2, 0.3f, -12), filt(0, 0, 112, 0.1f), kEnvRageChord, kRagePoly, kRageBus, dist(1, 24), kVast }), {} });
+  d.push_back({ "Sky Arp Lead", "Lead", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 5.4f), osc(2, 0.35f, 12), uni(2, 7, 4.6f), kRageSpread, filt(0, 0, 130, 0.0f), kEnvPunch,
+          kRagePoly, kRageBus, dist(0, 20), kRageVerb, kDelayDot, lfoHz(1, 2.4f) }),
+    { { "lfo_1", "osc_1_tune", 0.02f, true }, { "lfo_1", "osc_2_tune", 0.02f, true }, kPunchFilter } , { 1 } });
+  d.push_back({ "Punk Fuzz Lead", "Lead", { "@5", "@5" },
+    cat({ osc(1, 0.55f), uni(1, 5, 3.0f), osc(2, 0.3f, -12), filt(2, 0, 112, 0.3f, 14), kEnvPunch, kRagePoly, kRageBus, dist(2, 20), kRoom }),
+    { kPunchFilter, kPunchSnap } });
+  d.push_back({ "Slime Reese Bass", "Bass", { "@4" },
+    cat({ osc(1, 0.7f), uni(1, 7, 3.4f), filt(2, 0, 74, 0.3f, 12), kEnvBass, kMonoGlide, kDry, kRageBus, dist(1, 22), lfoHz(1, -1.8f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true } } });
+  d.push_back({ "Chaos Screech", "Lead", { "@4", "@4" },
+    cat({ osc(1, 0.5f), uni(1, 9, 7.2f), osc(2, 0.35f, 24), uni(2, 7, 6.0f), kRageSpread, filt(0, 0, 136, 0.0f), kEnvPunch,
+          kRagePoly, kRageBus, dist(1, 30), kRageVerb }), { kPunchSnap } });
+  d.push_back({ "Gated Hyper Saw", "Pad", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 6.4f), osc(2, 0.35f, 12), uni(2, 7, 5.4f), kRageSpread, filt(0, 0, 132, 0.0f), kEnvRageChord,
+          kRagePoly, kRageBus, dist(1, 26), kRageVerb, lfoTempo(1, 11) }),
+    { { "lfo_1", "osc_1_level", 0.6f, false }, { "lfo_1", "osc_2_level", 0.4f, false } }, { 4 } });
+  d.push_back({ "Overdrive Stab", "Pluck", { "@4", "@5" },
+    cat({ osc(1, 0.55f), uni(1, 9, 6.0f), osc(2, 0.3f, -12), uni(2, 3, 1.5f), kRageSpread, filt(0, 0, 110, 0.15f), kEnvPunchPluck,
+          kRagePoly, kRageBus, dist(1, 30), kRoom }),
+    { { "env_2", "filter_1_cutoff", 0.35f, false }, kPunchSnap } });
+  d.push_back({ "Glitch Crush Lead", "Lead", { "@4", "@5" },
+    cat({ osc(1, 0.55f), uni(1, 7, 5.0f), osc(2, 0.3f, 12), uni(2, 5, 4.0f), kRageSpread, filt(0, 0, 128, 0.0f), kEnvPunch,
+          kRagePoly, kRageBus, dist(5, 0), { { "distortion_mix", 0.6f } }, kRageVerb, kDelay16 }), { kPunchFilter } });
+  d.push_back({ "Wavy Saw Lead", "Lead", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 5.0f), osc(2, 0.35f, 12), uni(2, 7, 4.4f), kRageSpread, filt(0, 0, 124, 0.0f), kEnvPunch,
+          kRagePoly, kRageBus, dist(0, 18), kChorus, kRageVerb, kDelayDot, lfoHz(1, 1.6f) }),
+    { { "lfo_1", "osc_1_tune", 0.05f, true }, { "lfo_1", "osc_2_tune", 0.05f, true } }, { 1 } });
+  d.push_back({ "Dreamy Rage Pluck", "Pluck", { "@4", "@3" },
+    cat({ osc(1, 0.55f), uni(1, 9, 5.2f), osc(2, 0.35f, 12), kRageSpread, filt(0, 0, 118, 0.1f), kEnvPunchPluck,
+          kRagePoly, kRageBus, dist(0, 18), kShimmer, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.3f, false } } });
   // ---- RAGE: bells (5)
   d.push_back({ "Rage Bell", "Bell", { T("Additive Synth", 0) },
-    cat({ osc(1, 0.7f), filt(0, 0, 112, 0.1f), kEnvBellLong, dist(0, 9), kHall, kDelayDot }),
-    { { "env_2", "osc_1_wave_frame", 0.35f, false }, { "velocity", "distortion_drive", 0.1f, false } } });
+    cat({ osc(1, 0.6f), uni(1, 3, 0.6f), filt(0, 0, 134, 0.0f), kEnvBellLong, kRagePoly, kRageBus, dist(0, 20), kRageVerb, kDelayDot }),
+    { { "env_2", "osc_1_wave_frame", 0.35f, false } } });
   d.push_back({ "Tonka Chime", "Bell", { T("Digitone", 1) },
-    cat({ osc(1, 0.65f, 12), uni(1, 2, 0.3f), filt(0, 0, 118, 0.1f), kEnvBellLong, dist(1, 6), kShimmer, kDelay8 }),
+    cat({ osc(1, 0.6f, 12), uni(1, 3, 0.8f), filt(0, 0, 134, 0.0f), kEnvBellLong, kRagePoly, kRageBus, dist(1, 18), kShimmer, kDelay8 }),
     { { "env_2", "osc_1_wave_frame", 0.45f, false } } });
   d.push_back({ "Lux Toll", "Bell", { T("PM[Simple]", 4) },
-    cat({ osc(1, 0.65f), osc(2, 0.3f, 19), filt(1, 0, 104, 0.2f, 4), kEnvBellLong, dist(0, 12), kVast }),
+    cat({ osc(1, 0.6f), osc(2, 0.3f, 19), filt(0, 0, 126, 0.1f), kEnvBellLong, kRagePoly, kRageBus, dist(0, 22), kVast }),
     { { "env_2", "osc_2_level", 0.3f, false }, { "lfo_1", "osc_1_tune", 0.03f, true } } });
   d.push_back({ "Ice Toll", "Bell", { T("FM", 12) },
-    cat({ osc(1, 0.6f, 12), filt(0, 2, 70, 0.2f), kEnvBellLong, dist(4, 0), { { "distortion_mix", 0.35f } }, kHall, kDelayDot }),
+    cat({ osc(1, 0.6f, 12), uni(1, 3, 0.5f), filt(0, 0, 130, 0.0f), kEnvBellLong, kRagePoly, kRageBus, dist(4, 0), { { "distortion_mix", 0.4f } },
+          kRageVerb, kDelayDot }),
     { { "env_2", "osc_1_wave_frame", 0.3f, false } } });
   d.push_back({ "Wraith Bell", "Bell", { T("Additive Synth", 7) },
-    cat({ osc(1, 0.65f), uni(1, 3, 0.6f), filt(0, 0, 98, 0.1f), kEnvBellLong, dist(3, 5), kVast, lfoHz(1, 1.2f) }),
-    { { "lfo_1", "osc_1_wave_frame", 0.1f, true }, { "env_2", "filter_1_cutoff", 0.2f, false } }, { 1 } });
-  // ---- RAGE: 808s (5)
+    cat({ osc(1, 0.6f), uni(1, 5, 1.4f), kRageSpread, filt(0, 0, 124, 0.0f), kEnvBellLong, kRagePoly, kRageBus, dist(3, 10), kVast, lfoHz(1, 1.2f) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.1f, true } }, { 1 } });
+  // ---- RAGE: 808s (5): clipped hard, with the knock
   d.push_back({ "Rage 808", "Bass", { "@2" },
-    cat({ osc(1, 0.8f), filt(0, 0, 110, 0.0f), kEnv808, kSlide808, kDry, dist(0, 14), kComp }), { kDrop808 } });
+    cat({ osc(1, 0.8f), filt(0, 0, 120, 0.0f), kEnv808, kSlide808, kDry, kRageBus, dist(0, 26) }), { kDrop808 } });
   d.push_back({ "Clip 808", "Bass", { "@2" },
-    cat({ osc(1, 0.8f), filt(0, 0, 100, 0.0f), kEnv808, kSlide808, kDry, dist(1, 20), kComp }), { kDrop808 } });
+    cat({ osc(1, 0.8f), filt(0, 0, 112, 0.0f), kEnv808, kSlide808, kDry, kRageBus, dist(1, 30) }), { kDrop808 } });
   d.push_back({ "Fold 808", "Bass", { "@2" },
-    cat({ osc(1, 0.8f), warp(1, 6, 0.25f), filt(0, 0, 96, 0.1f), kEnv808, kSlide808, kDry, dist(3, 8) }),
+    cat({ osc(1, 0.8f), warp(1, 6, 0.35f), filt(0, 0, 110, 0.1f), kEnv808, kSlide808, kDry, kRageBus, dist(3, 14) }),
     { kDrop808, { "velocity", "osc_1_distortion_amount", 0.2f, false } } });
   d.push_back({ "Sub Knock 808", "Bass", { "@2" },
-    cat({ osc(1, 0.85f), filt(0, 0, 80, 0.0f), kEnv808, kSlide808, kDry, dist(0, 4), kComp }),
+    cat({ osc(1, 0.85f), filt(0, 0, 100, 0.0f), kEnv808, kSlide808, kDry, kRageBus, dist(0, 16) }),
     { { "env_2", "osc_1_transpose", 0.16f, false } } });
   d.push_back({ "Growl 808", "Bass", { "@2", "@4" },
-    cat({ osc(1, 0.75f), osc(2, 0.25f, 12), filt(2, 0, 78, 0.3f, 6), kEnv808, kSlide808, kDry, dist(0, 12) }),
+    cat({ osc(1, 0.75f), osc(2, 0.3f, 12), uni(2, 3, 1.0f), filt(2, 0, 92, 0.3f, 10), kEnv808, kSlide808, kDry, kRageBus, dist(1, 24) }),
     { kDrop808, { "env_2", "filter_1_cutoff", 0.3f, false } } });
-  // ---- RAGE: leads (5)
-  d.push_back({ "Rage Saw Lead", "Lead", { "@4" },
-    cat({ osc(1, 0.6f), uni(1, 7, 3.2f), filt(0, 1, 104, 0.15f), kEnvFestival, kMonoGlide, dist(0, 10), kHall, kDelay16 }),
-    { { "lfo_1", "osc_1_tune", 0.02f, true } } });
-  d.push_back({ "Siren Wail", "Lead", { "@6" },
-    cat({ osc(1, 0.65f, 0, 120), uni(1, 3, 1.2f), filt(1, 1, 96, 0.3f, 6), kEnvLead, kMonoGlide, dist(0, 8), kHall, lfoHz(1, 2.2f) }),
+  // ---- RAGE: leads (5): poly supersaws (play them as chords too), the two glide leads stay mono
+  d.push_back({ "Rage Saw Lead", "Lead", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 4.4f), osc(2, 0.35f, 12), uni(2, 7, 3.6f), kRageSpread, filt(0, 0, 134, 0.0f), kEnvRageChord,
+          kRagePoly, kRageBus, dist(0, 22), kRageVerb, kDelay16 }), {} });
+  d.push_back({ "Siren Wail", "Lead", { "@6", "@4" },
+    cat({ osc(1, 0.6f, 0, 120), uni(1, 7, 3.4f), osc(2, 0.3f, 12), uni(2, 5, 2.8f), kRageSpread, filt(0, 0, 130, 0.0f), kEnvLead,
+          kMonoGlide, kRageBus, dist(0, 22), kRageVerb, lfoHz(1, 2.2f) }),
     { { "lfo_1", "osc_1_tune", 0.06f, true }, { "env_2", "osc_1_wave_frame", 0.3f, false } }, { 1 } });
-  d.push_back({ "Dive Lead", "Lead", { T("AnalogFour", 1) },
-    cat({ osc(1, 0.65f), uni(1, 5, 2.4f), filt(0, 1, 100, 0.2f), kEnvFestival, kMono, dist(1, 7), kRoom }),
-    { { "env_2", "osc_1_transpose", 0.06f, false } } });
-  d.push_back({ "Fuzz Synth Lead", "Lead", { "@5" },
-    cat({ osc(1, 0.6f), uni(1, 4, 1.8f), filt(2, 0, 90, 0.35f, 10), kEnvLead, kMonoGlide, dist(2, 10), kRoom, kDelay16 }),
-    { { "velocity", "filter_1_cutoff", 0.15f, false } } });
-  d.push_back({ "Hyper Glide Lead", "Lead", { "@9" },
-    cat({ osc(1, 0.6f, 0, 60), uni(1, 5, 2.0f), filt(0, 1, 108, 0.1f), kEnvLead, kMonoGlide, dist(0, 9), kHall }),
-    { { "env_2", "osc_1_wave_frame", 0.5f, false } } });
+  d.push_back({ "Dive Lead", "Lead", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 4.8f), osc(2, 0.35f, 12), uni(2, 7, 4.0f), kRageSpread, filt(0, 0, 132, 0.0f), kEnvRageChord,
+          kRagePoly, kRageBus, dist(1, 22), kRageVerb }),
+    { { "env_2", "osc_1_transpose", 0.06f, false }, { "env_2", "osc_2_transpose", 0.06f, false } } });
+  d.push_back({ "Fuzz Synth Lead", "Lead", { "@5", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 7, 4.0f), osc(2, 0.35f, 12), uni(2, 7, 3.6f), kRageSpread, filt(2, 0, 120, 0.2f, 10), kEnvRageChord,
+          kRagePoly, kRageBus, dist(2, 16), kRageVerb, kDelay16 }), {} });
+  d.push_back({ "Hyper Glide Lead", "Lead", { "@4", "@9" },
+    cat({ osc(1, 0.55f), uni(1, 9, 5.0f), osc(2, 0.35f, 12, 60), uni(2, 5, 3.0f), kRageSpread, filt(0, 0, 134, 0.0f), kEnvLead,
+          kMonoGlide, kRageBus, dist(0, 22), kRageVerb }),
+    { { "env_2", "osc_2_wave_frame", 0.5f, false } } });
   // ---- RAGE: pads (5)
   d.push_back({ "Dark Choir", "Pad", { T("GMa Vowel", 0) },
-    cat({ osc(1, 0.6f, 0, 60), uni(1, 5, 1.6f), filt(0, 0, 82, 0.15f), kEnvChoir, dist(0, 6), kVast, lfoHz(1, -2.0f) }),
+    cat({ osc(1, 0.6f, 0, 60), uni(1, 7, 2.4f), kRageSpread, filt(0, 0, 96, 0.15f), kEnvChoir, kRageBus, dist(0, 16), kVast, lfoHz(1, -2.0f) }),
     { { "lfo_1", "osc_1_wave_frame", 0.35f, false } } });
   d.push_back({ "Void Organ", "Pad", { T("Walsh Function", 2) },
-    cat({ osc(1, 0.6f), osc(2, 0.3f, -12), filt(0, 0, 86, 0.1f), kEnvChoir, dist(0, 10), kVast }), {} });
-  d.push_back({ "Ghost Strings", "Pad", { "@4" },
-    cat({ osc(1, 0.55f), uni(1, 7, 2.8f), filt(0, 0, 74, 0.1f), kEnvChoir, kChorus, kVast, lfoHz(1, -1.6f) }),
+    cat({ osc(1, 0.6f), uni(1, 3, 0.6f), osc(2, 0.3f, -12), filt(0, 0, 102, 0.1f), kEnvChoir, kRageBus, dist(1, 18), kVast }), {} });
+  d.push_back({ "Ghost Strings", "Pad", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 9, 4.0f), osc(2, 0.3f, 12), uni(2, 5, 3.0f), kRageSpread, filt(0, 0, 100, 0.1f), kEnvChoir,
+          kRageBus, dist(0, 16), kChorus, kVast, lfoHz(1, -1.6f) }),
     { { "lfo_1", "filter_1_cutoff", 0.08f, true } } });
   d.push_back({ "Haze Vox Pad", "Pad", { T("Formant", 2) },
-    cat({ osc(1, 0.6f), uni(1, 4, 1.4f), filt(5, 0, 88, 0.2f), kEnvChoir, dist(5, 0), { { "distortion_mix", 0.25f } }, kVast, lfoHz(1, -2.4f) }),
+    cat({ osc(1, 0.6f), uni(1, 7, 2.8f), kRageSpread, filt(5, 0, 104, 0.2f), kEnvChoir, kRageBus, dist(5, 0), { { "distortion_mix", 0.35f } },
+          kVast, lfoHz(1, -2.4f) }),
     { { "lfo_1", "osc_1_wave_frame", 0.6f, false } } });
-  d.push_back({ "Night Swell", "Pad", { "@7" },
-    cat({ osc(1, 0.6f), uni(1, 5, 2.0f), filt(0, 0, 80, 0.15f), kEnvSwell, dist(0, 8), kVast }),
+  d.push_back({ "Night Swell", "Pad", { "@7", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 7, 3.4f), osc(2, 0.3f, 12), uni(2, 5, 3.0f), kRageSpread, filt(0, 0, 110, 0.15f), kEnvSwell,
+          kRageBus, dist(0, 18), kVast }),
     { { "env_2", "osc_1_wave_frame", 0.7f, false } } });
 
   // ---- EDM: leads (5)
@@ -1247,7 +1386,9 @@ int main(int argc, char** argv) {
     // loudest 300 ms lands near -16 dBFS RMS. Patches that cannot get there with volume alone get
     // their oscillator levels raised first.
     double last_peak = 0.0;
-    auto measure = [&core, &last_peak]() {
+    // 808s (and the 1.3 reese) play low: measure them on a low note, or the high-band compression makes them read loud.
+    bool low_bass = def.name.find("808") != std::string::npos || def.name == "Slime Reese Bass";
+    auto measure = [&core, &last_peak, low_bass]() {
       // Measure as the MPC plays it by default (Quality: Eco, unison and voices capped at 8),
       // including the release and effect tails.
       float oversampling = core.getControl("oversampling");
@@ -1258,6 +1399,7 @@ int main(int argc, char** argv) {
       core.applyLimits(8, 8, 0, nullptr);
       bool mono = core.getControl("polyphony") < 1.5f;
       std::vector<int> notes = { 48, 55, 60, 64 };   // mono patches too: the last note wins, as when played
+      if (low_bass) notes = { 33 };
       (void)mono;
       float l[128], r[128];
       double window = 0.0, best = 0.0;

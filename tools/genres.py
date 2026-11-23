@@ -16,14 +16,18 @@ GENRES = ["Trap / Rage", "Hip-Hop", "R&B / Soul", "EDM", "House / Techno", "Pop"
 
 # genre -> patch names (without the type code and .vital)
 TAGS = {
-    "Trap / Rage": """808 Glide; Clip 808; Fold 808; Growl 808; Rage 808; Sub Knock 808; Sub Pressure; Rubber Sub; Rage Bell;
+    "Trap / Rage": """Rage Supersaw Chords; Opium Chords; Distorted Chord Stab; Rage Gate Chords; Hyper Detune Chords; Bitcrush Chords;
+        Cloud Rage Chords; Rage Chord Pluck; Rage Anthem Lead; Hyper Detune Lead; Clipped Saw Lead; Square Rage Lead;
+        Pitch Snap Lead; Distorted Brass Lead; Punch Saw Pluck; Rage Pluck; Snap Pluck; Clipped Pluck; Detuned Stab Pluck;
+        Hyper Pluck; Vamp Organ; Sky Arp Lead; Punk Fuzz Lead; Slime Reese Bass; Chaos Screech; Gated Hyper Saw;
+        Overdrive Stab; Glitch Crush Lead; Wavy Saw Lead; Dreamy Rage Pluck; 808 Glide; Clip 808; Fold 808; Growl 808; Rage 808; Sub Knock 808; Sub Pressure; Rubber Sub; Rage Bell;
         Tonka Chime; Ice Toll; Lux Toll; Wraith Bell; Church Bell; Music Box; Glockenspiel; Rage Saw Lead; Siren Wail; Dive Lead;
         Fuzz Synth Lead; Hyper Glide Lead; Distorted Saw Lead; Hyper Saw; Fuzz Lead; Screamer; Portamento Sine; Dark Choir;
         Void Organ; Ghost Strings; Haze Vox Pad; Night Swell; Dark Matter; Dark Strings Pad; Night Pad; Choral Pad; Aah Choir;
         Monk Chant; Ghost Vowels; Dark Pulse Seq; Flute Synth; Ocarina; Pizzicato Strings; Synth Harp; Harp Glint; Koto Pluck;
         Sitar Pluck; Kalimba Drop; Cello Bow; Low Strings; Tubular Chime; Bowl Resonance; Snare Crack; Rim Click; Closed Hat;
         Clap Room""",
-    "Hip-Hop": """808 Glide; Sub Pressure; Rubber Sub; Moog Thump; Liquid Sub; Talking Bass; G-Funk Lead; Portamento Sine;
+    "Hip-Hop": """Opium Chords; Vamp Organ; Slime Reese Bass; Wavy Saw Lead; Dreamy Rage Pluck; Sky Arp Lead; 808 Glide; Sub Pressure; Rubber Sub; Moog Thump; Liquid Sub; Talking Bass; G-Funk Lead; Portamento Sine;
         Soft Sine Lead; Whistle Lead; Rhodes Hip Hop; Rhodes Classic; Rhodes Lofi Tape; Rhodes Mark Drive; Rhodes Suitcase;
         Lo-Fi Keys; Upright Felt; Analog Piano; Clav Funk; Wurly Drive; Muted Trumpet; Funk Brass Stab; Brass Section;
         Sax Synth; Muted Guitar; Nylon Pluck; Guitar Pick; Pizz Pluck; String Ensemble; Chamber Strings; Violin Solo;
@@ -37,7 +41,7 @@ TAGS = {
         Smooth Sine Lead; Talk Box Lead; Soft Square Lead; Glide Pulse Lead; Silk Lead; Soft Sine Lead; Whistle Lead;
         Smooth Sub; Funk Synth Bass; Round Moog Bass; Neo Soul Sub; Slap Synth Bass; Liquid Sub; Vibraphone Soft;
         Vibes Tremolo; Ooh Choir; Choir Swell; Whisper Pad; Talk Box; Sax Synth; Soft French Horn; Muted Trumpet""",
-    "EDM": """Festival Supersaw; Big Room Lead; Uplift Trance Lead; Trance Lead; Future Bass Saw; Hardstyle Screech;
+    "EDM": """Hyper Detune Chords; Rage Anthem Lead; Punch Saw Pluck; Detuned Stab Pluck; Gated Hyper Saw; Chaos Screech; Festival Supersaw; Big Room Lead; Uplift Trance Lead; Trance Lead; Future Bass Saw; Hardstyle Screech;
         Anthem Supersaw; Bright Saw Lead; Hoover Lead; Sync Lead; Sync Scream; Screamer; Crystal Lead; Formant Lead;
         Riddim Growl; Bounce Bass; Electro Reese; Dub Wobble; Dubstep Yoi; FM Growl; Formant Growler; Formant Wobble;
         Neuro Grind; Reese Pressure; Wobble Classic; Fat Unison Bass; Saw Stack Bass; Sync Snarl; Foldback Bass; Diode Bite;
