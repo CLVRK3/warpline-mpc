@@ -520,8 +520,8 @@ class Warpline : public mpc::Plugin {
       // Plugin-own parameters.
       addParam(mpc::choiceParam("patch", "Patch", names, 0));
       addParam(mpc::choiceParam("quality", "Quality", { "Eco", "High" }, 0));
-      addParam(mpc::intParam("max_voices", "Max Voices", 1, vital::kMaxPolyphony - 1, 8));
-      addParam(mpc::intParam("max_unison", "Max Unison", 1, 16, 8));
+      addParam(mpc::intParam("max_voices", "Max Voices", 1, vital::kMaxPolyphony - 1, kDefaultMaxVoices));
+      addParam(mpc::intParam("max_unison", "Max Unison", 1, 16, kDefaultMaxUnison));
       {
         mpc::Param status = mpc::floatParam("status", "Status", 0.0f, 1.0f, 0.0f);
         status.automatable = false;
@@ -745,6 +745,16 @@ class Warpline : public mpc::Plugin {
       bool gen_on = gen_in_use_.load();
       double gen_beats = Arp::beatsPerStep(gen_.settings().rate);
 
+      // 1.3 idle skip: after about a second of silence with no voices sounding, the engine is not rendered
+      // until a MIDI event arrives or the arp has notes again (saves the ~10% idle CPU on Gen 1 devices).
+      bool wake = arp_.running();
+      for (int i = 0; i < ctx.numMidiEvents && !wake; ++i)
+        wake = (ctx.midi[i].data[0] & 0xF0) != 0xF0;   // any channel message; clock and other system messages don't count
+      if (wake) {
+        idle_ = false;
+        idle_samples_ = 0;
+      }
+
       // Render between MIDI events and arp steps so notes land on the right sample.
       int pos = 0;
       int e = 0;
@@ -763,12 +773,29 @@ class Warpline : public mpc::Plugin {
           for (int o = 0; o < Gen::kNumOutputs; ++o)
             core_->setGenValue(o, gen_.value(o));
         }
-        core_->render(left + pos, right + pos, next - pos);
+        if (idle_) {
+          std::memset(left + pos, 0, sizeof(float) * (next - pos));
+          if (right != left)
+            std::memset(right + pos, 0, sizeof(float) * (next - pos));
+        }
+        else
+          core_->render(left + pos, right + pos, next - pos);
         arp_.advance(next - pos);
         pos = next;
       }
       while (e < ctx.numMidiEvents)
         handleMidi(ctx.midi[e++], send);
+      if (!idle_) {
+        float peak = 0.0f;
+        for (int i = 0; i < ctx.numFrames; ++i)
+          peak = std::max(peak, std::max(std::fabs(left[i]), std::fabs(right[i])));
+        if (peak < kIdlePeak && core_->activeVoices() == 0 && !arp_.running())
+          idle_samples_ += ctx.numFrames;
+        else
+          idle_samples_ = 0;
+        if (idle_samples_ > sample_rate_ * kIdleSeconds)
+          idle_ = true;
+      }
       arp_step_.store(arp_.running() ? arp_.currentStep() : -1);
       for (int o = 0; o < Gen::kNumOutputs; ++o)
         gen_out_[o].store(gen_.value(o));
@@ -2434,6 +2461,19 @@ class Warpline : public mpc::Plugin {
     std::atomic<bool> gen_in_use_{ false };
     std::array<std::atomic<float>, Gen::kNumOutputs> gen_out_ {};
     static constexpr int kGenChunk = 64;
+#if defined(__arm__) && !defined(__aarch64__)
+    // 1.3: Gen 1 MPCs (the 32-bit build) start new instances with fewer voices; saved projects keep their own value.
+    // (Unison costs little: x86 bench, 2026-11-24. Voices and FX are what count.)
+    static constexpr int kDefaultMaxVoices = 6;
+    static constexpr int kDefaultMaxUnison = 8;
+#else
+    static constexpr int kDefaultMaxVoices = 8;
+    static constexpr int kDefaultMaxUnison = 8;
+#endif
+    static constexpr float kIdlePeak = 1.0e-5f;   // -100 dBFS
+    static constexpr double kIdleSeconds = 1.0;
+    bool idle_ = false;          // audio thread only
+    double idle_samples_ = 0.0;  // audio thread only
     Granulator granulator_;
     GrainzClouds textures_;
     static constexpr int kWetChunk = 4096;
