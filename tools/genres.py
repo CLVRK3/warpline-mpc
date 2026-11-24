@@ -16,7 +16,7 @@ GENRES = ["Trap / Rage", "Hip-Hop", "R&B / Soul", "EDM", "House / Techno", "Pop"
 
 # genre -> patch names (without the type code and .vital)
 TAGS = {
-    "Trap / Rage": """Rage Supersaw Chords; Opium Chords; Distorted Chord Stab; Rage Gate Chords; Hyper Detune Chords; Bitcrush Chords;
+    "Trap / Rage": """Coin Rain Chords; Money Jingle Lead; Sub Quake Chords; Vault Chords; Rage Supersaw Chords; Opium Chords; Distorted Chord Stab; Rage Gate Chords; Hyper Detune Chords; Bitcrush Chords;
         Cloud Rage Chords; Rage Chord Pluck; Rage Anthem Lead; Hyper Detune Lead; Clipped Saw Lead; Square Rage Lead;
         Pitch Snap Lead; Distorted Brass Lead; Punch Saw Pluck; Rage Pluck; Snap Pluck; Clipped Pluck; Detuned Stab Pluck;
         Hyper Pluck; Vamp Organ; Sky Arp Lead; Punk Fuzz Lead; Slime Reese Bass; Chaos Screech; Gated Hyper Saw;
@@ -27,7 +27,7 @@ TAGS = {
         Monk Chant; Ghost Vowels; Dark Pulse Seq; Flute Synth; Ocarina; Pizzicato Strings; Synth Harp; Harp Glint; Koto Pluck;
         Sitar Pluck; Kalimba Drop; Cello Bow; Low Strings; Tubular Chime; Bowl Resonance; Snare Crack; Rim Click; Closed Hat;
         Clap Room""",
-    "Hip-Hop": """Opium Chords; Vamp Organ; Slime Reese Bass; Wavy Saw Lead; Dreamy Rage Pluck; Sky Arp Lead; 808 Glide; Sub Pressure; Rubber Sub; Moog Thump; Liquid Sub; Talking Bass; G-Funk Lead; Portamento Sine;
+    "Hip-Hop": """Sub Quake Chords; Money Jingle Lead; Opium Chords; Vamp Organ; Slime Reese Bass; Wavy Saw Lead; Dreamy Rage Pluck; Sky Arp Lead; 808 Glide; Sub Pressure; Rubber Sub; Moog Thump; Liquid Sub; Talking Bass; G-Funk Lead; Portamento Sine;
         Soft Sine Lead; Whistle Lead; Rhodes Hip Hop; Rhodes Classic; Rhodes Lofi Tape; Rhodes Mark Drive; Rhodes Suitcase;
         Lo-Fi Keys; Upright Felt; Analog Piano; Clav Funk; Wurly Drive; Muted Trumpet; Funk Brass Stab; Brass Section;
         Sax Synth; Muted Guitar; Nylon Pluck; Guitar Pick; Pizz Pluck; String Ensemble; Chamber Strings; Violin Solo;

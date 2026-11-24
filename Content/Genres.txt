@@ -196,6 +196,7 @@ LD Hyper Detune Lead.vital|Trap / Rage
 LD Hyper Glide Lead.vital|Trap / Rage
 LD Hyper Saw.vital|Trap / Rage
 LD Modulo Lead.vital|House / Techno
+LD Money Jingle Lead.vital|Trap / Rage,Hip-Hop
 LD Nasal Reed.vital|Lo-Fi / Chill
 LD OP Lead.vital|Synthwave / Retro
 LD Ocarina.vital|Trap / Rage,Lo-Fi / Chill
@@ -248,6 +249,7 @@ PD Cathedral.vital|Ambient / Cinematic
 PD Choir of Glass.vital|Synthwave / Retro,Ambient / Cinematic
 PD Choral Pad.vital|Trap / Rage
 PD Cloud Rage Chords.vital|Trap / Rage
+PD Coin Rain Chords.vital|Trap / Rage
 PD Comb Shimmer.vital|Ambient / Cinematic
 PD Dark Choir.vital|Trap / Rage,Ambient / Cinematic
 PD Dark Matter.vital|Trap / Rage,Ambient / Cinematic
@@ -288,7 +290,9 @@ PD Shimmer Pad.vital|EDM,Pop
 PD Sidechain Pad.vital|EDM
 PD Silk Pad.vital|R&B / Soul,Pop
 PD Spectral Smear.vital|Ambient / Cinematic
+PD Sub Quake Chords.vital|Trap / Rage,Hip-Hop
 PD Sunrise Sweep.vital|Ambient / Cinematic
+PD Vault Chords.vital|Trap / Rage
 PD Void Organ.vital|Trap / Rage,Ambient / Cinematic
 PD Vowel Pad.vital|Ambient / Cinematic
 PD Warm Analog Pad.vital|Pop,Synthwave / Retro
