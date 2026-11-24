@@ -10,7 +10,7 @@ Open MPC catalog: https://open-mpc.github.io/ (release rules: https://open-mpc.g
 - Catalog id: `warpline` (once listed).
 - License: GPL-3.0-or-later (Vital's engine is GPLv3). Keep `LICENSE` in the repo root.
 - Do not ship anyone else's presets (your own collection in `<drive>\Warpline\Patches` stays private).
-  The 394 factory patches are ours, made from CC0 wavetables, so they are fine to ship.
+  The 519 factory patches are ours, made from CC0 wavetables, so they are fine to ship.
 
 ## Version numbers (X.Y.Z)
 

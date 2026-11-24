@@ -28,7 +28,7 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
 - `tools/render_demo.cpp`: renders a WAV demo of .vital patches through VitalCore (chords, or an 808 line for Bass) to listen
   to factory patches without a device. Build line in its header.
 - `tools/genres.py`: writes `Content/Genres.txt`, the factory patches' genres. Run it after adding patches.
-- `tools/make_factory.cpp`: generates the 394 factory patches (a table named "@n" is Warpline's own built-in table n).
+- `tools/make_factory.cpp`: generates the 519 factory patches (a table named "@n" is Warpline's own built-in table n).
   - It uses CC0 wavetables from atsushieno/open-vital-resources.
   - It sets loudness (target -16 dBFS at velocity 0.8) and velocity sensitivity by type.
   - Run: `make_factory <open-vital-resources> Content/Patches` (takes about 5 minutes).
@@ -154,7 +154,9 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
 - Rage set reworked in `addMore4` (`kRageBus`: compressor on, fully wet, band +12 / high +12 dB; `kRageSpread`; `kRagePoly`;
   `kSub`/`kSubLight`: OSC 3 sine at -24 straight to Direct Out; `kCoins`: the sample source's white noise into Filter 2 as a
   comb at high resonance, its level and cutoff stepped by Random 1 and 2 at 1/32) plus 34 new patches. The loudness match
-  measures 808s and Slime Reese Bass on a low note (A1). Listened to as `render_demo` renders by the user before shipping.
+  measures 808s, Slime Reese Bass and the addMore5 basses (`g_low_names`) on a low note (A1). Listened to as `render_demo` renders by the user before shipping.
+- `addMore5`: 125 UK garage, DnB and jungle patches, written by a generator script from family templates (kept in the
+  patches, not the repo). Genre gains "UK Garage" and "DnB / Jungle" (appended to `kGenres`); the GENRE menu is 4 x 3 tiles.
 
 ## Rules that must not break
 
