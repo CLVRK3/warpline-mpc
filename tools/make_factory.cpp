@@ -643,7 +643,9 @@ static void addMore3(std::vector<PatchDef>& d) {
   d.push_back(P("Crystal Steps", "Arp", { T("Additive Synth", 7) }, cat({ osc(1, 0.65f), filt(0, 0, 112, 0.1f), kEnvArp, kDelayDot, kHall }), { { "env_2", "osc_1_wave_frame", 0.5f, false } }));
   d.push_back(P("Saw Sequence", "Arp", {}, cat({ osc(1, 0.6f), uni(1, 3, 1.2f), filt(2, 1, 64, 0.55f, 3), kEnvArp, kDelay16, kRoom }), { { "env_2", "filter_1_cutoff", 0.4f, false }, { "velocity", "filter_1_cutoff", 0.15f, false } }));
   d.push_back(P("Ping Pong Bells", "Arp", { T("FM", 9) }, cat({ osc(1, 0.65f), { { "filter_1_on", 0 } }, kEnvArp, kDelayDot, { { "delay_style", 1 } }, kHall }), {}));
-  d.push_back(P("Gated Choir", "Arp", { T("GMa Vowel", 0) }, cat({ osc(1, 0.55f), uni(1, 5, 1.4f), filt(5, 0, 98, 0.3f), kEnvPad, lfoTempo(1, 10), kHall }), { { "lfo_1", "osc_1_level", 0.8f, false } }, { 2 }));
+  d.push_back(P("Gated Choir", "Arp", { T("GMa Vowel", 0) }, cat({ osc(1, 0.55f), uni(1, 5, 1.4f), filt(5, 0, 98, 0.3f), kEnvPad, lfoTempo(1, 10), kHall,
+                                                                       // 1.3: 4 voices and a shorter release: it was the heaviest arp on Gen 1 MPCs
+                                                                       C{ { "polyphony", 4 }, { "env_1_release", 0.7f } } }), { { "lfo_1", "osc_1_level", 0.8f, false } }, { 2 }));
   d.push_back(P("Retro Arcade", "Arp", { T("PPG Wave[4bit]", 15) }, cat({ osc(1, 0.6f), { { "filter_1_on", 0 } }, kEnvArp, dist(4, 0), kDelay16 }), { { "env_2", "osc_1_wave_frame", 0.6f, false } }));
   d.push_back(P("Sidechain Stabs", "Arp", { T("AnalogFour", 4) }, cat({ osc(1, 0.6f), uni(1, 5, 2.2f), filt(0, 1, 90, 0.2f), kEnvPad, lfoTempo(1, 8), kRoom }), { { "lfo_1", "osc_1_level", 0.85f, false } }, { 3 }));
   d.push_back(P("Triplet Motion", "Arp", { T("Modulo", 3) }, cat({ osc(1, 0.6f), filt(3, 1, 88, 0.35f), kEnvArp, lfoTempo(1, 9, 3), kDelay8, kRoom }), { { "lfo_1", "filter_1_cutoff", 0.3f, false } }, { 1 }));
