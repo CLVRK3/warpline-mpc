@@ -25,8 +25,10 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   - Parameters, and the patch scan with two-letter type codes.
   - A worker thread for patch loads, which stops audio briefly during each load.
   - State saving, Live View, and the scrollable patch list/browser.
+- `tools/render_demo.cpp`: renders a WAV demo of .vital patches through VitalCore (chords, or an 808 line for Bass) to listen
+  to factory patches without a device. Build line in its header.
 - `tools/genres.py`: writes `Content/Genres.txt`, the factory patches' genres. Run it after adding patches.
-- `tools/make_factory.cpp`: generates the 360 factory patches (a table named "@n" is Warpline's own built-in table n).
+- `tools/make_factory.cpp`: generates the 394 factory patches (a table named "@n" is Warpline's own built-in table n).
   - It uses CC0 wavetables from atsushieno/open-vital-resources.
   - It sets loudness (target -16 dBFS at velocity 0.8) and velocity sensitivity by type.
   - Run: `make_factory <open-vital-resources> Content/Patches` (takes about 5 minutes).
@@ -146,6 +148,13 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   (`IndexedEnabling/<t>/10/Parameter <OscN Table>`); single-wave tables use a 1-frame picture and the morphing ones 16 frames, to keep
   image memory down (all images decoded: about 288 MB with the tables and genre menu tiles; 1.1 was about 203 MB). The MOD panel has a fourth tab, GEN, with two meters
   and the shared controls. The ARP panel's hint box became the GENERATE knobs.
+
+## 1.3.0 (2026-11-24, offline)
+
+- Rage set reworked in `addMore4` (`kRageBus`: compressor on, fully wet, band +12 / high +12 dB; `kRageSpread`; `kRagePoly`;
+  `kSub`/`kSubLight`: OSC 3 sine at -24 straight to Direct Out; `kCoins`: the sample source's white noise into Filter 2 as a
+  comb at high resonance, its level and cutoff stepped by Random 1 and 2 at 1/32) plus 34 new patches. The loudness match
+  measures 808s and Slime Reese Bass on a low note (A1). Listened to as `render_demo` renders by the user before shipping.
 
 ## Rules that must not break
 

@@ -500,7 +500,7 @@ class Warpline : public mpc::Plugin {
       info.name = "Warpline";
       info.vendor = "CLVRKE";
       info.uniqueId = MPC_FOURCC('C', 'v', 'V', 'm');
-      info.version = 1200;
+      info.version = 1300;
       info.isInstrument = true;
       info.numInputs = 0;
       info.numOutputs = 2;
