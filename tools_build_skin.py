@@ -915,6 +915,10 @@ class Page:
     # ---- interactive
     def add(self, ctype, pname, rect, focusable=True, inv=None):
         idx = PI[pname]
+        # 1.3: page controls below the header hide while a panel is open, so a focused control's orange
+        # Focus outline (drawn above everything) does not show through the panel.
+        if int(rect.split()[1]) >= 64 and not any(c.endswith("/%d/Parameter %d" % (NUM_PANELS, PI["Panel"])) for c in (inv or [])):
+            inv = (inv or []) + [panel_on(0)]
         self.entries.append(G.entry(pname, ctype, G.obj(("version", 1), ("handleName", "Data")), rect, "Yes" if focusable else "No", "Hide", "Always",
                                     remap=[("Data", "Parameter %d" % idx)], invalidating=inv))
 
