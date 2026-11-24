@@ -12,7 +12,7 @@ import os
 import sys
 
 GENRES = ["Trap / Rage", "Hip-Hop", "R&B / Soul", "EDM", "House / Techno", "Pop", "Synthwave / Retro",
-          "Ambient / Cinematic", "Lo-Fi / Chill"]
+          "Ambient / Cinematic", "Lo-Fi / Chill", "UK Garage", "DnB / Jungle"]
 
 # genre -> patch names (without the type code and .vital)
 TAGS = {
@@ -33,7 +33,7 @@ TAGS = {
         Sax Synth; Muted Guitar; Nylon Pluck; Guitar Pick; Pizz Pluck; String Ensemble; Chamber Strings; Violin Solo;
         Cinematic Swell; Ooh Choir; Talk Box; Vocoder Lead; Yah Stab; Synth Kick; Snare Crack; Clap Room; Closed Hat; Rim Click;
         Conga Tone; Cowbell 80s; Church Bell; Music Box; Marimba Wood; Vibraphone Soft; Toy Piano; Kalimba Drop""",
-    "R&B / Soul": """Silk Rhodes; Late Night Rhodes; Slow Jam Rhodes; Velvet Tines; Tape Soul Rhodes; Rhodes Neo Soul;
+    "R&B / Soul": """Silky 2-Step Pad; Velvet Garage Keys; Soulful Garage Pad; Liquid Rhodes; Silk Rhodes; Late Night Rhodes; Slow Jam Rhodes; Velvet Tines; Tape Soul Rhodes; Rhodes Neo Soul;
         Rhodes Mellow Jazz; Rhodes Dark Velvet; Rhodes Chorus Wide; Rhodes Phase Ballad; Rhodes Stage 73; Rhodes Classic; Rhodes Bright Bark;
         Rhodes Dream; Rhodes Bell Tines; Rhodes Echo Room; Rhodes Vintage Trem; Rhodes Wurli Hybrid; Rhodes Bell Mix;
         Dream Rhodes; EP Tines; Velvet Keys; Warm EP Pad Keys; Gospel Organ; Organ Drawbars; Satin Pad; Quiet Storm Pad;
@@ -50,7 +50,7 @@ TAGS = {
         Bright Poly Pad; Lush Supersaw Pad; Gated Saws; Trance Gate Pad; Sidechain Stabs; Saw Sequence; Crystal Steps;
         Ping Pong Bells; Triplet Motion; Big Synth Horns; Riser Sweep; White Noise Riser; Downlifter; Laser Zap; Tape Stop;
         Glitch Machine; Vocoder Lead; Yah Stab; Vowel Pluck; Synth Kick; Clap Room""",
-    "House / Techno": """Deep House Organ Bass; Garage Organ Bass; House Pluck Bass; Acid Line; Squelch 303; Pluck Bass;
+    "House / Techno": """Speed Garage Reese; Bassline Wobble; Bassline Bounce; Organ Chord Stab; M1 Garage Piano; Club Rhodes; Deep House Organ Bass; Garage Organ Bass; House Pluck Bass; Acid Line; Squelch 303; Pluck Bass;
         Moog Thump; Bit Bass; CZ Resonance Bass; Detuned Square Bass; M1 House Piano; House Organ Stab; Stab Chord;
         Soft Stab Keys; Chord Memory; Organ Pad; Acid Arp; Pulse Train; Seq Bubbles; Morph Steps; Random Blips; Dark Pulse Seq;
         Acid Lead; Wah Lead; Modulo Lead; Buchla Bounce; Plaits Lead; Folded Lead; Bubble Pluck; Rubber Pluck;
@@ -69,7 +69,7 @@ TAGS = {
         Phase Keys; Prophet Brass; Synth Brass; Big Synth Horns; Analog String Machine; Ensemble 78; Solina Dream;
         Retro Arcade; Saw Sequence; Pulse Train; Cowbell 80s; Tom Electro; Synth Tom; Bit Bass;
         CZ Resonance Bass; Saw Stack Bass; Moog Thump; Dial Up; Laser Zap; Robot Voice; Vocoder Lead; Choir of Glass""",
-    "Ambient / Cinematic": """Aurora; Cloud Nine; Daydream Swell; Dream Piano; Ethereal Voices; Floating; Hazy Memories;
+    "Ambient / Cinematic": """Atmos DnB Pad; Rain Pad; Ethereal Liquid Pad; Ambient Jungle Pad; Atmospheric 94 Pad; Breakdown Atmos; Aurora; Cloud Nine; Daydream Swell; Dream Piano; Ethereal Voices; Floating; Hazy Memories;
         Hologram; Lullaby; Lush Supersaw Pad; Moonlit Bells; Northern Lights; Shimmer Strings; Snowfall; Soft Focus; Stardust;
         Starlight Keys; Sunset Glow; Tide Pool; Underwater Dream; Velvet Haze; Weightless; Cathedral; Choir of Glass;
         Comb Shimmer; Dark Matter; Desert Wind Pad; Evolving Spectra; Glacier; Glass Choir Pad; Granular Haze; Granular Pad;
@@ -80,6 +80,10 @@ TAGS = {
         Hammer Dulcimer; Harpsichord; Harp Cascade; Gated Choir; Space Bloom; Space Drone; Dark Drone; Wind Tunnel;
         Underwater Sonar; Insect Swarm; Alarm Siren; Monk Chant; Choir Swell; Whisper Pad; Ghost Vowels; Formant Sweep Voice;
         Siren Voice; Zither; Shamisen; Koto Pluck; Tabla Bend""",
+    "UK Garage": """2-Step Organ Bass; Bumpy Organ Bass; Skippy Organ Bass; M1 Organ Bass; Warehouse Organ Bass; Shuffle Organ Bass; Dub Organ Bass; Late Night Organ Bass; 2-Step Sub; Garage Sine Sub; Rolling Sub; Deep Sub Glide; Warm Sub Thump; Pressure Sub; Speed Garage Reese; Bassline Wobble; Bassline Bounce; Wonky Bassline; Speed Garage Hoover; Talking Bassline; Wobble Organ Bass; Square Wob Bass; M1 Garage Piano; Garage Piano Stab; Organ Chord Stab; 2-Step Keys; Shuffle Stab; Dub Chord Delay; Velvet Garage Keys; Sunday Stab; Swing Chords; Club Rhodes; Vox Chop; Ooh Chop; Pitched Vox Stab; Garage Vox Lead; Formant Chop; Diva Chop; Silky 2-Step Pad; Dusk Garage Pad; Soulful Garage Pad; Late Club Pad; Velvet Room Pad; Garage Bell; Shuffle Pluck; Glassy Garage Pluck; Garage Sine Lead; Garage Whistle Lead; 2-Step Arp; Bend Garage Lead;
+        Garage Organ Bass; Deep House Organ Bass; M1 House Piano; House Organ Stab; Stab Chord; Chord Memory; Organ Pad""",
+    "DnB / Jungle": """Classic Reese; Rolling Reese; Dark Reese; Liquid Reese; Phased Reese; Grimy Reese; Wide Reese; Tech Reese; Smeared Reese; Halftime Reese; Snarl Reese; Neuro Reese; Neuro Growl; Jump Up Wub; Hoover Wub; Formant Yoi Bass; Robot Neuro; Metal Neuro; Talking Neuro; Foghorn Bass; Tearout Saw Bass; Grinder Bass; DnB Sine Sub; Rolling DnB Sub; Liquid Sine Sub; Halftime Sub; Pitch Drop Sub; Steppy Sub; Liquid Rhodes; Liquid Pad; Liquid Strings; Soulful DnB Piano; Atmos DnB Pad; Rain Pad; Liquid Bell; Dreamy Liquid Keys; Ethereal Liquid Pad; Night Drive Pad; Rave Stab DnB; Neuro Stab; DnB Pluck; Liquid Pluck; Dancefloor Lead; Siren Lead DnB; Hoover Stab; Jump Up Stab; Tension Riser DnB; Breakdown Atmos; Sub Drop FX; Dark Drone DnB; Jungle 808 Sub; Dub Jungle Sub; Ragga Sub; Rolling Jungle Sub; Bouncing Jungle Sub; Belgian Hoover; Rave Hoover; Mentasm Hoover; Rave Stab 92; Hardcore Stab; Orchestra Rave Hit; Jungle Strings; Ambient Jungle Pad; Dark Jungle Pad; Atmospheric 94 Pad; Choir Jungle Pad; Rave Piano; M1 Jungle Piano; Dub Chord Jungle; Jazz Jungle Rhodes; Dub Siren; Ragga Horn; Jungle Whistle; Laser Dub FX; Reese Jungle 95;
+        Reese Pressure; Liquid Sub; Talking Bass; Wobble Classic; Neuro Grind; FM Growl; Formant Wobble; Hoover Lead""",
     "Lo-Fi / Chill": """Lo-Fi Keys; Rhodes Lofi Tape; Rhodes Hip Hop; Rhodes Mellow Jazz; Rhodes Suitcase; Rhodes Echo Room;
         Tape Soul Rhodes; Late Night Rhodes; Upright Felt; Analog Piano; Toy Keys; Toy Piano; Music Box; Wurly Drive;
         Kalimba Drop; Water Drop; Marimba Wood; Vibraphone Soft; Vibes Tremolo; Nylon Pluck; Guitar Pick; Muted Guitar;

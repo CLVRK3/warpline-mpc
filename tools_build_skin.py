@@ -39,11 +39,12 @@ PANEL_TABLES1 = 7   # 7, 8, 9: the big wavetable menu for OSC 1, 2, 3
 PANEL_GENRES = 10   # the GENRE menu
 NUM_PANELS = 11
 GENRES = ["All", "Trap / Rage", "Hip-Hop", "R&B / Soul", "EDM", "House / Techno", "Pop", "Synthwave / Retro",
-          "Ambient / Cinematic", "Lo-Fi / Chill"]
+          "Ambient / Cinematic", "Lo-Fi / Chill", "UK Garage", "DnB / Jungle"]
 GENRE_HINTS = ["every patch", "808s, dark bells, rage leads", "keys, subs, soul samples", "Rhodes, smooth leads, pads",
                "supersaws, drops, plucks", "acid, organ bass, stabs", "bright keys, plucks, pads", "80s polys, arps, brass",
-               "pads, strings, textures", "dusty keys, soft tones"]
-GENRE_ACC = ["mint", "violet", "amber", "pink", "teal", "blue", "coral", "pink", "blue", "amber"]
+               "pads, strings, textures", "dusty keys, soft tones",
+               "organ bass, 2-step stabs, vox chops", "reese, neuro, liquid, 90s rave"]
+GENRE_ACC = ["mint", "violet", "amber", "pink", "teal", "blue", "coral", "pink", "blue", "amber", "teal", "coral"]
 # 1.2 wavetable picker: the display art per Osc Table value (0 = Patch keeps the column's own picture)
 TABLE_KINDS = [None, "shapes", "sine", "tri", "sawpure", "square", "pwm", "harm", "formant", "sync"]
 TABLE_NAMES = ["Patch", "Basic Shapes", "Sine", "Triangle", "Saw", "Square", "PWM", "Harmonics", "Formant", "Sync"]
@@ -255,9 +256,9 @@ def genre_tile_img(w, h, on, g):
                         outline=col + (255,) if on else (52, 59, 69, 255), width=(3 if on else 1) * S)
     d.rounded_rectangle((18 * S, 18 * S, 58 * S, 24 * S), 3 * S, fill=col + (255,))
     words = GENRES[g].split(" / ")
-    y = h * S * (0.46 if len(words) == 1 else 0.38)
+    y = h * S * (0.44 if len(words) == 1 else 0.36)
     for j, wd in enumerate(words):
-        d.text((w * S / 2, y + j * 30 * S), wd.upper() if j == 0 else "/ " + wd.upper(), font=font((24 if j == 0 else 18) * S, "Bold", display=True),
+        d.text((w * S / 2, y + j * 26 * S), wd.upper() if j == 0 else "/ " + wd.upper(), font=font((24 if j == 0 else 18) * S, "Bold", display=True),
                fill=TEXT + (255,) if j == 0 else MUTED + (255,), anchor="mm")
     d.text((w * S / 2, h * S * 0.86), GENRE_HINTS[g], font=font(12 * S), fill=MUTED + (255,), anchor="mm")
     return save(im.resize((w, h), Image.LANCZOS), name)
@@ -266,10 +267,10 @@ def genre_tile_img(w, h, on, g):
 def genres_panel(p):
     """The GENRE menu: ten big tiles on Genre (All + 9). A pick filters every list and the arrows, then the menu closes."""
     inv, y0 = panel_shell(p, PANEL_GENRES, "GENRE", "mint", "TAP ONE TO SHOW ONLY THOSE PATCHES")
-    tw, th, gap = 232, 230, 13
-    x_start = (W - (5 * tw + 4 * gap)) // 2
+    tw, th, gap = 292, 148, 12   # 4 x 3 since 1.3 (12 tiles)
+    x_start = (W - (4 * tw + 3 * gap)) // 2
     for g in range(len(GENRES)):
-        x = x_start + (g % 5) * (tw + gap); y = y0 + 66 + (g // 5) * (th + gap)
+        x = x_start + (g % 4) * (tw + gap); y = y0 + 62 + (g // 4) * (th + gap)
         p.add(comp_button(genre_tile_img(tw, th, True, g), genre_tile_img(tw, th, False, g), g, len(GENRES), tw, th),
               "Genre", f"{x} {y} {tw} {th}", focusable=False, inv=inv)
 

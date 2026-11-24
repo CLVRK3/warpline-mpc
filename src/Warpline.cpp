@@ -238,7 +238,7 @@ struct PatchEntry {
 
 // 1.2 GENRE picker. Index 0 = all; the names are the ones Genres.txt uses (tools/genres.py).
 const char* const kGenres[] = { "All", "Trap / Rage", "Hip-Hop", "R&B / Soul", "EDM", "House / Techno", "Pop",
-                                "Synthwave / Retro", "Ambient / Cinematic", "Lo-Fi / Chill" };
+                                "Synthwave / Retro", "Ambient / Cinematic", "Lo-Fi / Chill", "UK Garage", "DnB / Jungle" };   // last two: 1.3
 constexpr int kNumGenres = sizeof(kGenres) / sizeof(kGenres[0]);
 
 // Two-letter sound-type codes. Factory patch names already start with one (tools/make_factory.cpp uses

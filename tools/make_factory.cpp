@@ -1181,6 +1181,389 @@ static void addMore4(std::vector<PatchDef>& d) {
     { { "env_2", "filter_1_cutoff", 0.45f, false }, { "env_2", "osc_1_wave_frame", 0.3f, false } } });
 }
 
+// ---------------- 1.3: UK GARAGE (50), DnB (50), 90s JUNGLE (25) ---- made by gen_more5.py ----
+static std::set<std::string> g_low_names;   // measured on a low note in the loudness match (subs, reeses)
+static void addMore5(std::vector<PatchDef>& d) {
+  size_t first = d.size();
+  d.push_back({ "2-Step Organ Bass", "Bass", { T("Walsh Function", 1), "@2" },
+    cat({ osc(1, 0.7f), osc(2, 0.35f, -12), filt(0, 0, 66, 0.25f, 4), { { "env_1_attack", 0.0f }, { "env_1_decay", 0.75f }, { "env_1_sustain", 0.45f }, { "env_1_release", 0.25f }, { "env_2_attack", 0.0f }, { "env_2_decay", 0.3f }, { "env_2_sustain", 0.0f } }, kMonoGlide, kDry, dist(0, 4), kComp }),
+    { { "env_2", "filter_1_cutoff", 0.32f, false }, { "velocity", "filter_1_cutoff", 0.12f, false } } });
+  d.push_back({ "Bumpy Organ Bass", "Bass", { T("Walsh Function", 3), "@2" },
+    cat({ osc(1, 0.7f), osc(2, 0.35f, -12), filt(0, 0, 62, 0.3f, 4), { { "env_1_attack", 0.0f }, { "env_1_decay", 0.75f }, { "env_1_sustain", 0.45f }, { "env_1_release", 0.25f }, { "env_2_attack", 0.0f }, { "env_2_decay", 0.36f }, { "env_2_sustain", 0.0f } }, kMonoGlide, kDry, dist(0, 6), kComp }),
+    { { "env_2", "filter_1_cutoff", 0.32f, false }, { "velocity", "filter_1_cutoff", 0.12f, false } } });
+  d.push_back({ "Skippy Organ Bass", "Bass", { T("Walsh Function", 2), "@2" },
+    cat({ osc(1, 0.7f), osc(2, 0.35f, -12), filt(0, 0, 70, 0.2f, 4), { { "env_1_attack", 0.0f }, { "env_1_decay", 0.75f }, { "env_1_sustain", 0.45f }, { "env_1_release", 0.25f }, { "env_2_attack", 0.0f }, { "env_2_decay", 0.26f }, { "env_2_sustain", 0.0f } }, kMonoGlide, kDry, dist(0, 4), kComp }),
+    { { "env_2", "filter_1_cutoff", 0.32f, false }, { "velocity", "filter_1_cutoff", 0.12f, false } } });
+  d.push_back({ "M1 Organ Bass", "Bass", { T("Walsh Function", 0), "@2" },
+    cat({ osc(1, 0.7f), osc(2, 0.35f, -12), filt(0, 0, 64, 0.25f, 4), { { "env_1_attack", 0.0f }, { "env_1_decay", 0.75f }, { "env_1_sustain", 0.45f }, { "env_1_release", 0.25f }, { "env_2_attack", 0.0f }, { "env_2_decay", 0.4f }, { "env_2_sustain", 0.0f } }, kMonoGlide, kDry, dist(0, 5), kComp }),
+    { { "env_2", "filter_1_cutoff", 0.32f, false }, { "velocity", "filter_1_cutoff", 0.12f, false } } });
+  d.push_back({ "Warehouse Organ Bass", "Bass", { T("Walsh Function", 4), "@2" },
+    cat({ osc(1, 0.7f), osc(2, 0.35f, -12), filt(0, 0, 60, 0.35f, 4), { { "env_1_attack", 0.0f }, { "env_1_decay", 0.75f }, { "env_1_sustain", 0.45f }, { "env_1_release", 0.25f }, { "env_2_attack", 0.0f }, { "env_2_decay", 0.34f }, { "env_2_sustain", 0.0f } }, kMonoGlide, kDry, dist(0, 8), kComp }),
+    { { "env_2", "filter_1_cutoff", 0.32f, false }, { "velocity", "filter_1_cutoff", 0.12f, false } } });
+  d.push_back({ "Shuffle Organ Bass", "Bass", { T("Walsh Function", 5), "@2" },
+    cat({ osc(1, 0.7f), osc(2, 0.35f, -12), filt(0, 0, 68, 0.2f, 4), { { "env_1_attack", 0.0f }, { "env_1_decay", 0.75f }, { "env_1_sustain", 0.45f }, { "env_1_release", 0.25f }, { "env_2_attack", 0.0f }, { "env_2_decay", 0.3f }, { "env_2_sustain", 0.0f } }, kMonoGlide, kDry, dist(0, 3), kComp }),
+    { { "env_2", "filter_1_cutoff", 0.32f, false }, { "velocity", "filter_1_cutoff", 0.12f, false } } });
+  d.push_back({ "Dub Organ Bass", "Bass", { T("Walsh Function", 6), "@2" },
+    cat({ osc(1, 0.7f), osc(2, 0.35f, -12), filt(0, 0, 58, 0.3f, 4), { { "env_1_attack", 0.0f }, { "env_1_decay", 0.75f }, { "env_1_sustain", 0.45f }, { "env_1_release", 0.25f }, { "env_2_attack", 0.0f }, { "env_2_decay", 0.44f }, { "env_2_sustain", 0.0f } }, kMonoGlide, kDry, dist(0, 6), kComp }),
+    { { "env_2", "filter_1_cutoff", 0.32f, false }, { "velocity", "filter_1_cutoff", 0.12f, false } } });
+  d.push_back({ "Late Night Organ Bass", "Bass", { T("Walsh Function", 7), "@2" },
+    cat({ osc(1, 0.7f), osc(2, 0.35f, -12), filt(0, 0, 62, 0.2f, 4), { { "env_1_attack", 0.0f }, { "env_1_decay", 0.75f }, { "env_1_sustain", 0.45f }, { "env_1_release", 0.25f }, { "env_2_attack", 0.0f }, { "env_2_decay", 0.38f }, { "env_2_sustain", 0.0f } }, kMonoGlide, kDry, dist(0, 4), kComp }),
+    { { "env_2", "filter_1_cutoff", 0.32f, false }, { "velocity", "filter_1_cutoff", 0.12f, false } } });
+  d.push_back({ "2-Step Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnvBass, { { "polyphony", 1 }, { "legato", 1 }, { "portamento_time", -4.0f } }, kDry, dist(0, 2) }),
+    { { "env_2", "osc_1_transpose", 0.04f, false } } });
+  d.push_back({ "Garage Sine Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnvBass, { { "polyphony", 1 }, { "legato", 1 }, { "portamento_time", -5.0f } }, kDry, dist(0, 0) }),
+    { { "env_2", "osc_1_transpose", 0.04f, false } } });
+  d.push_back({ "Rolling Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnvBass, { { "polyphony", 1 }, { "legato", 1 }, { "portamento_time", -3.5f } }, kDry, dist(0, 3) }),
+    { { "env_2", "osc_1_transpose", 0.04f, false } } });
+  d.push_back({ "Deep Sub Glide", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnvBass, { { "polyphony", 1 }, { "legato", 1 }, { "portamento_time", -2.8f } }, kDry, dist(0, 1) }),
+    { { "env_2", "osc_1_transpose", 0.04f, false } } });
+  d.push_back({ "Warm Sub Thump", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnvBass, { { "polyphony", 1 }, { "legato", 1 }, { "portamento_time", -5.0f } }, kDry, dist(0, 6) }),
+    { { "env_2", "osc_1_transpose", 0.04f, false } } });
+  d.push_back({ "Pressure Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnvBass, { { "polyphony", 1 }, { "legato", 1 }, { "portamento_time", -4.0f } }, kDry, dist(0, 10) }),
+    { { "env_2", "osc_1_transpose", 0.04f, false } } });
+  d.push_back({ "Speed Garage Reese", "Bass", { "@4" },
+    cat({ osc(1, 0.75f), uni(1, 6, 3.0f), filt(2, 0, 74, 0.35f, 8), kEnvBass, kMono, kDry, dist(0, 8), kComp, lfoTempo(1, 9) }),
+    { { "lfo_1", "filter_1_cutoff", 0.25f, false }, { "lfo_1", "osc_1_wave_frame", 0.4f, false } }, { 1 } });
+  d.push_back({ "Bassline Wobble", "Bass", { "@5" },
+    cat({ osc(1, 0.75f), uni(1, 3, 1.0f), filt(2, 0, 64, 0.35f, 8), kEnvBass, kMono, kDry, dist(0, 8), kComp, lfoTempo(1, 9) }),
+    { { "lfo_1", "filter_1_cutoff", 0.45f, false }, { "lfo_1", "osc_1_wave_frame", 0.4f, false } }, { 1 } });
+  d.push_back({ "Bassline Bounce", "Bass", { "@4" },
+    cat({ osc(1, 0.75f), uni(1, 4, 1.6f), filt(2, 0, 66, 0.35f, 8), kEnvBass, kMono, kDry, dist(0, 8), kComp, lfoTempo(1, 10) }),
+    { { "lfo_1", "filter_1_cutoff", 0.35f, false }, { "lfo_1", "osc_1_wave_frame", 0.4f, false } }, { 1 } });
+  d.push_back({ "Wonky Bassline", "Bass", { T("FormantStep", 0) },
+    cat({ osc(1, 0.75f), uni(1, 1, 0.0f), filt(2, 0, 70, 0.35f, 8), kEnvBass, kMono, kDry, dist(0, 8), kComp, lfoTempo(1, 9) }),
+    { { "lfo_1", "filter_1_cutoff", 0.4f, false }, { "lfo_1", "osc_1_wave_frame", 0.4f, false } }, { 1 } });
+  d.push_back({ "Speed Garage Hoover", "Bass", { T("Alpha Juno SawPWM", 1) },
+    cat({ osc(1, 0.75f), uni(1, 7, 3.6f), filt(2, 0, 80, 0.35f, 8), kEnvBass, kMono, kDry, dist(0, 8), kComp, lfoTempo(1, 8) }),
+    { { "lfo_1", "filter_1_cutoff", 0.2f, false }, { "lfo_1", "osc_1_wave_frame", 0.4f, false } }, { 1 } });
+  d.push_back({ "Talking Bassline", "Bass", { T("Vocorder", 1) },
+    cat({ osc(1, 0.75f), uni(1, 2, 0.6f), filt(2, 0, 72, 0.35f, 8), kEnvBass, kMono, kDry, dist(0, 8), kComp, lfoTempo(1, 10) }),
+    { { "lfo_1", "filter_1_cutoff", 0.45f, false }, { "lfo_1", "osc_1_wave_frame", 0.4f, false } }, { 1 } });
+  d.push_back({ "Wobble Organ Bass", "Bass", { T("Walsh Function", 2) },
+    cat({ osc(1, 0.75f), uni(1, 3, 0.8f), filt(2, 0, 64, 0.35f, 8), kEnvBass, kMono, kDry, dist(0, 8), kComp, lfoTempo(1, 9) }),
+    { { "lfo_1", "filter_1_cutoff", 0.4f, false }, { "lfo_1", "osc_1_wave_frame", 0.4f, false } }, { 1 } });
+  d.push_back({ "Square Wob Bass", "Bass", { "@5" },
+    cat({ osc(1, 0.75f), uni(1, 2, 0.6f), filt(2, 0, 60, 0.35f, 8), kEnvBass, kMono, kDry, dist(0, 8), kComp, lfoTempo(1, 10) }),
+    { { "lfo_1", "filter_1_cutoff", 0.5f, false }, { "lfo_1", "osc_1_wave_frame", 0.4f, false } }, { 1 } });
+  d.push_back({ "M1 Garage Piano", "Keys", { T("M1 Piano", 0) },
+    cat({ osc(1, 0.65f), uni(1, 2, 0.4f), filt(0, 0, 100, 0.15f), kEnvLongPluck, kRoom, kChorus }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false }, { "env_2", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Garage Piano Stab", "Keys", { T("M1 Piano", 1) },
+    cat({ osc(1, 0.65f), uni(1, 2, 0.4f), filt(0, 0, 100, 0.15f), kEnvPluck, kRoom }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false }, { "env_2", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Organ Chord Stab", "Keys", { T("Walsh Function", 1) },
+    cat({ osc(1, 0.65f), uni(1, 2, 0.4f), filt(0, 0, 100, 0.15f), kEnvPluck, kRoom, kDelay8 }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false }, { "env_2", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "2-Step Keys", "Keys", { T("FM", 1) },
+    cat({ osc(1, 0.65f), uni(1, 2, 0.4f), filt(0, 0, 100, 0.15f), kEnvRhodes, kChorus, kRoom }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false }, { "env_2", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Shuffle Stab", "Keys", { "@4" },
+    cat({ osc(1, 0.65f), uni(1, 2, 0.4f), filt(0, 0, 100, 0.15f), kEnvPluck, kRoom, kDelayDot }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false }, { "env_2", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Dub Chord Delay", "Keys", { T("Walsh Function", 3) },
+    cat({ osc(1, 1.0f), osc(2, 0.5f, 12), uni(1, 2, 0.4f), filt(0, 0, 100, 0.15f), kEnvLongPluck, kDelayQuarter, kHall }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false }, { "env_2", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Velvet Garage Keys", "Keys", { T("Phase", 5) },
+    cat({ osc(1, 0.65f), uni(1, 2, 0.4f), filt(0, 0, 100, 0.15f), kEnvRhodes, kChorus, kHall }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false }, { "env_2", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Sunday Stab", "Keys", { T("M1 Wavetable[Mini][2048-44.1khz-32bit]", 9) },
+    cat({ osc(1, 0.65f), uni(1, 2, 0.4f), filt(0, 0, 100, 0.15f), kEnvPluck, kRoom, kDelay8 }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false }, { "env_2", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Swing Chords", "Keys", { T("PM[Simple]", 2) },
+    cat({ osc(1, 0.65f), uni(1, 2, 0.4f), filt(0, 0, 100, 0.15f), kEnvKeys, kChorus, kRoom }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false }, { "env_2", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Club Rhodes", "Keys", { T("FM", 4) },
+    cat({ osc(1, 0.65f), uni(1, 2, 0.4f), filt(0, 0, 100, 0.15f), kEnvRhodes, kPhaser, kRoom }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false }, { "env_2", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Vox Chop", "Vocal", { T("Vocorder", 0) },
+    cat({ osc(1, 0.65f, 0), filt(5, 0, 96, 0.3f), kEnvPluck, kRoom, kDelay8 }),
+    { { "env_2", "osc_1_wave_frame", 0.6f, false }, { "velocity", "filter_1_cutoff", 0.1f, false } } });
+  d.push_back({ "Ooh Chop", "Vocal", { T("GMa Vowel", 0) },
+    cat({ osc(1, 0.65f, 0), filt(5, 0, 96, 0.3f), kEnvPluck, kRoom, kDelay8 }),
+    { { "env_2", "osc_1_wave_frame", 0.6f, false }, { "velocity", "filter_1_cutoff", 0.1f, false } } });
+  d.push_back({ "Pitched Vox Stab", "Vocal", { T("Vocorder", 2) },
+    cat({ osc(1, 0.65f, 12), filt(5, 0, 96, 0.3f), kEnvPluck, kRoom, kDelay8 }),
+    { { "env_2", "osc_1_wave_frame", 0.6f, false }, { "velocity", "filter_1_cutoff", 0.1f, false } } });
+  d.push_back({ "Garage Vox Lead", "Vocal", { T("Formant", 1) },
+    cat({ osc(1, 0.65f, 0), filt(5, 0, 96, 0.3f), kEnvPluck, kRoom, kDelay8 }),
+    { { "env_2", "osc_1_wave_frame", 0.6f, false }, { "velocity", "filter_1_cutoff", 0.1f, false } } });
+  d.push_back({ "Formant Chop", "Vocal", { T("Formant", 0) },
+    cat({ osc(1, 0.65f, 0), filt(5, 0, 96, 0.3f), kEnvPluck, kRoom, kDelay8 }),
+    { { "env_2", "osc_1_wave_frame", 0.6f, false }, { "velocity", "filter_1_cutoff", 0.1f, false } } });
+  d.push_back({ "Diva Chop", "Vocal", { T("Vocorder", 3) },
+    cat({ osc(1, 0.65f, 12), filt(5, 0, 96, 0.3f), kEnvPluck, kRoom, kDelay8 }),
+    { { "env_2", "osc_1_wave_frame", 0.6f, false }, { "velocity", "filter_1_cutoff", 0.1f, false } } });
+  d.push_back({ "Silky 2-Step Pad", "Pad", { "@3" },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 88, 0.1f), kEnvPad, kChorus, kHall, lfoHz(1, -2.0f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true } }, { 1 } });
+  d.push_back({ "Dusk Garage Pad", "Pad", { "@6" },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 88, 0.1f), kEnvPad, kChorus, kHall, lfoHz(1, -2.0f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true } }, { 1 } });
+  d.push_back({ "Soulful Garage Pad", "Pad", { T("M1 Wavetable[Mini][2048-44.1khz-32bit]", 8) },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 88, 0.1f), kEnvPad, kChorus, kHall, lfoHz(1, -2.0f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true } }, { 1 } });
+  d.push_back({ "Late Club Pad", "Pad", { "@4" },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 88, 0.1f), kEnvPad, kChorus, kHall, lfoHz(1, -2.0f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true } }, { 1 } });
+  d.push_back({ "Velvet Room Pad", "Pad", { T("Prophet VS Wave", 4) },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 88, 0.1f), kEnvPad, kChorus, kHall, lfoHz(1, -2.0f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true } }, { 1 } });
+  d.push_back({ "Garage Bell", "Bell", { T("FM", 6) },
+    cat({ osc(1, 0.65f), filt(0, 0, 104, 0.15f), kEnvBellLong, kRoom, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.2f, false } } });
+  d.push_back({ "Shuffle Pluck", "Pluck", { "@4" },
+    cat({ osc(1, 0.65f), filt(0, 0, 104, 0.15f), kEnvPluck, kRoom, kDelay16 }),
+    { { "env_2", "filter_1_cutoff", 0.2f, false } } });
+  d.push_back({ "Glassy Garage Pluck", "Pluck", { T("Additive Synth", 3) },
+    cat({ osc(1, 0.65f), filt(0, 0, 104, 0.15f), kEnvPluck, kHall, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.2f, false } } });
+  d.push_back({ "Garage Sine Lead", "Lead", { "@2" },
+    cat({ osc(1, 0.65f), filt(0, 0, 104, 0.15f), kEnvSoftLead, kMonoGlide, kHall, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.2f, false } } });
+  d.push_back({ "Garage Whistle Lead", "Lead", { "@3" },
+    cat({ osc(1, 0.65f), filt(0, 0, 104, 0.15f), kEnvSoftLead, kMonoGlide, kHall }),
+    { { "env_2", "filter_1_cutoff", 0.2f, false } } });
+  d.push_back({ "2-Step Arp", "Arp", { "@5" },
+    cat({ osc(1, 0.65f), filt(0, 0, 104, 0.15f), kEnvArp, kRoom, kDelay16 }),
+    { { "env_2", "filter_1_cutoff", 0.2f, false } } });
+  d.push_back({ "Bend Garage Lead", "Lead", { "@6" },
+    cat({ osc(1, 0.65f), filt(0, 0, 104, 0.15f), kEnvLead, kMonoGlide, kRoom, kDelay8 }),
+    { { "env_2", "filter_1_cutoff", 0.2f, false } } });
+  d.push_back({ "Classic Reese", "Bass", { "@4", "@4" },
+    cat({ osc(1, 0.6f), uni(1, 6, 2.4f), osc(2, 0.4f, -12), uni(2, 3, 0.8f), filt(2, 1, 72, 0.25f, 6), kEnvBass, kMono, kDry, kChorus, kComp, lfoHz(1, -2.5f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true }, { "lfo_1", "osc_1_unison_detune", 0.12f, false } }, { 1 } });
+  d.push_back({ "Rolling Reese", "Bass", { "@4", "@4" },
+    cat({ osc(1, 0.6f), uni(1, 7, 3.0f), osc(2, 0.4f, -12), uni(2, 3, 0.8f), filt(2, 1, 68, 0.25f, 6), kEnvBass, kMono, kDry, kChorus, kComp, lfoHz(1, -1.8f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true }, { "lfo_1", "osc_1_unison_detune", 0.12f, false } }, { 1 } });
+  d.push_back({ "Dark Reese", "Bass", { "@4", "@4" },
+    cat({ osc(1, 0.6f), uni(1, 6, 2.2f), osc(2, 0.4f, -12), uni(2, 3, 0.8f), filt(2, 1, 60, 0.25f, 6), kEnvBass, kMono, kDry, kPhaser, kComp, lfoHz(1, -3.0f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true }, { "lfo_1", "osc_1_unison_detune", 0.12f, false } }, { 1 } });
+  d.push_back({ "Liquid Reese", "Bass", { "@4", "@4" },
+    cat({ osc(1, 0.6f), uni(1, 5, 1.8f), osc(2, 0.4f, -12), uni(2, 3, 0.8f), filt(2, 1, 76, 0.25f, 6), kEnvBass, kMono, kDry, kChorus, kComp, lfoHz(1, -2.2f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true }, { "lfo_1", "osc_1_unison_detune", 0.12f, false } }, { 1 } });
+  d.push_back({ "Phased Reese", "Bass", { "@4", "@4" },
+    cat({ osc(1, 0.6f), uni(1, 6, 2.6f), osc(2, 0.4f, -12), uni(2, 3, 0.8f), filt(2, 1, 70, 0.25f, 6), kEnvBass, kMono, kDry, kPhaser, kComp, lfoHz(1, -2.0f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true }, { "lfo_1", "osc_1_unison_detune", 0.12f, false } }, { 1 } });
+  d.push_back({ "Grimy Reese", "Bass", { "@4", "@4" },
+    cat({ osc(1, 0.6f), uni(1, 7, 3.2f), osc(2, 0.4f, -12), uni(2, 3, 0.8f), filt(2, 1, 64, 0.25f, 6), kEnvBass, kMono, kDry, dist(1, 8), kComp, lfoHz(1, -1.5f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true }, { "lfo_1", "osc_1_unison_detune", 0.12f, false } }, { 1 } });
+  d.push_back({ "Wide Reese", "Bass", { "@4", "@4" },
+    cat({ osc(1, 0.6f), uni(1, 8, 3.6f), osc(2, 0.4f, -12), uni(2, 3, 0.8f), filt(2, 1, 74, 0.25f, 6), kEnvBass, kMono, kDry, kChorus, kComp, lfoHz(1, -2.4f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true }, { "lfo_1", "osc_1_unison_detune", 0.12f, false } }, { 1 } });
+  d.push_back({ "Tech Reese", "Bass", { "@4", "@4" },
+    cat({ osc(1, 0.6f), uni(1, 6, 2.0f), osc(2, 0.4f, -12), uni(2, 3, 0.8f), filt(2, 1, 66, 0.25f, 6), kEnvBass, kMono, kDry, dist(0, 10), kComp, lfoHz(1, -1.0f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true }, { "lfo_1", "osc_1_unison_detune", 0.12f, false } }, { 1 } });
+  d.push_back({ "Smeared Reese", "Bass", { "@4", "@4" },
+    cat({ osc(1, 0.6f), uni(1, 8, 4.0f), osc(2, 0.4f, -12), uni(2, 3, 0.8f), filt(2, 1, 70, 0.25f, 6), kEnvBass, kMono, kDry, kPhaser, kComp, lfoHz(1, -2.8f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true }, { "lfo_1", "osc_1_unison_detune", 0.12f, false } }, { 1 } });
+  d.push_back({ "Halftime Reese", "Bass", { "@4", "@4" },
+    cat({ osc(1, 0.6f), uni(1, 6, 2.8f), osc(2, 0.4f, -12), uni(2, 3, 0.8f), filt(2, 1, 62, 0.25f, 6), kEnvBass, kMono, kDry, dist(0, 6), kComp, lfoHz(1, -3.2f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true }, { "lfo_1", "osc_1_unison_detune", 0.12f, false } }, { 1 } });
+  d.push_back({ "Snarl Reese", "Bass", { "@4", "@4" },
+    cat({ osc(1, 0.6f), uni(1, 7, 3.0f), osc(2, 0.4f, -12), uni(2, 3, 0.8f), filt(2, 1, 68, 0.25f, 6), kEnvBass, kMono, kDry, dist(2, 8), kComp, lfoHz(1, -0.8f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true }, { "lfo_1", "osc_1_unison_detune", 0.12f, false } }, { 1 } });
+  d.push_back({ "Neuro Reese", "Bass", { "@4", "@4" },
+    cat({ osc(1, 0.6f), uni(1, 6, 2.6f), osc(2, 0.4f, -12), uni(2, 3, 0.8f), filt(2, 1, 72, 0.25f, 6), kEnvBass, kMono, kDry, dist(1, 10), kComp, lfoHz(1, 0.0f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true }, { "lfo_1", "osc_1_unison_detune", 0.12f, false } }, { 1 } });
+  d.push_back({ "Neuro Growl", "Bass", { T("Hardcore FM", 2), "@2" },
+    cat({ osc(1, 0.7f), uni(1, 3, 1.0f), osc(2, 0.35f, -12), { { "osc_2_destination", 4 } }, filt(1, 0, 80, 0.5f, 8), kEnvBass, kMono, kDry, dist(2, 10), kComp, lfoTempo(1, 10) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.6f, false }, { "lfo_1", "filter_1_cutoff", 0.3f, false } }, { 1 } });
+  d.push_back({ "Jump Up Wub", "Bass", { "@5", "@2" },
+    cat({ osc(1, 0.7f), uni(1, 3, 1.0f), osc(2, 0.35f, -12), { { "osc_2_destination", 4 } }, filt(0, 1, 70, 0.5f, 6), kEnvBass, kMono, kDry, dist(0, 10), kComp, lfoTempo(1, 9) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.6f, false }, { "lfo_1", "filter_1_cutoff", 0.3f, false } }, { 1 } });
+  d.push_back({ "Hoover Wub", "Bass", { T("Alpha Juno SawPWM", 2), "@2" },
+    cat({ osc(1, 0.7f), uni(1, 3, 1.0f), osc(2, 0.35f, -12), { { "osc_2_destination", 4 } }, filt(0, 0, 76, 0.4f, 6), kEnvBass, kMono, kDry, dist(0, 8), kComp, lfoTempo(1, 9) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.6f, false }, { "lfo_1", "filter_1_cutoff", 0.3f, false } }, { 1 } });
+  d.push_back({ "Formant Yoi Bass", "Bass", { T("FormantStep", 0), "@2" },
+    cat({ osc(1, 0.7f), uni(1, 3, 1.0f), osc(2, 0.35f, -12), { { "osc_2_destination", 4 } }, filt(5, 0, 84, 0.5f), kEnvBass, kMono, kDry, dist(0, 8), kComp, lfoTempo(1, 10) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.6f, false }, { "lfo_1", "filter_1_cutoff", 0.3f, false } }, { 1 } });
+  d.push_back({ "Robot Neuro", "Bass", { T("Hardcore FM", 5), "@2" },
+    cat({ osc(1, 0.7f), uni(1, 3, 1.0f), osc(2, 0.35f, -12), { { "osc_2_destination", 4 } }, filt(6, 0, 80, 0.6f), kEnvBass, kMono, kDry, dist(1, 10), kComp, lfoTempo(1, 11) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.6f, false }, { "lfo_1", "filter_1_cutoff", 0.3f, false } }, { 1 } });
+  d.push_back({ "Metal Neuro", "Bass", { T("FM", 9), "@2" },
+    cat({ osc(1, 0.7f), uni(1, 3, 1.0f), osc(2, 0.35f, -12), { { "osc_2_destination", 4 } }, filt(6, 1, 86, 0.6f), kEnvBass, kMono, kDry, dist(2, 8), kComp, lfoTempo(1, 10) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.6f, false }, { "lfo_1", "filter_1_cutoff", 0.3f, false } }, { 1 } });
+  d.push_back({ "Talking Neuro", "Bass", { T("Vocorder", 1), "@2" },
+    cat({ osc(1, 0.7f), uni(1, 3, 1.0f), osc(2, 0.35f, -12), { { "osc_2_destination", 4 } }, filt(5, 0, 80, 0.5f), kEnvBass, kMono, kDry, dist(0, 10), kComp, lfoTempo(1, 10) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.6f, false }, { "lfo_1", "filter_1_cutoff", 0.3f, false } }, { 1 } });
+  d.push_back({ "Foghorn Bass", "Bass", { "@4", "@2" },
+    cat({ osc(1, 0.7f), uni(1, 3, 1.0f), osc(2, 0.35f, -12), { { "osc_2_destination", 4 } }, filt(0, 1, 62, 0.4f, 10), kEnvBass, kMono, kDry, dist(1, 12), kComp, lfoTempo(1, 8) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.6f, false }, { "lfo_1", "filter_1_cutoff", 0.3f, false } }, { 1 } });
+  d.push_back({ "Tearout Saw Bass", "Bass", { "@9", "@2" },
+    cat({ osc(1, 0.7f), uni(1, 3, 1.0f), osc(2, 0.35f, -12), { { "osc_2_destination", 4 } }, filt(0, 0, 90, 0.3f, 8), kEnvBass, kMono, kDry, dist(1, 12), kComp, lfoTempo(1, 10) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.6f, false }, { "lfo_1", "filter_1_cutoff", 0.3f, false } }, { 1 } });
+  d.push_back({ "Grinder Bass", "Bass", { T("Hardcore FM", 8), "@2" },
+    cat({ osc(1, 0.7f), uni(1, 3, 1.0f), osc(2, 0.35f, -12), { { "osc_2_destination", 4 } }, filt(1, 0, 78, 0.4f, 10), kEnvBass, kMono, kDry, dist(2, 12), kComp, lfoTempo(1, 11) }),
+    { { "lfo_1", "osc_1_wave_frame", 0.6f, false }, { "lfo_1", "filter_1_cutoff", 0.3f, false } }, { 1 } });
+  d.push_back({ "DnB Sine Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnvBass, { { "polyphony", 1 }, { "legato", 1 }, { "portamento_time", -5.0f } }, kDry, dist(0, 2) }),
+    {  } });
+  d.push_back({ "Rolling DnB Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnvBass, { { "polyphony", 1 }, { "legato", 1 }, { "portamento_time", -3.5f } }, kDry, dist(0, 2) }),
+    { { "env_2", "osc_1_transpose", 0.02f, false } } });
+  d.push_back({ "Liquid Sine Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnvBass, { { "polyphony", 1 }, { "legato", 1 }, { "portamento_time", -4.0f } }, kDry, dist(0, 2) }),
+    {  } });
+  d.push_back({ "Halftime Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnvBass, { { "polyphony", 1 }, { "legato", 1 }, { "portamento_time", -3.0f } }, kDry, dist(0, 2) }),
+    { { "env_2", "osc_1_transpose", 0.04f, false } } });
+  d.push_back({ "Pitch Drop Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnvBass, { { "polyphony", 1 }, { "legato", 1 }, { "portamento_time", -5.0f } }, kDry, dist(0, 2) }),
+    { { "env_2", "osc_1_transpose", 0.1f, false } } });
+  d.push_back({ "Steppy Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnvBass, { { "polyphony", 1 }, { "legato", 1 }, { "portamento_time", -6.0f } }, kDry, dist(0, 2) }),
+    { { "env_2", "osc_1_transpose", 0.03f, false } } });
+  d.push_back({ "Liquid Rhodes", "Rhodes", { T("FM", 1) },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 92, 0.1f), kEnvRhodes, kChorus, kHall, lfoHz(1, -2.2f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true }, { "velocity", "filter_1_cutoff", 0.1f, false } }, { 1 } });
+  d.push_back({ "Liquid Pad", "Pad", { "@3" },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 92, 0.1f), kEnvPad, kChorus, kVast, lfoHz(1, -2.2f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true }, { "velocity", "filter_1_cutoff", 0.1f, false } }, { 1 } });
+  d.push_back({ "Liquid Strings", "Strings", { T("M1 Wavetable[Mini][2048-44.1khz-32bit]", 8) },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 92, 0.1f), kEnvBow, kChorus, kHall, lfoHz(1, -2.2f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true }, { "velocity", "filter_1_cutoff", 0.1f, false } }, { 1 } });
+  d.push_back({ "Soulful DnB Piano", "Keys", { T("M1 Piano", 0) },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 92, 0.1f), kEnvLongPluck, kHall, lfoHz(1, -2.2f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true }, { "velocity", "filter_1_cutoff", 0.1f, false } }, { 1 } });
+  d.push_back({ "Atmos DnB Pad", "Pad", { "@6" },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 92, 0.1f), kEnvDream, kShimmer, lfoHz(1, -2.2f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true }, { "velocity", "filter_1_cutoff", 0.1f, false } }, { 1 } });
+  d.push_back({ "Rain Pad", "Pad", { T("Prophet VS Wave", 6) },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 92, 0.1f), kEnvDream, kVast, kDelayDot, lfoHz(1, -2.2f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true }, { "velocity", "filter_1_cutoff", 0.1f, false } }, { 1 } });
+  d.push_back({ "Liquid Bell", "Bell", { T("FM", 6) },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 92, 0.1f), kEnvBellLong, kHall, kDelayDot, lfoHz(1, -2.2f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true }, { "velocity", "filter_1_cutoff", 0.1f, false } }, { 1 } });
+  d.push_back({ "Dreamy Liquid Keys", "Keys", { T("Phase", 5) },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 92, 0.1f), kEnvRhodes, kChorus, kVast, lfoHz(1, -2.2f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true }, { "velocity", "filter_1_cutoff", 0.1f, false } }, { 1 } });
+  d.push_back({ "Ethereal Liquid Pad", "Pad", { "@7" },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 92, 0.1f), kEnvDream, kShimmer, lfoHz(1, -2.2f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true }, { "velocity", "filter_1_cutoff", 0.1f, false } }, { 1 } });
+  d.push_back({ "Night Drive Pad", "Pad", { "@4" },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.6f), filt(0, 0, 92, 0.1f), kEnvPad, kChorus, kVast, lfoHz(1, -2.2f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true }, { "velocity", "filter_1_cutoff", 0.1f, false } }, { 1 } });
+  d.push_back({ "Rave Stab DnB", "Pluck", { T("M1 Wavetable[Mini][2048-44.1khz-32bit]", 9) },
+    cat({ osc(1, 0.6f), uni(1, 5, 2.6f), filt(0, 0, 100, 0.2f), kEnvPluck, kRoom, kDelay16 }),
+    { { "env_2", "filter_1_cutoff", 0.3f, false } } });
+  d.push_back({ "Neuro Stab", "Pluck", { T("Hardcore FM", 3) },
+    cat({ osc(1, 0.6f), uni(1, 5, 2.6f), filt(0, 0, 100, 0.2f), kEnvPluck, dist(1, 10), kRoom }),
+    { { "env_2", "filter_1_cutoff", 0.3f, false } } });
+  d.push_back({ "DnB Pluck", "Pluck", { "@4" },
+    cat({ osc(1, 0.6f), uni(1, 5, 2.6f), filt(0, 0, 100, 0.2f), kEnvPluck, kRoom, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.3f, false } } });
+  d.push_back({ "Liquid Pluck", "Pluck", { T("Additive Synth", 2) },
+    cat({ osc(1, 0.6f), uni(1, 5, 2.6f), filt(0, 0, 100, 0.2f), kEnvPluck, kHall, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.3f, false } } });
+  d.push_back({ "Dancefloor Lead", "Lead", { "@4" },
+    cat({ osc(1, 0.6f), uni(1, 5, 2.6f), filt(0, 0, 100, 0.2f), kEnvLead, kMonoGlide, kHall, kDelay16 }),
+    { { "env_2", "filter_1_cutoff", 0.3f, false } } });
+  d.push_back({ "Siren Lead DnB", "Lead", { "@6" },
+    cat({ osc(1, 0.6f), uni(1, 5, 2.6f), filt(0, 0, 100, 0.2f), kEnvLead, kMonoGlide, kHall }),
+    { { "env_2", "filter_1_cutoff", 0.3f, false } } });
+  d.push_back({ "Hoover Stab", "Pluck", { T("Alpha Juno SawPWM", 3) },
+    cat({ osc(1, 0.6f), uni(1, 5, 2.6f), filt(0, 0, 100, 0.2f), kEnvPluck, kRoom }),
+    { { "env_2", "filter_1_cutoff", 0.3f, false } } });
+  d.push_back({ "Jump Up Stab", "Pluck", { "@5" },
+    cat({ osc(1, 0.6f), uni(1, 5, 2.6f), filt(0, 0, 100, 0.2f), kEnvPluck, dist(0, 10), kRoom }),
+    { { "env_2", "filter_1_cutoff", 0.3f, false } } });
+  d.push_back({ "Tension Riser DnB", "FX", { "@4" },
+    cat({ osc(1, 0.5f), uni(1, 7, 4.0f), filt(0, 1, 40, 0.5f), kEnvSwell, kNoise, kHall, kDelayDot }),
+    { { "env_2", "filter_1_cutoff", 0.7f, false }, { "env_2", "osc_1_transpose", 0.1f, false } }, { 1 } });
+  d.push_back({ "Breakdown Atmos", "FX", { "@4" },
+    cat({ osc(1, 0.5f), uni(1, 6, 3.0f), filt(0, 0, 80, 0.2f), kEnvDream, kShimmer, kNoise, { { "sample_level", 0.15f } } }),
+    { { "lfo_1", "filter_1_cutoff", 0.1f, true } }, { 1 } });
+  d.push_back({ "Sub Drop FX", "FX", { "@2" },
+    cat({ osc(1, 0.8f), filt(0, 0, 90, 0.0f), { { "env_1_attack", 0.0f }, { "env_1_decay", 1.6f }, { "env_1_sustain", 0.0f }, { "env_1_release", 1.0f }, { "env_2_attack", 0.0f }, { "env_2_decay", 1.5f }, { "env_2_sustain", 0.0f } }, kDry }),
+    { { "env_2", "osc_1_transpose", 0.25f, false } }, { 1 } });
+  d.push_back({ "Dark Drone DnB", "FX", { "@4" },
+    cat({ osc(1, 0.5f), uni(1, 6, 2.0f), filt(0, 1, 60, 0.4f, 6), kEnvSwell, kPhaser, kVast }),
+    { { "lfo_1", "filter_1_cutoff", 0.15f, true } }, { 1 } });
+  d.push_back({ "Jungle 808 Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnv808, { { "polyphony", 1 }, { "legato", 0 }, { "portamento_time", -3.0f } }, kDry, dist(0, 4) }),
+    { { "env_2", "osc_1_transpose", 0.08f, false } } });
+  d.push_back({ "Dub Jungle Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnv808, { { "polyphony", 1 }, { "legato", 0 }, { "portamento_time", -4.0f } }, kDry, dist(0, 2) }),
+    {  } });
+  d.push_back({ "Ragga Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnv808, { { "polyphony", 1 }, { "legato", 0 }, { "portamento_time", -3.5f } }, kDry, dist(0, 6) }),
+    { { "env_2", "osc_1_transpose", 0.05f, false } } });
+  d.push_back({ "Rolling Jungle Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnv808, { { "polyphony", 1 }, { "legato", 0 }, { "portamento_time", -2.5f } }, kDry, dist(0, 3) }),
+    {  } });
+  d.push_back({ "Bouncing Jungle Sub", "Bass", { "@2" },
+    cat({ osc(1, 0.85f), filt(0, 0, 90, 0.0f), kEnv808, { { "polyphony", 1 }, { "legato", 0 }, { "portamento_time", -5.0f } }, kDry, dist(0, 2) }),
+    { { "env_2", "osc_1_transpose", 0.1f, false } } });
+  d.push_back({ "Belgian Hoover", "Lead", { T("Alpha Juno SawPWM", 0), T("Alpha Juno SawPWM", 0) },
+    cat({ osc(1, 0.55f), uni(1, 7, 3.8f), osc(2, 0.3f, -12), uni(2, 5, 3.0f), filt(0, 0, 110, 0.15f), kEnvLead, { { "portamento_time", -3.0f } }, kChorus, kRoom, dist(0, 6) }),
+    { { "env_2", "osc_1_transpose", -0.04f, false }, { "env_2", "osc_2_transpose", -0.04f, false } } });
+  d.push_back({ "Rave Hoover", "Lead", { T("Alpha Juno SawPWM", 2), T("Alpha Juno SawPWM", 2) },
+    cat({ osc(1, 0.55f), uni(1, 7, 3.8f), osc(2, 0.3f, -12), uni(2, 5, 3.0f), filt(0, 0, 110, 0.15f), kEnvLead, { { "portamento_time", -3.0f } }, kChorus, kRoom, dist(0, 6) }),
+    { { "env_2", "osc_1_transpose", -0.04f, false }, { "env_2", "osc_2_transpose", -0.04f, false } } });
+  d.push_back({ "Mentasm Hoover", "Lead", { T("Alpha Juno SawPWM", 3), T("Alpha Juno SawPWM", 3) },
+    cat({ osc(1, 0.55f), uni(1, 7, 3.8f), osc(2, 0.3f, -12), uni(2, 5, 3.0f), filt(0, 0, 110, 0.15f), kEnvLead, { { "portamento_time", -3.0f } }, kChorus, kRoom, dist(0, 6) }),
+    { { "env_2", "osc_1_transpose", -0.04f, false }, { "env_2", "osc_2_transpose", -0.04f, false } } });
+  d.push_back({ "Rave Stab 92", "Pluck", { T("M1 Wavetable[Mini][2048-44.1khz-32bit]", 9), T("M1 Wavetable[Mini][2048-44.1khz-32bit]", 9) },
+    cat({ osc(1, 0.55f), uni(1, 7, 3.8f), osc(2, 0.3f, -12), uni(2, 5, 3.0f), filt(0, 0, 110, 0.15f), kEnvPluck, { { "portamento_time", -3.0f } }, kChorus, kRoom, dist(0, 6) }),
+    { { "env_2", "osc_1_transpose", -0.04f, false }, { "env_2", "osc_2_transpose", -0.04f, false } } });
+  d.push_back({ "Hardcore Stab", "Pluck", { "@4", "@4" },
+    cat({ osc(1, 0.55f), uni(1, 7, 3.8f), osc(2, 0.3f, -12), uni(2, 5, 3.0f), filt(0, 0, 110, 0.15f), kEnvPluck, { { "portamento_time", -3.0f } }, kChorus, kRoom, dist(0, 6) }),
+    { { "env_2", "osc_1_transpose", -0.04f, false }, { "env_2", "osc_2_transpose", -0.04f, false } } });
+  d.push_back({ "Orchestra Rave Hit", "Pluck", { T("M1 Wavetable[Mini][2048-44.1khz-32bit]", 8), T("M1 Wavetable[Mini][2048-44.1khz-32bit]", 8) },
+    cat({ osc(1, 0.55f), uni(1, 7, 3.8f), osc(2, 0.3f, -12), uni(2, 5, 3.0f), filt(0, 0, 110, 0.15f), kEnvHit, { { "portamento_time", -3.0f } }, kChorus, kRoom, dist(0, 6) }),
+    { { "env_2", "osc_1_transpose", -0.04f, false }, { "env_2", "osc_2_transpose", -0.04f, false } } });
+  d.push_back({ "Jungle Strings", "Pad", { T("M1 Wavetable[Mini][2048-44.1khz-32bit]", 8) },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.8f), filt(0, 0, 86, 0.15f), kEnvPad, kChorus, kVast, kDelayQuarter, lfoHz(1, -2.4f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true } }, { 1 } });
+  d.push_back({ "Ambient Jungle Pad", "Pad", { "@3" },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.8f), filt(0, 0, 86, 0.15f), kEnvPad, kChorus, kVast, kDelayQuarter, lfoHz(1, -2.4f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true } }, { 1 } });
+  d.push_back({ "Dark Jungle Pad", "Pad", { "@6" },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.8f), filt(0, 0, 86, 0.15f), kEnvPad, kChorus, kVast, kDelayQuarter, lfoHz(1, -2.4f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true } }, { 1 } });
+  d.push_back({ "Atmospheric 94 Pad", "Pad", { T("Prophet VS Wave", 4) },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.8f), filt(0, 0, 86, 0.15f), kEnvPad, kChorus, kVast, kDelayQuarter, lfoHz(1, -2.4f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true } }, { 1 } });
+  d.push_back({ "Choir Jungle Pad", "Pad", { T("GMa Vowel", 0) },
+    cat({ osc(1, 0.6f), uni(1, 4, 1.8f), filt(0, 0, 86, 0.15f), kEnvPad, kChorus, kVast, kDelayQuarter, lfoHz(1, -2.4f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.06f, true } }, { 1 } });
+  d.push_back({ "Rave Piano", "Keys", { T("M1 Piano", 0) },
+    cat({ osc(1, 0.65f), filt(0, 0, 100, 0.1f), kEnvLongPluck, kRoom }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "M1 Jungle Piano", "Keys", { T("M1 Piano", 1) },
+    cat({ osc(1, 0.65f), filt(0, 0, 100, 0.1f), kEnvLongPluck, kHall }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Dub Chord Jungle", "Keys", { T("Walsh Function", 2) },
+    cat({ osc(1, 1.0f), osc(2, 0.5f, 12), filt(0, 0, 100, 0.1f), kEnvLongPluck, kDelayQuarter, kHall }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Jazz Jungle Rhodes", "Rhodes", { T("FM", 4) },
+    cat({ osc(1, 0.65f), filt(0, 0, 100, 0.1f), kEnvRhodes, kChorus, kRoom }),
+    { { "velocity", "filter_1_cutoff", 0.15f, false } } });
+  d.push_back({ "Dub Siren", "FX", { "@5" },
+    cat({ osc(1, 0.6f), filt(0, 0, 110, 0.2f), kEnvLead, kMonoGlide, kDelayDot, kHall, lfoHz(1, 1.5f) }),
+    { { "lfo_1", "osc_1_transpose", 0.08f, true } }, { 1 } });
+  d.push_back({ "Ragga Horn", "Brass", { "@4" },
+    cat({ osc(1, 0.6f), uni(1, 3, 1.2f), filt(0, 1, 80, 0.3f, 6), kEnvBrass, kRoom }),
+    { { "env_2", "filter_1_cutoff", 0.35f, false } }, { 1 } });
+  d.push_back({ "Jungle Whistle", "Lead", { "@2" },
+    cat({ osc(1, 0.6f, 12), filt(0, 0, 120, 0.0f), kEnvSoftLead, kMonoGlide, kDelayDot, kHall, lfoHz(1, 2.4f) }),
+    { { "lfo_1", "osc_1_tune", 0.03f, true } }, { 1 } });
+  d.push_back({ "Laser Dub FX", "FX", { "@2" },
+    cat({ osc(1, 0.6f), filt(0, 0, 110, 0.3f), kEnvPerc, kDelayQuarter, kHall }),
+    { { "env_2", "osc_1_transpose", 0.3f, false } }, { 1 } });
+  d.push_back({ "Reese Jungle 95", "Bass", { "@4", "@4" },
+    cat({ osc(1, 0.6f), uni(1, 6, 2.6f), osc(2, 0.4f, -12), filt(2, 1, 70, 0.25f, 6), kEnvBass, kMono, kDry, kChorus, lfoHz(1, -2.0f) }),
+    { { "lfo_1", "filter_1_cutoff", 0.12f, true } }, { 1 } });
+  for (size_t i = first; i < d.size(); ++i)
+    if (d[i].style == "Bass" || d[i].name == "Sub Drop FX") g_low_names.insert(d[i].name);
+}
+
 int main(int argc, char** argv) {
   if (argc < 3) {
     std::fprintf(stderr, "usage: make_factory <open-vital-resources> <out Patches folder>\n");
@@ -1328,6 +1711,7 @@ int main(int argc, char** argv) {
   addMore2(defs);
   addMore3(defs);
   addMore4(defs);
+  addMore5(defs);
   {
     std::map<std::string, int> seen;
     for (const PatchDef& d : defs)
@@ -1417,7 +1801,7 @@ int main(int argc, char** argv) {
     // their oscillator levels raised first.
     double last_peak = 0.0;
     // 808s (and the 1.3 reese) play low: measure them on a low note, or the high-band compression makes them read loud.
-    bool low_bass = def.name.find("808") != std::string::npos || def.name == "Slime Reese Bass";
+    bool low_bass = def.name.find("808") != std::string::npos || def.name == "Slime Reese Bass" || g_low_names.count(def.name) > 0;
     auto measure = [&core, &last_peak, low_bass]() {
       // Measure as the MPC plays it by default (Quality: Eco, unison and voices capped at 8),
       // including the release and effect tails.
