@@ -10,7 +10,9 @@ Designed for the **MPC Live III / MPC XL** (64-bit). It also builds for the 32-b
 ![Warpline on the MPC](docs/screenshots/warpline.png)
 
 **New in 1.3.0:** 125 UK garage, drum and bass and 90s jungle patches, and a harder, bigger rage set with supersaw chords,
-sub and coin layers (159 new patches, 519 in all). The GENRE menu gains UK Garage and DnB / Jungle.
+sub and coin layers (159 new patches, 519 in all). The GENRE menu gains UK Garage and DnB / Jungle. Lighter on the CPU: Warpline
+stops running its engine after about a second of silence, so a loaded instance that is not playing costs almost nothing, and on
+32-bit MPCs a new instance starts at 6 voices. An open menu no longer shows the orange Q-Link focus box through it.
 
 **New in 1.2.0:** a wavetable picker on each oscillator (Basic Shapes, Sine, Triangle, Saw, Square, PWM, Harmonics, Formant and Sync
 tables, or the patch's own), generative CHANCE / DEJA VU / LOOP controls on the arpeggiator, and two random mod sources, GEN 1 and GEN 2.
@@ -80,7 +82,11 @@ Rebuild the skin after changing parameters: `python tools_build_skin.py` (needs 
 
 ## CPU and memory: the "stripped down" part
 - **Quality: Eco** (default) runs the engine without oversampling. **High** allows the patch's 2× oversampling, which sounds cleaner and uses about twice the CPU.
-- **Max Voices** (default 8, at most 16) and **Max Unison** (default 8, Vital allows 16) cap a patch's polyphony and unison. Lower them if the MPC struggles.
+- **Max Voices** (default 8, or 6 on 32-bit MPCs since 1.3; at most 16) and **Max Unison** (default 8, Vital allows 16) cap a patch's
+  polyphony and unison. If the MPC struggles, lower **Max Voices** first: voices (and the FX) are what cost CPU, unison costs little.
+  Patches with long releases, like pads played through the arp, keep many voices sounding at once.
+- **Idle (1.3):** after about a second of silence with no notes sounding, the engine is not run until the next note, so an
+  instance that is loaded but not playing uses almost no CPU.
 - The engine is compiled with 16 voices at most (desktop Vital has 32), which brings memory down to about 85 MB per instance.
 - Measured on a desktop core with 150 real-world .vital patches, 4 notes held: median 5.5 %, heaviest 15 % (factory patches: median 5 %, heaviest 14 %).
   The MPC's ARM cores are several times slower, so check heavy patches on the hardware.

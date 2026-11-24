@@ -27,6 +27,7 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   - State saving, Live View, and the scrollable patch list/browser.
 - `tools/render_demo.cpp`: renders a WAV demo of .vital patches through VitalCore (chords, or an 808 line for Bass) to listen
   to factory patches without a device. Build line in its header.
+- `tools/bench_patches.cpp`: ranks .vital patches by engine CPU (relative, x86) to find patches too heavy for Gen 1. Build line in its header.
 - `tools/genres.py`: writes `Content/Genres.txt`, the factory patches' genres. Run it after adding patches.
 - `tools/make_factory.cpp`: generates the 519 factory patches (a table named "@n" is Warpline's own built-in table n).
   - It uses CC0 wavetables from atsushieno/open-vital-resources.
@@ -157,6 +158,19 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   measures 808s, Slime Reese Bass and the addMore5 basses (`g_low_names`) on a low note (A1). Listened to as `render_demo` renders by the user before shipping.
 - `addMore5`: 125 UK garage, DnB and jungle patches, written by a generator script from family templates (kept in the
   patches, not the repo). Genre gains "UK Garage" and "DnB / Jungle" (appended to `kGenres`); the GENRE menu is 4 x 3 tiles.
+- CPU, after a Gen 1 user report (about 10 % loaded and idle, 50-130 % playing, Gated Choir the worst):
+  - Idle skip in `process()`: after `kIdleSeconds` (1 s) with the output below `kIdlePeak` (-100 dBFS), no active voices and
+    the arp not running, `core_->render` is skipped (zeros out) until a channel MIDI message arrives or the arp runs. System
+    messages (clock) do not wake it. `tools/test_v13.cpp` checks it: block time 10.4 → 1.7 µs idle on x86, the first note
+    after idle has its attack, a latched arp stays awake.
+  - The 32-bit build (`__arm__`, Gen 1) defaults Max Voices to 6 (`kDefaultMaxVoices`); saved projects keep theirs.
+  - `tools/bench_patches.cpp` ranks patches by engine CPU (4-note chord, x86, relative only; `BENCH_OFF=reverb_on,...`
+    switches controls off). Factory median 3.9 %, heaviest 11.6 % at 8 voices. Unison 1 vs 16 made no measurable
+    difference; voices (1 → 4 doubles it) and FX (Clavinet Pop: 10 % → 3 % without them) do.
+  - Gated Choir: patch polyphony 4 and amp release 0.7 (was 8 and 1.3), so its arp does not pile up voices.
+- Skin: page controls below the header get a `Panel == Closed` invalidating handle (`Page.add`), so they hide while a panel
+  is open and a focused control's orange Focus outline no longer draws over the panel (reported on a device; fix checked
+  only in the offline preview so far).
 
 ## Rules that must not break
 
@@ -192,6 +206,7 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   - At block 512 the parameter sweep sometimes warns about denormals inside Vital's engine; that warning is harmless.
 - Always try a build on the MPC before releasing: every page, the Q-Links, the browser, save and reload a project.
 
+- 1.3 idle test: `tools/test_v13.cpp` (build line at the top), run under ASan.
 - 1.1 feature test: `tools/test_v11.cpp` (build line at the top) is a small VST2 host. It drives the arp, GRAINZ, the matrix,
   search, favourites, drag and a state reload through `setParameter` and prints what it measures. Run it under ASan.
 
