@@ -1,0 +1,521 @@
+# Warpline factory patch CPU ratings (tools/cpu_ratings.py): L light, M medium, H heavy.
+# Relative to the median patch (3.68% of a desktop core here): L <= 0.8x, H >= 1.4x.
+AR 2-Step Arp.vital|L
+AR Acid Arp.vital|M
+AR Crystal Steps.vital|M
+AR Dark Pulse Seq.vital|M
+AR Gated Choir.vital|M
+AR Gated Saws.vital|M
+AR Harp Cascade.vital|L
+AR Morph Steps.vital|M
+AR Ping Pong Bells.vital|L
+AR Pulse Train.vital|L
+AR Random Blips.vital|M
+AR Retro Arcade.vital|L
+AR Saw Sequence.vital|M
+AR Seq Bubbles.vital|M
+AR Sidechain Stabs.vital|M
+AR Trance Gate Pad.vital|M
+AR Triplet Motion.vital|M
+BL Bowl Resonance.vital|M
+BL Church Bell.vital|L
+BL Crystal Bell.vital|M
+BL FM Bell Pad.vital|M
+BL Gamelan.vital|M
+BL Garage Bell.vital|M
+BL Glass Chimes.vital|M
+BL Glockenspiel.vital|L
+BL Ice Toll.vital|M
+BL Liquid Bell.vital|M
+BL Lux Toll.vital|H
+BL Marimba Wood.vital|M
+BL Metallic Ring.vital|M
+BL Music Box.vital|M
+BL Rage Bell.vital|M
+BL Steel Drum.vital|M
+BL Tonka Chime.vital|M
+BL Toy Piano.vital|M
+BL Tubular Chime.vital|L
+BL Vibes Tremolo.vital|M
+BL Vibraphone Soft.vital|M
+BL Wind Chime.vital|M
+BL Wraith Bell.vital|M
+BR Big Synth Horns.vital|M
+BR Brass Fanfare.vital|H
+BR Brass Section.vital|M
+BR Funk Brass Stab.vital|M
+BR Jump Brass.vital|M
+BR Muted Trumpet.vital|M
+BR Prophet Brass.vital|M
+BR Ragga Horn.vital|M
+BR Sax Synth.vital|L
+BR Soft French Horn.vital|M
+BR Swell Brass Pad.vital|M
+BR Synth Brass.vital|M
+BR Tuba Low.vital|L
+BS 2-Step Organ Bass.vital|L
+BS 2-Step Sub.vital|L
+BS 808 Glide.vital|L
+BS Acid Line.vital|L
+BS Bassline Bounce.vital|L
+BS Bassline Wobble.vital|L
+BS Bit Bass.vital|L
+BS Bounce Bass.vital|H
+BS Bouncing Jungle Sub.vital|L
+BS Bumpy Organ Bass.vital|M
+BS Classic Reese.vital|M
+BS Clip 808.vital|L
+BS CZ Resonance Bass.vital|L
+BS Dark Reese.vital|M
+BS Deep House Organ Bass.vital|L
+BS Deep Sub Glide.vital|L
+BS Detuned Square Bass.vital|L
+BS Diode Bite.vital|L
+BS DnB Sine Sub.vital|L
+BS Dub Jungle Sub.vital|L
+BS Dub Organ Bass.vital|L
+BS Dub Wobble.vital|L
+BS Dubstep Yoi.vital|L
+BS Electro Reese.vital|L
+BS Fat Unison Bass.vital|M
+BS FM Growl.vital|L
+BS Foghorn Bass.vital|M
+BS Fold 808.vital|L
+BS Foldback Bass.vital|L
+BS Formant Growler.vital|L
+BS Formant Wobble.vital|L
+BS Formant Yoi Bass.vital|M
+BS Funk Synth Bass.vital|H
+BS Garage Organ Bass.vital|L
+BS Garage Sine Sub.vital|L
+BS Grimy Reese.vital|L
+BS Grinder Bass.vital|L
+BS Growl 808.vital|L
+BS Halftime Reese.vital|M
+BS Halftime Sub.vital|L
+BS Hoover Wub.vital|M
+BS House Pluck Bass.vital|L
+BS Jump Up Wub.vital|M
+BS Jungle 808 Sub.vital|L
+BS Late Night Organ Bass.vital|L
+BS Liquid Reese.vital|M
+BS Liquid Sine Sub.vital|L
+BS Liquid Sub.vital|L
+BS M1 Organ Bass.vital|L
+BS Metal Neuro.vital|L
+BS Moog Thump.vital|L
+BS Neo Soul Sub.vital|L
+BS Neuro Grind.vital|L
+BS Neuro Growl.vital|M
+BS Neuro Reese.vital|M
+BS Phased Reese.vital|M
+BS Pitch Drop Sub.vital|L
+BS Plaits Thump.vital|H
+BS Pluck Bass.vital|H
+BS Pressure Sub.vital|L
+BS Rage 808.vital|L
+BS Ragga Sub.vital|L
+BS Reese Jungle 95.vital|M
+BS Reese Pressure.vital|L
+BS Riddim Growl.vital|L
+BS Robot Neuro.vital|L
+BS Rolling DnB Sub.vital|L
+BS Rolling Jungle Sub.vital|L
+BS Rolling Reese.vital|M
+BS Rolling Sub.vital|L
+BS Round Moog Bass.vital|L
+BS Rubber Sub.vital|L
+BS Saw Stack Bass.vital|L
+BS Shuffle Organ Bass.vital|M
+BS Skippy Organ Bass.vital|L
+BS Slap Synth Bass.vital|H
+BS Slime Reese Bass.vital|L
+BS Smeared Reese.vital|L
+BS Smooth Sub.vital|L
+BS Snarl Reese.vital|M
+BS Speed Garage Hoover.vital|L
+BS Speed Garage Reese.vital|L
+BS Square Wob Bass.vital|L
+BS Squelch 303.vital|L
+BS Steppy Sub.vital|L
+BS Sub Knock 808.vital|L
+BS Sub Pressure.vital|L
+BS Sync Snarl.vital|L
+BS Talking Bass.vital|L
+BS Talking Bassline.vital|L
+BS Talking Neuro.vital|M
+BS Tearout Saw Bass.vital|L
+BS Tech Reese.vital|M
+BS Warehouse Organ Bass.vital|L
+BS Warm Sub Thump.vital|L
+BS Wide Reese.vital|H
+BS Wobble Classic.vital|L
+BS Wobble Organ Bass.vital|L
+BS Wonky Bassline.vital|L
+DY Aurora.vital|M
+DY Cloud Nine.vital|H
+DY Daydream Swell.vital|M
+DY Dream Piano.vital|M
+DY Ethereal Voices.vital|H
+DY Floating.vital|M
+DY Hazy Memories.vital|M
+DY Hologram.vital|M
+DY Lullaby.vital|M
+DY Lush Supersaw Pad.vital|H
+DY Moonlit Bells.vital|M
+DY Northern Lights.vital|M
+DY Shimmer Strings.vital|H
+DY Snowfall.vital|M
+DY Soft Focus.vital|M
+DY Stardust.vital|M
+DY Starlight Keys.vital|M
+DY Sunset Glow.vital|H
+DY Tide Pool.vital|H
+DY Underwater Dream.vital|M
+DY Velvet Haze.vital|H
+DY Weightless.vital|M
+FX Alarm Siren.vital|M
+FX Breakdown Atmos.vital|M
+FX Dark Drone.vital|M
+FX Dark Drone DnB.vital|M
+FX Dial Up.vital|L
+FX Downlifter.vital|L
+FX Dub Siren.vital|L
+FX Glitch Machine.vital|M
+FX Insect Swarm.vital|M
+FX Laser Dub FX.vital|M
+FX Laser Zap.vital|M
+FX Radio Static.vital|M
+FX Riser Sweep.vital|M
+FX Robot Chatter.vital|M
+FX Space Bloom.vital|M
+FX Space Drone.vital|M
+FX Sub Drop FX.vital|M
+FX Tape Stop.vital|M
+FX Tension Riser DnB.vital|M
+FX Underwater Sonar.vital|M
+FX White Noise Riser.vital|L
+FX Wind Tunnel.vital|M
+KY 2-Step Keys.vital|M
+KY Analog Piano.vital|L
+KY Celeste.vital|M
+KY Chord Memory.vital|H
+KY Clav Funk.vital|H
+KY Clavinet Pop.vital|H
+KY Club Rhodes.vital|M
+KY Digi Piano 84.vital|M
+KY Digital Grand.vital|M
+KY Dream Rhodes.vital|M
+KY Dreamy Liquid Keys.vital|M
+KY Dub Chord Delay.vital|H
+KY Dub Chord Jungle.vital|H
+KY EP Tines.vital|M
+KY Garage Piano Stab.vital|M
+KY Glass Harp.vital|L
+KY Glass Keys.vital|M
+KY Glass Organ.vital|H
+KY Gospel Organ.vital|H
+KY Hammer Dulcimer.vital|M
+KY Harpsichord.vital|H
+KY House Organ Stab.vital|M
+KY Juno Keys.vital|M
+KY Lo-Fi Keys.vital|H
+KY M1 Garage Piano.vital|M
+KY M1 House Piano.vital|L
+KY M1 Jungle Piano.vital|L
+KY OP Keys.vital|L
+KY Organ Chord Stab.vital|M
+KY Organ Drawbars.vital|H
+KY Phase Keys.vital|M
+KY Piano Air.vital|M
+KY Plastic Keys.vital|M
+KY Poly Synth Keys.vital|H
+KY Rave Piano.vital|M
+KY Shuffle Stab.vital|M
+KY Soft Stab Keys.vital|M
+KY Soulful DnB Piano.vital|M
+KY Stab Chord.vital|M
+KY Sunday Stab.vital|M
+KY Swing Chords.vital|H
+KY Toy Keys.vital|M
+KY Upright Felt.vital|M
+KY Vamp Organ.vital|H
+KY Vector Keys.vital|M
+KY Velvet Garage Keys.vital|M
+KY Velvet Keys.vital|M
+KY Warm EP Pad Keys.vital|M
+KY Wurly Drive.vital|M
+LD Acid Lead.vital|L
+LD Analog Brass Lead.vital|L
+LD Anthem Supersaw.vital|H
+LD Belgian Hoover.vital|H
+LD Bend Garage Lead.vital|L
+LD Big Room Lead.vital|H
+LD Bright Saw Lead.vital|L
+LD Buchla Bounce.vital|M
+LD Chaos Screech.vital|H
+LD Chebyshev Whistle.vital|L
+LD Chip Arp.vital|M
+LD Chip Lead.vital|L
+LD Clipped Saw Lead.vital|H
+LD Crystal Lead.vital|L
+LD Dancefloor Lead.vital|L
+LD Distorted Brass Lead.vital|H
+LD Distorted Saw Lead.vital|L
+LD Dive Lead.vital|H
+LD Falsetto Whistle.vital|L
+LD Festival Supersaw.vital|H
+LD Flute Synth.vital|M
+LD Folded Lead.vital|L
+LD Formant Lead.vital|L
+LD Future Bass Saw.vital|H
+LD Fuzz Lead.vital|L
+LD Fuzz Synth Lead.vital|H
+LD G-Funk Lead.vital|L
+LD Garage Sine Lead.vital|L
+LD Garage Whistle Lead.vital|L
+LD Glide Pulse Lead.vital|L
+LD Glide Saw 80s.vital|M
+LD Glitch Crush Lead.vital|H
+LD Hardstyle Screech.vital|L
+LD Hoover Lead.vital|M
+LD Hyper Detune Lead.vital|H
+LD Hyper Glide Lead.vital|H
+LD Hyper Saw.vital|H
+LD Jungle Whistle.vital|L
+LD Mentasm Hoover.vital|H
+LD Modulo Lead.vital|L
+LD Money Jingle Lead.vital|H
+LD Nasal Reed.vital|L
+LD Ocarina.vital|L
+LD OP Lead.vital|L
+LD Pitch Snap Lead.vital|H
+LD Plaits Lead.vital|L
+LD Portamento Sine.vital|L
+LD Punk Fuzz Lead.vital|H
+LD Rage Anthem Lead.vital|H
+LD Rage Saw Lead.vital|H
+LD Rave Hoover.vital|H
+LD Screamer.vital|L
+LD Silk Lead.vital|L
+LD Siren Lead DnB.vital|L
+LD Siren Wail.vital|M
+LD Sky Arp Lead.vital|H
+LD Smooth Sine Lead.vital|M
+LD Soft Sine Lead.vital|L
+LD Soft Square Lead.vital|L
+LD Square Hero.vital|L
+LD Square Rage Lead.vital|H
+LD Sync Lead.vital|L
+LD Sync Scream.vital|L
+LD Talk Box Lead.vital|L
+LD Trance Lead.vital|M
+LD Uplift Trance Lead.vital|M
+LD Vocal Synth Lead.vital|M
+LD Wah Lead.vital|L
+LD Wavy Saw Lead.vital|H
+LD Whistle Lead.vital|L
+PC Clap Room.vital|M
+PC Closed Hat.vital|L
+PC Conga Tone.vital|M
+PC Cowbell 80s.vital|H
+PC Glitch Hit.vital|M
+PC Kaoss Kit Hit.vital|M
+PC Metal Hit.vital|M
+PC Rim Click.vital|L
+PC Snare Crack.vital|L
+PC Synth Kick.vital|L
+PC Synth Tom.vital|M
+PC Tabla Bend.vital|M
+PC Tom Electro.vital|M
+PD 80s Poly Pad.vital|M
+PD Additive Choir.vital|M
+PD Ambient Jungle Pad.vital|M
+PD Analog Strings Pad.vital|M
+PD Analog Warmth.vital|H
+PD Atmos DnB Pad.vital|M
+PD Atmospheric 94 Pad.vital|H
+PD Bitcrush Chords.vital|H
+PD Breakdown Pad.vital|M
+PD Breathing Pad.vital|M
+PD Bright Poly Pad.vital|M
+PD Cathedral.vital|H
+PD Choir Jungle Pad.vital|H
+PD Choir of Glass.vital|H
+PD Choral Pad.vital|H
+PD Cloud Rage Chords.vital|H
+PD Coin Rain Chords.vital|H
+PD Comb Shimmer.vital|M
+PD Dark Choir.vital|M
+PD Dark Jungle Pad.vital|M
+PD Dark Matter.vital|M
+PD Dark Strings Pad.vital|M
+PD Desert Wind Pad.vital|M
+PD Dusk Garage Pad.vital|H
+PD Ethereal Liquid Pad.vital|M
+PD Euphoric Pad.vital|H
+PD Evolving Spectra.vital|M
+PD Filter Rise Pad.vital|M
+PD Gated Hyper Saw.vital|H
+PD Ghost Strings.vital|H
+PD Glacier.vital|M
+PD Glass Choir Pad.vital|H
+PD Granular Haze.vital|M
+PD Granular Pad.vital|M
+PD Harmonic Bloom.vital|M
+PD Harmonic Drift.vital|L
+PD Haze Vox Pad.vital|M
+PD Hyper Detune Chords.vital|H
+PD Ice Field.vital|M
+PD Jungle Strings.vital|M
+PD Late Club Pad.vital|M
+PD Liquid Pad.vital|M
+PD Neo Soul Strings.vital|M
+PD Night Drive Pad.vital|M
+PD Night Pad.vital|M
+PD Night Swell.vital|H
+PD Opium Chords.vital|H
+PD Organ Pad.vital|M
+PD Phase Pad.vital|M
+PD Phaser Strings.vital|M
+PD PPG Sweep.vital|M
+PD Prophet Vector.vital|H
+PD Pulse Width Pad.vital|M
+PD PWM Air Pad.vital|M
+PD PWM Strings.vital|M
+PD Quiet Storm Pad.vital|M
+PD Rage Gate Chords.vital|H
+PD Rage Supersaw Chords.vital|H
+PD Rain Pad.vital|M
+PD Retro Sci-Fi Pad.vital|M
+PD Satin Pad.vital|M
+PD Shimmer Pad.vital|H
+PD Sidechain Pad.vital|M
+PD Silk Pad.vital|H
+PD Silky 2-Step Pad.vital|M
+PD Soulful Garage Pad.vital|M
+PD Spectral Smear.vital|M
+PD Sub Quake Chords.vital|H
+PD Sunrise Sweep.vital|M
+PD Vault Chords.vital|H
+PD Velvet Room Pad.vital|M
+PD Void Organ.vital|H
+PD Vowel Pad.vital|M
+PD Warm Analog Pad.vital|H
+PD Warm Blanket.vital|M
+PD Warm Vocal Pad.vital|M
+PL Bell Pluck.vital|M
+PL Bright Saw Pluck.vital|M
+PL Bubble Pluck.vital|M
+PL Chime Pluck.vital|M
+PL Chord Stab.vital|M
+PL Clipped Pluck.vital|H
+PL Deep Pluck.vital|H
+PL Detuned Stab Pluck.vital|H
+PL Digital Bells.vital|M
+PL Distorted Chord Stab.vital|H
+PL DnB Pluck.vital|M
+PL Dreamy Rage Pluck.vital|H
+PL Drop Pluck.vital|H
+PL Funky Wah Pluck.vital|M
+PL Future Pluck.vital|M
+PL Glass Pluck.vital|M
+PL Glassy Garage Pluck.vital|M
+PL Guitar Pick.vital|M
+PL Hardcore Stab.vital|H
+PL Harp Glint.vital|M
+PL Hoover Stab.vital|M
+PL Hyper Pluck.vital|H
+PL Island Pluck.vital|M
+PL Jump Up Stab.vital|M
+PL Kalimba Drop.vital|M
+PL Koto Pluck.vital|M
+PL Liquid Pluck.vital|M
+PL Lush Pluck.vital|M
+PL Mallet Pluck.vital|L
+PL Marimba Pluck.vital|M
+PL Muted Guitar.vital|L
+PL Neuro Stab.vital|L
+PL Nylon Pluck.vital|L
+PL Orchestra Rave Hit.vital|H
+PL Overdrive Stab.vital|H
+PL Pizz Pluck.vital|M
+PL Pizzicato Strings.vital|M
+PL Pluck Arp Glass.vital|M
+PL Progressive Pluck.vital|M
+PL Punch Saw Pluck.vital|H
+PL Rage Chord Pluck.vital|H
+PL Rage Pluck.vital|H
+PL Rave Stab 92.vital|H
+PL Rave Stab DnB.vital|M
+PL Rubber Pluck.vital|M
+PL Shamisen.vital|M
+PL Shuffle Pluck.vital|M
+PL Sitar Pluck.vital|M
+PL Snap Pluck.vital|H
+PL String Pluck.vital|M
+PL Sync Pluck.vital|M
+PL Synth Harp.vital|M
+PL Tropical Pluck.vital|M
+PL Ukulele.vital|M
+PL Water Drop.vital|M
+PL Zither.vital|M
+RH Jazz Jungle Rhodes.vital|M
+RH Late Night Rhodes.vital|M
+RH Liquid Rhodes.vital|H
+RH Rhodes Bell Mix.vital|H
+RH Rhodes Bell Tines.vital|H
+RH Rhodes Bright Bark.vital|M
+RH Rhodes Chorus Wide.vital|M
+RH Rhodes Classic.vital|M
+RH Rhodes Dark Velvet.vital|M
+RH Rhodes Dream.vital|M
+RH Rhodes Echo Room.vital|M
+RH Rhodes Hip Hop.vital|M
+RH Rhodes Lofi Tape.vital|M
+RH Rhodes Mark Drive.vital|M
+RH Rhodes Mellow Jazz.vital|L
+RH Rhodes Neo Soul.vital|M
+RH Rhodes Phase Ballad.vital|M
+RH Rhodes Stage 73.vital|M
+RH Rhodes Suitcase.vital|M
+RH Rhodes Vintage Trem.vital|M
+RH Rhodes Wurli Hybrid.vital|M
+RH Silk Rhodes.vital|M
+RH Slow Jam Rhodes.vital|M
+RH Tape Soul Rhodes.vital|M
+RH Velvet Tines.vital|H
+ST Analog String Machine.vital|M
+ST Cello Bow.vital|L
+ST Chamber Strings.vital|M
+ST Cinematic Swell.vital|M
+ST Ensemble 78.vital|M
+ST Glass Strings.vital|M
+ST Liquid Strings.vital|H
+ST Low Strings.vital|M
+ST Solina Dream.vital|H
+ST Spiccato.vital|M
+ST String Ensemble.vital|M
+ST Tremolo Strings.vital|M
+ST Viola Warm.vital|L
+ST Violin Solo.vital|L
+VX Aah Choir.vital|H
+VX Choir Swell.vital|M
+VX Diva Chop.vital|M
+VX Eeh Choir.vital|H
+VX Formant Chop.vital|M
+VX Formant Sweep Voice.vital|M
+VX Garage Vox Lead.vital|M
+VX Ghost Vowels.vital|H
+VX Monk Chant.vital|M
+VX Ooh Choir.vital|M
+VX Ooh Chop.vital|M
+VX Pitched Vox Stab.vital|M
+VX Robot Voice.vital|M
+VX Siren Voice.vital|L
+VX Talk Box.vital|L
+VX Vocoder Lead.vital|L
+VX Vowel Pluck.vital|M
+VX Vox Chop.vital|M
+VX Whisper Pad.vital|H
+VX Yah Stab.vital|M
