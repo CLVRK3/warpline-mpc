@@ -36,6 +36,8 @@
 #include <set>
 #include <string>
 #include <thread>
+#include <pthread.h>
+#include <sched.h>
 #include <vector>
 
 #include "Arp.h"
@@ -43,6 +45,8 @@
 #include "Granulator.h"
 #include "GrainzClouds.h"
 #include "VitalCore.h"
+#include "WavTable.h"
+#include "fast_cores.h"
 #include "synth_constants.h"
 #include "synth_parameters.h"
 
@@ -234,12 +238,58 @@ struct PatchEntry {
   std::string path;   // empty = built-in Init
   int type = -1;      // index into kTypeCodes (-1 = Init)
   uint32_t genres = 0;   // 1.2: bit g-1 = kGenres[g] (from Content/Genres.txt or <drive>/Warpline/Genres.txt)
+  int cpu = 0;           // 1.4: 0 not rated, 1 light, 2 medium, 3 heavy (Content/Cpu.txt, tools/cpu_ratings.py)
 };
+
+// 1.4: one of your own WAV wavetables.
+struct UserTable {
+  std::string name;   // file name without .wav, shortened for the menu
+  std::string path;
+};
+constexpr size_t kMaxUserTables = 64;
 
 // 1.2 GENRE picker. Index 0 = all; the names are the ones Genres.txt uses (tools/genres.py).
 const char* const kGenres[] = { "All", "Trap / Rage", "Hip-Hop", "R&B / Soul", "EDM", "House / Techno", "Pop",
                                 "Synthwave / Retro", "Ambient / Cinematic", "Lo-Fi / Chill", "UK Garage", "DnB / Jungle" };   // last two: 1.3
 constexpr int kNumGenres = sizeof(kGenres) / sizeof(kGenres[0]);
+
+// 1.4 chord mode: intervals from the played note (-1 ends a chord).
+const char* const kChordNames[] = { "Off", "Major", "Minor", "Sus2", "Sus4", "7th", "Maj7", "Min7", "Min9", "Maj9", "Add9",
+                                    "Power", "Dim", "Octave" };
+constexpr int kNumChords = sizeof(kChordNames) / sizeof(kChordNames[0]);
+const int kChordNotes[kNumChords][6] = {
+  { 0, -1 }, { 0, 4, 7, -1 }, { 0, 3, 7, -1 }, { 0, 2, 7, -1 }, { 0, 5, 7, -1 }, { 0, 4, 7, 10, -1 }, { 0, 4, 7, 11, -1 },
+  { 0, 3, 7, 10, -1 }, { 0, 3, 7, 10, 14, -1 }, { 0, 4, 7, 11, 14, -1 }, { 0, 4, 7, 14, -1 }, { 0, 7, 12, -1 },
+  { 0, 3, 6, -1 }, { 0, 12, -1 } };
+const char* const kVoicingNames[] = { "Close", "Inv 1", "Inv 2", "Drop 2", "Spread" };
+constexpr int kNumVoicings = sizeof(kVoicingNames) / sizeof(kVoicingNames[0]);
+
+// The notes chord c in voicing v plays for root (sorted low to high, inside 0..127).
+inline std::vector<int> chordNotes(int root, int c, int v) {
+  std::vector<int> n;
+  c = std::clamp(c, 0, kNumChords - 1);
+  for (int k = 0; k < 6 && kChordNotes[c][k] >= 0; ++k)
+    n.push_back(root + kChordNotes[c][k]);
+  if (n.size() >= 3) {
+    switch (v) {
+      case 1: n[0] += 12; break;                                  // first inversion: the root up an octave
+      case 2: n[0] += 12; n[1] += 12; break;                      // second inversion
+      case 3: { std::sort(n.begin(), n.end()); n[n.size() - 2] -= 12; break; }   // drop 2: second from the top down
+      case 4: {                                                   // spread: a bass root, every other note up
+        for (size_t k = 2; k < n.size(); k += 2) n[k] += 12;
+        n.push_back(root - 12);
+        break;
+      }
+      default: break;
+    }
+  }
+  std::vector<int> out;
+  for (int x : n)
+    if (x >= 0 && x <= 127 && std::find(out.begin(), out.end(), x) == out.end())
+      out.push_back(x);
+  std::sort(out.begin(), out.end());
+  return out;
+}
 
 // Two-letter sound-type codes. Factory patch names already start with one (tools/make_factory.cpp uses
 // the same table); your own patches get one from the patch's Vital style, its folder or its name.
@@ -500,7 +550,7 @@ class Warpline : public mpc::Plugin {
       info.name = "Warpline";
       info.vendor = "CLVRKE";
       info.uniqueId = MPC_FOURCC('C', 'v', 'V', 'm');
-      info.version = 1300;
+      info.version = 1400;
       info.isInstrument = true;
       info.numInputs = 0;
       info.numOutputs = 2;
@@ -667,9 +717,16 @@ class Warpline : public mpc::Plugin {
       core_->setWavetable(0, VitalCore::kTableShapes);
 
       worker_ = std::thread([this] { workerLoop(); });
+      engine_ring_l_.assign(kEngineRing, 0.0f);
+      engine_ring_r_.assign(kEngineRing, 0.0f);
+      engine_thread_ = std::thread([this] { engineLoop(); });
     }
 
     ~Warpline() override {
+      engine_quit_.store(true);
+      engine_cv_.notify_all();
+      if (engine_thread_.joinable())
+        engine_thread_.join();
       {
         std::lock_guard<std::mutex> lock(worker_mutex_);
         quit_ = true;
@@ -696,21 +753,43 @@ class Warpline : public mpc::Plugin {
     }
 
     void reset() override {
-      // Audio thread (resume, or after a state load). Stops hanging notes.
-      if (!paused_.load()) {
-        arp_.reset([](int, float, bool) {});
-        core_->allSoundsOff();
-        granulator_.reset();
-        textures_.reset();
-        gen_.reset();
-      }
+      // Audio thread (resume, or after a state load). Stops hanging notes: done by the next rendered block, on
+      // whichever thread renders (1.4: the engine thread may own the engine).
+      reset_request_.store(true);
+    }
+
+    // The render side's part of reset(). Caller renders (audio or engine thread), not paused.
+    void doReset() {
+      arp_.reset([](int, float, bool) {});
+      core_->allSoundsOff();
+      granulator_.reset();
+      textures_.reset();
+      gen_.reset();
+      chordReset();
     }
 
     // ----- audio ------------------------------------------------------------------------------
     void process(mpc::ProcessContext& ctx) override {
       float* left = ctx.outputs[0];
       float* right = ctx.numOutputs > 1 ? ctx.outputs[1] : ctx.outputs[0];
+      bool want_thread = engine_thread_index_ >= 0 && getInt(engine_thread_index_) != 0 && engine_ready_.load();
+      if (want_thread != threaded_) {
+        if (threaded_)
+          drainEngine();   // the engine thread finishes what it has, then this thread owns the engine again
+        else {
+          engine_prefill_ = 0;   // set by the first threaded block
+          engine_read_ = engine_written_.load();
+        }
+        threaded_ = want_thread;
+      }
+      if (threaded_)
+        processThreaded(ctx, left, right);
+      else
+        renderBlock(ctx, left, right);
+    }
 
+    // Renders one host block into left/right (right may equal left). The audio thread, or the engine thread (1.4).
+    void renderBlock(const mpc::ProcessContext& ctx, float* left, float* right) {
       in_process_.store(true);
       if (paused_.load()) {
         std::memset(left, 0, sizeof(float) * ctx.numFrames);
@@ -719,6 +798,8 @@ class Warpline : public mpc::Plugin {
         in_process_.store(false);
         return;
       }
+      if (reset_request_.exchange(false))
+        doReset();
 
       applyDirtyParams();
 
@@ -816,6 +897,120 @@ class Warpline : public mpc::Plugin {
           texture_mix_ = 0.0f;
       }
       in_process_.store(false);
+    }
+
+    // ----- 1.4 engine thread ------------------------------------------------------------------
+    // The audio thread queues each host block (frames, MIDI, transport) and returns audio the engine thread rendered
+    // earlier: kEngineAhead blocks of latency (2 x 128 frames = 5.8 ms at 44.1 kHz on MPC). A late block plays silence
+    // for the missing frames (counted in engine_underruns_) and the latency grows by that much, up to kEngineMaxFill.
+    static constexpr int kEngineQueue = 8;
+    static constexpr int kEngineMaxMidi = 256;
+    static constexpr int kEngineRing = 16384;   // frames per channel (power of two)
+    static constexpr int kEngineAhead = 2;
+    static constexpr int kEngineMaxFill = 4096;
+    struct EngineBlock {
+      int frames = 0;
+      mpc::Transport transport;
+      int num_midi = 0;
+      std::array<mpc::MidiEvent, kEngineMaxMidi> midi;
+    };
+
+    void processThreaded(const mpc::ProcessContext& ctx, float* left, float* right) {
+      int n = std::min(ctx.numFrames, kEngineRing / 4);
+      if (engine_prefill_ == 0 && engine_read_ == engine_written_.load() && engine_queue_write_.load() == engine_queue_read_.load())
+        engine_prefill_ = kEngineAhead * n;   // first threaded block: start kEngineAhead blocks behind
+      // Queue this block for the engine thread (waits only if it is kEngineQueue blocks behind).
+      uint32_t w = engine_queue_write_.load(std::memory_order_relaxed);
+      for (int spin = 0; w - engine_queue_read_.load(std::memory_order_acquire) >= kEngineQueue; ++spin) {
+        if (spin > 200000) { std::memset(left, 0, sizeof(float) * ctx.numFrames); if (right != left) std::memset(right, 0, sizeof(float) * ctx.numFrames); return; }
+        std::this_thread::yield();
+      }
+      EngineBlock& b = engine_queue_[w % kEngineQueue];
+      b.frames = n;
+      b.transport = ctx.transport;
+      b.num_midi = std::min(ctx.numMidiEvents, kEngineMaxMidi);
+      for (int i = 0; i < b.num_midi; ++i)
+        b.midi[i] = ctx.midi[i];
+      engine_queue_write_.store(w + 1, std::memory_order_release);
+      engine_cv_.notify_one();
+
+      // Output: silence while prefilling, then what the engine thread rendered.
+      int pos = 0;
+      if (engine_prefill_ > 0) {
+        int z = std::min(engine_prefill_, ctx.numFrames);
+        std::memset(left, 0, sizeof(float) * z);
+        if (right != left) std::memset(right, 0, sizeof(float) * z);
+        engine_prefill_ -= z;
+        pos = z;
+      }
+      int need = ctx.numFrames - pos;
+      if (need > 0) {
+        // Wait up to about two blocks' time for the frames.
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::microseconds(
+                            static_cast<int64_t>(2.0e6 * ctx.numFrames / std::max(8000.0, sample_rate_)));
+        while (engine_written_.load(std::memory_order_acquire) - engine_read_ < static_cast<uint64_t>(need) &&
+               std::chrono::steady_clock::now() < deadline)
+          std::this_thread::yield();
+        uint64_t have = engine_written_.load(std::memory_order_acquire) - engine_read_;
+        int got = static_cast<int>(std::min<uint64_t>(have, need));
+        for (int i = 0; i < got; ++i) {
+          size_t k = (engine_read_ + i) & (kEngineRing - 1);
+          left[pos + i] = engine_ring_l_[k];
+          if (right != left) right[pos + i] = engine_ring_r_[k];
+        }
+        engine_read_ += got;
+        if (got < need) {
+          engine_underruns_.fetch_add(1);
+          std::memset(left + pos + got, 0, sizeof(float) * (need - got));
+          if (right != left) std::memset(right + pos + got, 0, sizeof(float) * (need - got));
+        }
+      }
+      // Too far behind (after underruns): skip ahead so the latency comes back down.
+      uint64_t fill = engine_written_.load(std::memory_order_acquire) - engine_read_;
+      if (fill > static_cast<uint64_t>(kEngineMaxFill))
+        engine_read_ += fill - kEngineAhead * n;
+    }
+
+    // Audio thread, leaving threaded mode: wait until the engine thread has rendered every queued block.
+    void drainEngine() {
+      for (int spin = 0; spin < 400000 && (engine_queue_read_.load() != engine_queue_write_.load() || engine_busy_.load()); ++spin)
+        std::this_thread::yield();
+    }
+
+    void engineLoop() {
+      fastcores::pin_this_thread();
+      sched_param sp {};
+      sp.sched_priority = fastcores::rt_priority(15);   // below MPC's audio threads (20)
+      pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp);   // may fail without permission: then it runs as normal
+      std::vector<float> l(kEngineRing / 4), r(kEngineRing / 4);
+      engine_ready_.store(true);
+      while (!engine_quit_.load()) {
+        uint32_t rd = engine_queue_read_.load(std::memory_order_relaxed);
+        if (rd == engine_queue_write_.load(std::memory_order_acquire)) {
+          std::unique_lock<std::mutex> lock(engine_mutex_);
+          engine_cv_.wait_for(lock, std::chrono::milliseconds(2));
+          continue;
+        }
+        engine_busy_.store(true);
+        const EngineBlock& b = engine_queue_[rd % kEngineQueue];
+        mpc::ProcessContext c;
+        c.numFrames = b.frames;
+        c.numOutputs = 2;
+        c.midi = b.midi.data();
+        c.numMidiEvents = b.num_midi;
+        c.sampleRate = sample_rate_;
+        c.transport = b.transport;
+        renderBlock(c, l.data(), r.data());
+        uint64_t wr = engine_written_.load(std::memory_order_relaxed);
+        for (int i = 0; i < b.frames; ++i) {
+          size_t k = (wr + i) & (kEngineRing - 1);
+          engine_ring_l_[k] = l[i];
+          engine_ring_r_[k] = r[i];
+        }
+        engine_written_.store(wr + b.frames, std::memory_order_release);
+        engine_queue_read_.store(rd + 1, std::memory_order_release);
+        engine_busy_.store(false);
+      }
     }
 
     // ----- parameters -------------------------------------------------------------------------
@@ -1163,6 +1358,66 @@ class Warpline : public mpc::Plugin {
         if (it != genre_of.end())
           e.genres = it->second;
       }
+
+      // 1.4 CPU ratings: "<file name>|L" (or M, H) per line, factory patches only.
+      std::map<std::string, int> cpu_of;
+      {
+        std::ifstream in(fs::path(mpc::contentFolder()) / "Cpu.txt");
+        std::string line;
+        while (std::getline(in, line)) {
+          if (!line.empty() && line.back() == '\r') line.pop_back();
+          size_t bar = line.find('|');
+          if (line.empty() || line[0] == '#' || bar == std::string::npos || bar + 1 >= line.size())
+            continue;
+          char c = static_cast<char>(std::toupper(static_cast<unsigned char>(line[bar + 1])));
+          int rating = c == 'L' ? 1 : c == 'M' ? 2 : c == 'H' ? 3 : 0;
+          if (rating > 0)
+            cpu_of[lowerCase(line.substr(0, bar))] = rating;
+        }
+      }
+      for (int i = 0; i < factory_count_; ++i) {
+        PatchEntry& e = patches_[i];
+        if (e.path.empty()) continue;
+        auto it = cpu_of.find(lowerCase(fs::path(e.path).filename().string()));
+        if (it != cpu_of.end())
+          e.cpu = it->second;
+      }
+
+      // 1.4: your own wavetables, <drive>/Warpline/Wavetables/*.wav (sub-folders too), sorted by name.
+      auto scan_tables = [this](const fs::path& root) {
+        std::error_code ec;
+        if (!fs::is_directory(root, ec))
+          return;
+        std::vector<UserTable> found;
+        for (fs::recursive_directory_iterator it(root, fs::directory_options::skip_permission_denied, ec), end;
+             it != end && !ec; it.increment(ec)) {
+          if (!it->is_regular_file(ec) || lowerCase(it->path().extension().string()) != ".wav")
+            continue;
+          std::string stem = it->path().stem().string();
+          if (stem.empty() || stem[0] == '.')
+            continue;
+          {   // a quick look at the header: RIFF ... WAVE ... fmt (the full read happens when you pick it)
+            std::ifstream f(it->path(), std::ios::binary);
+            std::string head(4096, '\0');
+            f.read(&head[0], static_cast<std::streamsize>(head.size()));
+            head.resize(static_cast<size_t>(f.gcount()));
+            if (head.size() < 12 || head.compare(0, 4, "RIFF") != 0 || head.compare(8, 4, "WAVE") != 0 ||
+                head.find("fmt ") == std::string::npos)
+              continue;
+          }
+          found.push_back({ trimName(stem, 24), it->path().generic_string() });
+        }
+        std::sort(found.begin(), found.end(), [](const UserTable& a, const UserTable& b) {
+          return lowerCase(a.name) < lowerCase(b.name);
+        });
+        for (UserTable& t : found)
+          if (user_tables_.size() < kMaxUserTables)
+            user_tables_.push_back(std::move(t));
+      };
+      if (parent.filename() == "VST2 Plugins" || parent.filename() == "Synths")
+        scan_tables(parent.parent_path() / "Warpline" / "Wavetables");
+      if (const char* env = std::getenv("WARPLINE_USER_TABLES"))
+        scan_tables(fs::path(env));
     }
 
     // "<file name>|<genre>,<genre>" per line; # starts a comment. Names match kGenres, any case. Missing file = nothing.
@@ -1213,10 +1468,12 @@ class Warpline : public mpc::Plugin {
       int filter = category_.load();   // 0 = all, else type + 1
       if (filter != 0 && patches_[i].type != filter - 1)
         return false;
-      int show = show_filter_.load();   // 0 all, 1 favourites, 2 your own (1.2)
+      int show = show_filter_.load();   // 0 all, 1 favourites, 2 your own (1.2), 3 light CPU (1.4)
       if (show == 1 && favourites_.count(favKey(i)) == 0)
         return false;
       if (show == 2 && i < factory_count_)
+        return false;
+      if (show == 3 && patches_[i].cpu != 1)   // 1.4: LIGHT, the patches easiest on the CPU
         return false;
       int genre = genre_.load();   // 0 = all genres (1.2)
       if (genre > 0 && (patches_[i].genres & (1u << (genre - 1))) == 0)
@@ -1325,6 +1582,11 @@ class Warpline : public mpc::Plugin {
         if (!ok)
           core_->loadInit();
       }
+      {
+        std::lock_guard<std::mutex> lock(macro_mutex_);
+        for (int m = 0; m < 4; ++m)
+          macro_names_[m] = ok ? report.macro_names[m] : std::string();
+      }
       rememberPatchLimits();
       applyEcoSettings(&report);
       lfo_applied_mask_ = 0;          // the patch brought its own LFO 5-8
@@ -1384,6 +1646,14 @@ class Warpline : public mpc::Plugin {
       int tick = 0;
       while (!quit_) {
         worker_cv_.wait_for(lock, std::chrono::milliseconds(40));
+        if (++underrun_log_tick_ >= 125) {   // about every 5 s: log the engine thread's underruns when they rose
+          underrun_log_tick_ = 0;
+          uint32_t u = engine_underruns_.load();
+          if (u != underruns_logged_) {
+            std::fprintf(stderr, "Warpline: engine thread late %u times (total)\n", u);
+            underruns_logged_ = u;
+          }
+        }
         if (quit_)
           break;
         // Just after a project load the restored screen values stay as saved for a moment (as Live View).
@@ -1542,12 +1812,44 @@ class Warpline : public mpc::Plugin {
       int channel = m.channel();
       if (m.isNoteOn()) {
         arp_channel_ = channel;
-        if (!arp_.noteOn(m.data[1], m.data[2] / 127.0f, send))
-          core_->noteOn(m.data[1], m.data[2] / 127.0f, 0, channel);
+        int root = m.data[1] & 127;
+        float velocity = m.data[2] / 127.0f;
+        int chord = chord_index_ >= 0 ? getInt(chord_index_) : 0;
+        if (chord > 0 || chord_held_count_[root] > 0) {   // 1.4 chord mode: the key plays a chord
+          if (chord_held_count_[root] > 0)
+            chordRelease(root, channel, send);              // the same key again before its note-off
+          std::vector<int> notes = chordNotes(root, chord, getInt(chord_index_ + 1));
+          if (notes.empty())
+            notes.push_back(root);
+          int k = 0;
+          for (int n : notes) {
+            if (k >= 8) break;
+            chord_held_[root][k++] = static_cast<int8_t>(n);
+            if (chord_note_refs_[n]++ == 0)
+              noteOnInner(n, velocity, channel, send);
+          }
+          chord_held_count_[root] = static_cast<uint8_t>(k);
+          return;
+        }
+        noteOnInner(root, velocity, channel, send);
       }
       else if (m.isNoteOff()) {
-        if (!arp_.noteOff(m.data[1], send))
-          core_->noteOff(m.data[1], m.data[2] / 127.0f, 0, channel);
+        int root = m.data[1] & 127;
+        if (chord_held_count_[root] > 0) {
+          chordRelease(root, channel, send);
+          return;
+        }
+        if (!arp_.noteOff(root, send))
+          core_->noteOff(root, m.data[2] / 127.0f, 0, channel);
+      }
+      else if (m.status() == 0xA0) {   // 1.4: polyphonic pressure (MPC pads), to every note the key started
+        int root = m.data[1] & 127;
+        float v = m.data[2] / 127.0f;
+        if (chord_held_count_[root] > 0)
+          for (int k = 0; k < chord_held_count_[root]; ++k)
+            core_->polyPressure(chord_held_[root][k], v, channel);
+        else
+          core_->polyPressure(root, v, channel);
       }
       else if (m.status() == 0xE0) {
         int bend = (m.data[2] << 7) | m.data[1];
@@ -1565,12 +1867,37 @@ class Warpline : public mpc::Plugin {
         else if (cc == 120) {
           arp_.reset(send);
           core_->allSoundsOff();
+          chordReset();
         }
         else if (cc == 123) {
           arp_.reset(send);
           core_->allNotesOff();
+          chordReset();
         }
       }
+    }
+
+    template <typename NoteFn>
+    void noteOnInner(int note, float velocity, int channel, NoteFn& send) {
+      if (!arp_.noteOn(note, velocity, send))
+        core_->noteOn(note, velocity, 0, channel);
+    }
+
+    template <typename NoteFn>
+    void chordRelease(int root, int channel, NoteFn& send) {
+      for (int k = 0; k < chord_held_count_[root]; ++k) {
+        int n = chord_held_[root][k];
+        if (chord_note_refs_[n] > 0 && --chord_note_refs_[n] == 0) {
+          if (!arp_.noteOff(n, send))
+            core_->noteOff(n, 0.0f, 0, channel);
+        }
+      }
+      chord_held_count_[root] = 0;
+    }
+
+    void chordReset() {
+      chord_held_count_.fill(0);
+      chord_note_refs_.fill(0);
     }
 
 
@@ -1598,7 +1925,7 @@ class Warpline : public mpc::Plugin {
       fav_toggle_index_ = screen(mpc::boolParam("fav_toggle", "Favourite", false));
       first_v11_index_ = fav_toggle_index_;
       fav_state_index_ = screen(mpc::choiceParam("fav_state", "Fav State", { "Off", "On" }, 0));
-      fav_filter_index_ = screen(mpc::choiceParam("fav_filter", "Fav Filter", { "All", "Favourites", "User" }, 0));   // "User" since 1.2
+      fav_filter_index_ = screen(mpc::choiceParam("fav_filter", "Fav Filter", { "All", "Favourites", "User", "Light" }, 0));   // "User" since 1.2, "Light" 1.4
       search_index_ = screen(mpc::floatParam("search", "Search", 0.0f, 1.0f, 0.0f));
       for (int k = 0; k < kNumKeys; ++k) {
         std::string id = "key_" + std::to_string(k + 1);
@@ -1720,6 +2047,10 @@ class Warpline : public mpc::Plugin {
       // ----- 1.2 -----
       // Wavetable picker, one per oscillator (Patch = the patch's own table).
       std::vector<std::string> tables(kTables, kTables + kNumTables);
+      // 1.4: your own WAVs after the built-in tables. Always kMaxUserTables entries, so the skin's choice count
+      // (and saved projects) do not depend on how many files there are.
+      for (size_t u = 0; u < kMaxUserTables; ++u)
+        tables.push_back(u < user_tables_.size() ? user_tables_[u].name : "WAV " + std::to_string(u + 1));
       for (int o = 0; o < VitalCore::kNumOscillators; ++o) {
         std::string n = std::to_string(o + 1);
         int index = addParam(mpc::choiceParam(("osc_" + n + "_table").c_str(), ("Osc" + n + " Table").c_str(), tables, 0));
@@ -1747,6 +2078,34 @@ class Warpline : public mpc::Plugin {
       genre_index_ = screen(mpc::choiceParam("genre", "Genre", std::vector<std::string>(kGenres, kGenres + kNumGenres), 0));
       gen_out_index_[0] = screen(mpc::floatParam("gen_1_out", "Gen 1 Out", 0.0f, 1.0f, 0.5f));
       gen_out_index_[1] = screen(mpc::floatParam("gen_2_out", "Gen 2 Out", 0.0f, 1.0f, 0.5f));
+
+      // ----- 1.4 -----
+      // CPU rating marks on the list rows (set by the plugin, like List User).
+      for (int r = 0; r < kListRows; ++r) {
+        std::string n = std::to_string(r + 1);
+        int index = screen(mpc::choiceParam(("list_cpu_" + n).c_str(), ("List CPU " + n).c_str(), { "-", "Light", "Medium", "Heavy" }, 0));
+        if (r == 0) list_cpu_first_index_ = index;
+      }
+      // Chord mode: each played note becomes a chord (before the arp).
+      chord_index_ = addParam(mpc::choiceParam("chord", "Chord", std::vector<std::string>(kChordNames, kChordNames + kNumChords), 0));
+      addParam(mpc::choiceParam("chord_voicing", "Chord Voicing", std::vector<std::string>(kVoicingNames, kVoicingNames + kNumVoicings), 0));
+      // RANDOM: loads a random patch from the current list (TYPE, GENRE, SHOW and search apply).
+      random_index_ = screen(mpc::boolParam("random_patch", "Random Patch", false));
+      // The loaded patch's macro names (text only).
+      for (int m = 0; m < 4; ++m) {
+        std::string n = std::to_string(m + 1);
+        int index = screen(mpc::floatParam(("macro_name_" + n).c_str(), ("Macro " + n + " Name").c_str(), 0.0f, 1.0f, 0.0f));
+        if (m == 0) macro_name_first_index_ = index;
+      }
+      // Your own wavetables: previous / next WAV for each oscillator (the TABLES menus).
+      for (int o = 0; o < VitalCore::kNumOscillators; ++o) {
+        std::string n = std::to_string(o + 1);
+        int index = screen(mpc::boolParam(("osc_" + n + "_wav_prev").c_str(), ("Osc" + n + " WAV Prev").c_str(), false));
+        screen(mpc::boolParam(("osc_" + n + "_wav_next").c_str(), ("Osc" + n + " WAV Next").c_str(), false));
+        if (o == 0) wav_step_first_index_ = index;
+      }
+      // Engine thread: render one block ahead on a thread of its own (another core), off MPC's audio thread.
+      engine_thread_index_ = addParam(mpc::choiceParam("engine_thread", "Engine Thread", { "Off", "On" }, kDefaultEngineThread));
       suffix_.resize(numParams());
       signed_.resize(numParams(), false);
       for (int i : { arp_gen_first_index_, arp_gen_first_index_ + 1, gen_first_index_ + 1, gen_first_index_ + 2,
@@ -1782,13 +2141,52 @@ class Warpline : public mpc::Plugin {
           set(index, static_cast<float>(want));
           notifyHostParameterChanged(index);
         }
+        int cpu = k >= 0 ? patches_[k].cpu : 0;   // 1.4: the row's CPU mark
+        int cpu_index = list_cpu_first_index_ + r;
+        if (list_cpu_first_index_ >= 0 && cpu_marks_[r] != cpu) {
+          cpu_marks_[r] = cpu;
+          set(cpu_index, static_cast<float>(cpu));
+          notifyHostParameterChanged(cpu_index);
+        }
       }
     }
 
     // Worker (or paused): the oscillators' picked wavetables.
     void applyTablesLocked() {
-      for (int o = 0; o < VitalCore::kNumOscillators; ++o)
-        core_->setWavetable(o, getInt(table_first_index_ + o));
+      for (int o = 0; o < VitalCore::kNumOscillators; ++o) {
+        int t = getInt(table_first_index_ + o);
+        if (t < kNumTables) {
+          core_->setWavetable(o, t);
+          continue;
+        }
+        int id = t - kNumTables;   // 1.4: one of your own WAVs (a file that does not load falls back to the patch's)
+        const wavtable::Table* table = userTable(id);
+        if (table)
+          core_->setUserWavetable(o, id, table->samples, table->frame_size, user_tables_[id].name);
+        else
+          core_->setWavetable(o, VitalCore::kTablePatch);
+      }
+    }
+
+    // Parsed WAV id, loading it the first time (nullptr if it does not load). Not the audio thread.
+    const wavtable::Table* userTable(int id) {
+      if (id < 0 || id >= static_cast<int>(user_tables_.size()))
+        return nullptr;
+      std::lock_guard<std::mutex> lock(user_table_mutex_);
+      auto it = user_table_cache_.find(id);
+      if (it == user_table_cache_.end()) {
+        wavtable::Table t;
+        if (!wavtable::load(user_tables_[id].path, t))
+          t = wavtable::Table();
+        it = user_table_cache_.emplace(id, std::move(t)).first;
+      }
+      return it->second.frame_size > 0 ? &it->second : nullptr;
+    }
+
+    // Before pausing the audio: read the picked WAVs, so the pause is only as long as building the table.
+    void cacheUserTables() {
+      for (int o = 0; o < VitalCore::kNumOscillators && table_first_index_ >= 0; ++o)
+        userTable(getInt(table_first_index_ + o) - kNumTables);
     }
 
     // Before a patch you picked loads: the tables go back to the patch's own, except Init, whose
@@ -1912,6 +2310,53 @@ class Warpline : public mpc::Plugin {
       notifyHostParameterChanged(index);
     }
 
+    // 1.4 parameters. True if index was one of them.
+    bool parameterChangedV14(int index, float plain) {
+      if (list_cpu_first_index_ < 0)
+        return false;
+      if ((index >= list_cpu_first_index_ && index < list_cpu_first_index_ + kListRows) ||
+          (index >= macro_name_first_index_ && index < macro_name_first_index_ + 4))
+        return true;   // display only
+      if (index == chord_index_) {
+        display_dirty_.store(true);   // the ARP chip shows the chord while the arp is off
+        return true;
+      }
+      if (index == chord_index_ + 1 || index == engine_thread_index_)
+        return true;   // read where they are used
+      if (index == random_index_) {
+        momentary(index, plain, [this] {
+          std::vector<int> list = filteredPatches();
+          int cur = requested_patch_.load();
+          list.erase(std::remove(list.begin(), list.end(), cur), list.end());
+          if (list.empty())
+            return;
+          random_seed_ = random_seed_ * 6364136223846793005ULL + 1442695040888963407ULL + static_cast<uint64_t>(nowNs());
+          int k = list[static_cast<size_t>((random_seed_ >> 33) % list.size())];
+          setNormalised(kPatch, param(kPatch).toNormalised(static_cast<float>(k)));
+          notifyHostParameterChanged(kPatch);
+        });
+        return true;
+      }
+      if (index >= wav_step_first_index_ && index < wav_step_first_index_ + 2 * VitalCore::kNumOscillators) {
+        int o = (index - wav_step_first_index_) / 2;
+        int dir = (index - wav_step_first_index_) % 2 ? 1 : -1;
+        momentary(index, plain, [this, o, dir] {
+          int count = static_cast<int>(user_tables_.size());
+          if (count == 0)
+            return;
+          int t = table_first_index_ + o;
+          int cur = getInt(t) - kNumTables;   // < 0: a built-in table is picked
+          int next = cur < 0 ? (dir > 0 ? 0 : count - 1) : ((cur + dir) % count + count) % count;
+          set(t, static_cast<float>(kNumTables + next));
+          notifyHostParameterChanged(t);
+          tables_dirty_.store(true);
+          worker_cv_.notify_all();
+        });
+        return true;
+      }
+      return false;
+    }
+
     void filterChanged() {
       list_top_.store(0);
       list_follow_.store(true);
@@ -1920,6 +2365,8 @@ class Warpline : public mpc::Plugin {
     }
 
     void parameterChangedV11(int index, float plain) {
+      if (parameterChangedV14(index, plain))
+        return;
       if (table_first_index_ >= 0 && index >= table_first_index_ && index < table_first_index_ + VitalCore::kNumOscillators) {
         // A pick on the big TABLES menu closes it (the worker does it, off the host's call).
         if (panel_index_ >= 0 && getInt(panel_index_) == kPanelTables1 + (index - table_first_index_))
@@ -2049,6 +2496,13 @@ class Warpline : public mpc::Plugin {
     }
 
     bool formatValueV11(int index, float plain, std::string& out) {
+      if (macro_name_first_index_ >= 0 && index >= macro_name_first_index_ && index < macro_name_first_index_ + 4) {
+        int m = index - macro_name_first_index_;
+        std::lock_guard<std::mutex> lock(macro_mutex_);
+        out = macro_names_[m].empty() ? "MACRO " + std::to_string(m + 1) : trimName(macro_names_[m], 14);
+        std::transform(out.begin(), out.end(), out.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+        return true;
+      }
       if (index == search_index_) {
         std::lock_guard<std::mutex> lock(filter_mutex_);
         std::string q = query_;
@@ -2065,9 +2519,10 @@ class Warpline : public mpc::Plugin {
       // the star may legitimately differ from a project's saved value (and host_sim's state check compares text).
       if (index == fav_state_index_) { out = "STAR"; return true; }
       if (index == arp_info_index_) {
+        int chord = chord_index_ >= 0 ? getInt(chord_index_) : 0;
         out = getInt(arp_first_index_) ? std::string(kArpModesShort[getInt(arp_first_index_ + 1)]) + " " +
                                            kArpRates[getInt(arp_first_index_ + 2)]
-                                       : std::string("OFF");
+                                       : (chord > 0 ? "CHORD " + std::string(kChordNames[chord]) : std::string("OFF"));   // 1.4
         return true;
       }
       if (index == grain_info_index_) {
@@ -2252,6 +2707,7 @@ class Warpline : public mpc::Plugin {
         paused_.store(false);   // no markAllDirty: nothing else changed
       }
       if (tables_dirty_.exchange(false)) {
+        cacheUserTables();
         std::lock_guard<std::mutex> load_lock(load_mutex_);
         pauseAudio();
         applyTablesLocked();
@@ -2501,6 +2957,40 @@ class Warpline : public mpc::Plugin {
     std::mutex worker_mutex_;
     std::condition_variable worker_cv_;
     bool quit_ = false;
+
+    // ----- 1.4 -----
+    int list_cpu_first_index_ = -1, chord_index_ = -1, random_index_ = -1, macro_name_first_index_ = -1;
+    int wav_step_first_index_ = -1, engine_thread_index_ = -1;
+    std::array<int, kListRows> cpu_marks_ { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+    // Chord mode (render side): the notes each played key started, and how many keys hold each note.
+    std::array<std::array<int8_t, 8>, 128> chord_held_ {};
+    std::array<uint8_t, 128> chord_held_count_ {};
+    std::array<uint8_t, 128> chord_note_refs_ {};
+    // Macro names of the loaded patch.
+    std::mutex macro_mutex_;
+    std::array<std::string, 4> macro_names_;
+    // Your own wavetables (WAV): the list, and parsed files (worker / paused).
+    std::vector<UserTable> user_tables_;
+    std::map<int, wavtable::Table> user_table_cache_;
+    std::mutex user_table_mutex_;
+    // Engine thread.
+    static constexpr int kDefaultEngineThread = 0;
+    std::atomic<bool> reset_request_{ false };
+    bool threaded_ = false;                 // audio thread only
+    int engine_prefill_ = 0;                // audio thread only
+    uint64_t engine_read_ = 0;              // audio thread only
+    std::array<EngineBlock, kEngineQueue> engine_queue_ {};
+    std::atomic<uint32_t> engine_queue_write_{ 0 }, engine_queue_read_{ 0 };
+    std::atomic<uint64_t> engine_written_{ 0 };
+    std::atomic<bool> engine_busy_{ false }, engine_quit_{ false }, engine_ready_{ false };
+    uint64_t random_seed_ = 0x9E3779B97F4A7C15ULL;
+    int underrun_log_tick_ = 0;            // worker
+    uint32_t underruns_logged_ = 0;        // worker
+    std::atomic<uint32_t> engine_underruns_{ 0 };
+    std::vector<float> engine_ring_l_, engine_ring_r_;
+    std::mutex engine_mutex_;
+    std::condition_variable engine_cv_;
+    std::thread engine_thread_;
 };
 
 MPC_PLUGIN_ENTRY(Warpline)

@@ -183,6 +183,41 @@ void VitalCore::setWavetable(int osc, int table) {
   buildTable(creator, table);
 }
 
+void VitalCore::setUserWavetable(int osc, int user_id, const std::vector<float>& samples, int frame_size,
+                                 const std::string& name) {
+  if (osc < 0 || osc >= kNumOscillators || !wavetable_creators_[osc] || frame_size < 2 || samples.empty())
+    return;
+  int choice = kNumTables + user_id;
+  if (choice == table_choice_[osc])
+    return;
+  table_choice_[osc] = choice;
+  WavetableCreator& creator = *wavetable_creators_[osc];
+  creator.clear();
+  WavetableGroup* group = new WavetableGroup();
+  WaveSource* source = new WaveSource();
+  int frames = std::min(static_cast<int>(samples.size()) / frame_size, vital::kNumOscillatorWaveFrames);
+  std::vector<float> buffer(kFrame);
+  for (int f = 0; f < frames; ++f) {
+    const float* in = samples.data() + static_cast<size_t>(f) * frame_size;
+    for (int i = 0; i < kFrame; ++i) {   // resample the frame to Vital's 2048 points (linear)
+      double x = static_cast<double>(i) * frame_size / kFrame;
+      int a = static_cast<int>(x);
+      double t = x - a;
+      float v0 = in[a % frame_size], v1 = in[(a + 1) % frame_size];
+      buffer[i] = static_cast<float>(v0 + (v1 - v0) * t);
+    }
+    int position = frames > 1 ? static_cast<int>(std::lround(static_cast<double>(f) * (vital::kNumOscillatorWaveFrames - 1) /
+                                                            (frames - 1))) : 0;
+    source->insertNewKeyframe(position);
+    source->getKeyframe(f)->wave_frame()->loadTimeDomain(buffer.data());
+  }
+  source->setInterpolationStyle(frames > 1 ? WavetableComponent::kLinear : WavetableComponent::kNone);
+  group->addComponent(source);
+  creator.addGroup(group);
+  creator.setName(name);
+  creator.render();
+}
+
 VitalCore::~VitalCore() = default;
 
 vital::Value* VitalCore::findControl(const std::string& name) const {
@@ -257,6 +292,10 @@ void VitalCore::modWheel(float value) { engine_->setModWheelAllChannels(value); 
 
 void VitalCore::channelPressure(float value) {
   engine_->setChannelRangeAftertouch(0, vital::kNumMidiChannels - 1, value, 0);
+}
+
+void VitalCore::polyPressure(int note, float value, int channel) {
+  engine_->setAftertouch(static_cast<vital::mono_float>(note), value, 0, channel);
 }
 
 void VitalCore::sustain(bool on) {
@@ -462,6 +501,11 @@ bool VitalCore::loadPatch(const std::string& text, PatchReport& report) {
       report.name = data["preset_name"].get<std::string>();
     if (data.count("author") && data["author"].is_string())
       report.author = data["author"].get<std::string>();
+    for (int m = 0; m < 4; ++m) {
+      std::string key = "macro" + std::to_string(m + 1);
+      if (data.count(key) && data[key].is_string())
+        report.macro_names[m] = data[key].get<std::string>();
+    }
     if (data.count("preset_style") && data["preset_style"].is_string())
       report.style = data["preset_style"].get<std::string>();
 

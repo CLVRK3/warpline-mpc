@@ -25,6 +25,7 @@ struct PatchReport {
   std::string style;
   std::string error;
   std::vector<std::string> notes;   // e.g. "Unison 16 -> 8 voices"
+  std::string macro_names[4];       // 1.4: the patch's macro names ("macro1".."macro4"), empty if unnamed
 };
 
 class VitalCore {
@@ -47,6 +48,7 @@ class VitalCore {
     void pitchBend(float value);           // -1..1
     void modWheel(float value);            // 0..1
     void channelPressure(float value);     // 0..1
+    void polyPressure(int note, float value, int channel);   // 0..1, one note (1.4: MPC pads)
     void sustain(bool on);
     void setBpm(float bpm);
     void setTime(double seconds);
@@ -101,6 +103,8 @@ class VitalCore {
     enum Table { kTablePatch = 0, kTableShapes, kTableSine, kTableTriangle, kTableSaw, kTableSquare, kTablePwm,
                  kTableHarmonics, kTableFormant, kTableSync, kNumTables };
     void setWavetable(int osc, int table);
+    // 1.4: one of your own WAV wavetables (user_id >= 0, frames of frame_size samples each, -1..1). Same rules.
+    void setUserWavetable(int osc, int user_id, const std::vector<float>& samples, int frame_size, const std::string& name);
 
     // Audio thread: the plugin's two generated mod sources ("gen_1", "gen_2"), 0..1.
     static constexpr int kNumGen = 2;
