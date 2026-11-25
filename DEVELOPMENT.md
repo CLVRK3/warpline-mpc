@@ -28,6 +28,9 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
 - `tools/render_demo.cpp`: renders a WAV demo of .vital patches through VitalCore (chords, or an 808 line for Bass) to listen
   to factory patches without a device. Build line in its header.
 - `tools/bench_patches.cpp`: ranks .vital patches by engine CPU (relative, x86) to find patches too heavy for Gen 1. Build line in its header.
+- `tools/cpu_ratings.py`: runs bench_patches over the factory set and writes `Content/Cpu.txt` (the browser's CPU marks). Rerun after changing patches.
+- `tools/add_pressure.py`: the 1.4 pad-pressure routing for factory patches (safe to rerun).
+- `tools/state_dump.cpp`: a state.json for the skin previews, from the running plugin.
 - `tools/genres.py`: writes `Content/Genres.txt`, the factory patches' genres. Run it after adding patches.
 - `tools/make_factory.cpp`: generates the 519 factory patches (a table named "@n" is Warpline's own built-in table n).
   - It uses CC0 wavetables from atsushieno/open-vital-resources.
@@ -172,6 +175,41 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   is open and a focused control's orange Focus outline no longer draws over the panel (reported on a device; fix checked
   only in the offline preview so far).
 
+## 1.4.0 (2026-11-25, offline)
+
+- Chord mode (`Chord`, `Chord Voicing`, appended): `handleMidi` turns a played key into `chordNotes(root, chord, voicing)`
+  before the arp. `chord_held_` remembers each key's notes (so a chord change while holding releases the right ones) and
+  `chord_note_refs_` counts keys per note (overlapping chords share notes). All-notes-off and `reset()` clear both.
+- Polyphonic pressure (`0xA0`) goes to the note (`VitalCore::polyPressure` -> `SoundEngine::setAftertouch`), and to every
+  note of a chord. Factory patches: `tools/add_pressure.py` added aftertouch -> filter 1 cutoff (0.18) in each patch's first
+  free slot (everything else unchanged); `make_factory`'s house style has the same routing. A full `make_factory` run is NOT
+  a drop-in replacement for Content/Patches any more: 41 patches had been tuned by hand afterwards (volume, levels, drive).
+- CPU ratings: `tools/cpu_ratings.py <bench_patches> [runs]` writes `Content/Cpu.txt` (`<file>|L/M/H`, relative to the median
+  patch: L <= 0.8x, H >= 1.4x). `List CPU 1-12` (screen) drive a 1-3 bar meter on the list rows; `Fav Filter` gains `Light`.
+- `Random Patch` (momentary): a random entry of `filteredPatches()` other than the current one.
+- `Macro 1-4 Name` (screen, text only): `PatchReport::macro_names` from the patch's `macro1`..`macro4`; the skin's macro
+  captions are value labels of these.
+- Your own WAV wavetables: `src/WavTable.h` parses Serum-style WAVs (`clm ` chunk, else 2048-sample cycles, else one cycle up
+  to 4096 samples); `VitalCore::setUserWavetable` resamples each cycle to 2048 and builds a linear-interpolated table.
+  `Osc1-3 Table` now always has 10 + 64 choices (built-ins, then `<drive>/Warpline/Wavetables` files or "WAV n"
+  placeholders), so the skin's `IndexedEnabling` counts and saved values don't depend on the files. Files are read on the
+  worker before the audio pause (`cacheUserTables`), parsed once (`user_table_cache_`). `Osc1-3 WAV Prev/Next` step through them.
+- Engine thread (`Engine Thread`, Off by default): `process()` either renders inline (`renderBlock`) or queues the block
+  (frames, MIDI, transport) for `engineLoop()` and copies audio rendered earlier from a ring, `kEngineAhead` (2) blocks
+  behind. The engine thread pins itself with `fast_cores.h` (Gen 2: the A76s minus core 7; Gen 1: no pin) and asks for
+  `SCHED_FIFO` 15, below MPC's audio threads. A late block plays silence for the missing frames and counts in
+  `engine_underruns_` (logged to stderr every ~5 s when it rose: `Warpline: engine thread late N times`). `reset()` is now
+  deferred to the next rendered block (`reset_request_`), so the audio thread never touches the engine while the engine
+  thread owns it. Switching off drains the queue first.
+  `tools/test_v14.cpp`: the threaded note onset is exactly 2 blocks later than inline (two Init instances differ sample by
+  sample anyway: random phase), toggling while playing leaves no hanging notes; paced 2.9 ms blocks on a 2-core x86 box:
+  audio-thread time per block 174 -> 133 µs mean. Needs a device test in MPC (EMULATOR_PORTS.md section 4).
+- Not done: profile-guided optimisation. The SDK's `tools/build.py` fixes `-O2` and takes no extra compile flags, zig 0.17's
+  ARM targets ship no profile runtime (an `-fprofile-instr-generate` .so links without one), and `-O3` measured no faster
+  on x86 (2026-11-25).
+- `tools/state_dump.cpp`: plays the plugin like the tests, applies `Param=normalised` / `Param~choice text` / `note=` /
+  `wait=` steps and prints a state.json for `tools_preview_skin.py` (how the 1.4 screenshots were made).
+
 ## Rules that must not break
 
 - Never change the uid `CvVm`, the .so names or parameter ids. Only add new parameters at the END of the list (older ones
@@ -206,6 +244,8 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   - At block 512 the parameter sweep sometimes warns about denormals inside Vital's engine; that warning is harmless.
 - Always try a build on the MPC before releasing: every page, the Q-Links, the browser, save and reload a project.
 
+- 1.4 test: `tools/test_v14.cpp` (chord, pressure, RANDOM, LIGHT, macro names, WAV tables with `WARPLINE_USER_TABLES`,
+  engine thread), run under ASan.
 - 1.3 idle test: `tools/test_v13.cpp` (build line at the top), run under ASan.
 - 1.1 feature test: `tools/test_v11.cpp` (build line at the top) is a small VST2 host. It drives the arp, GRAINZ, the matrix,
   search, favourites, drag and a state reload through `setParameter` and prints what it measures. Run it under ASan.

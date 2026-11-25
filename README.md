@@ -9,6 +9,11 @@ Designed for the **MPC Live III / MPC XL** (64-bit). It also builds for the 32-b
 
 ![Warpline on the MPC](docs/screenshots/warpline.png)
 
+**New in 1.4.0:** **CHORD** mode (one pad plays a whole chord, 13 chord types and 5 voicings, also into the arp), a **RANDOM**
+patch button, a CPU mark on every factory patch with a **LIGHT** list filter for older MPCs, the patch's own **macro names** on the
+macro knobs, **your own WAV wavetables** in the TABLES menus, pad pressure that opens the filter on every factory patch, and an
+optional **ENGINE THREAD** that runs the synth on its own CPU core, off MPC's audio thread.
+
 **New in 1.3.0:** 125 UK garage, drum and bass and 90s jungle patches, and a harder, bigger rage set with supersaw chords,
 sub and coin layers (159 new patches, 519 in all). The GENRE menu gains UK Garage and DnB / Jungle. Lighter on the CPU: Warpline
 stops running its engine after about a second of silence, so a loaded instance that is not playing costs almost nothing, and on
@@ -85,6 +90,11 @@ Rebuild the skin after changing parameters: `python tools_build_skin.py` (needs 
 - **Max Voices** (default 8, or 6 on 32-bit MPCs since 1.3; at most 16) and **Max Unison** (default 8, Vital allows 16) cap a patch's
   polyphony and unison. If the MPC struggles, lower **Max Voices** first: voices (and the FX) are what cost CPU, unison costs little.
   Patches with long releases, like pads played through the arp, keep many voices sounding at once.
+- **Engine thread (1.4):** PATCH page, **ENGINE THREAD: ON** renders the synth on a thread of its own, on another CPU core,
+  instead of on MPC's audio thread. Warpline then costs MPC's audio engine almost nothing, at the price of 256 samples (about
+  6 ms) of extra latency. If the engine thread runs late, those samples play as silence and the latency grows a little; it is logged
+  to the system log (`Warpline: engine thread late ...`). Off by default until it has been tested on more MPCs: try it if you hear pops.
+- **Light patches (1.4):** the browser's **SHOW: LIGHT** lists the factory patches that use the least CPU.
 - **Idle (1.3):** after about a second of silence with no notes sounding, the engine is not run until the next note, so an
   instance that is loaded but not playing uses almost no CPU.
 - The engine is compiled with 16 voices at most (desktop Vital has 32), which brings memory down to about 85 MB per instance.
@@ -115,6 +125,11 @@ Every patch name starts with a two-letter code for its type, so lists sort and r
 type's first patch, and from then on the ‹ › arrows step only through that type and wrap around. **ALL** steps through everything.
 The data wheel and Q-Link 1 on the Patch control still go through the whole list.
 
+## Pad pressure (1.4)
+Every factory patch opens its filter with pad pressure (aftertouch, polyphonic or channel), on top of the TONE macro. Warpline
+passes polyphonic pressure to each note, and to every note of a chord in CHORD mode. Your own patches use pressure however
+their maker routed it.
+
 ## Velocity
 
 Every patch responds to how hard you hit the pads or keys. **VELOCITY** on the PATCH page (Vital's "velocity track") sets how much
@@ -132,6 +147,11 @@ bells, perc, Rhodes) have the compressor off, because it would even the levels o
 notes play (about 12 updates a second), instead of only the knob positions. It is off by default. The live pictures run on
 display-only parameters that cannot be automated, so recording automation never picks them up. If the pictures stutter or
 the screen feels slow on your MPC, switch it off.
+
+## Macros
+The four macro knobs (on F1 MAIN and F4 ENV/MAC) are captioned with the loaded patch's own macro names (1.4), so a .vital patch
+whose maker named them "Cutoff" or "Wobble" shows those names. Factory patches use TONE, MOTION, GRIT and SPACE. Unnamed macros
+show MACRO 1-4.
 
 ## Header chips: ARP, GRAINZ, MOD
 The three chips at the top of every page show what each section is doing (for example `UP/DN 1/8`, `MIX 50%`, `3 SLOTS`).
@@ -151,6 +171,11 @@ Tap a chip to open its full-screen panel and tap **CLOSE** to go back. Only one 
   the same dice come back in a shuffled order. In Random mode the dice also pick the notes, so DEJA VU 50% turns it into a
   repeating random melody.
 - The arp plays Warpline's own voices. MPC doesn't pass plugin MIDI on, so it can't drive other tracks.
+- **CHORD (1.4):** at the top of the ARP panel. Every note you play becomes a chord: Major, Minor, Sus2, Sus4, 7th, Maj7, Min7,
+  Min9, Maj9, Add9, Power, Dim or Octave, built up from the note you play. The second box is the voicing: **Close**, **Inv 1** and
+  **Inv 2** (inversions), **Drop 2** (the second-highest note an octave down) and **Spread** (a bass note an octave below, and every
+  other note up an octave). It works with the arp off too; with the arp on, the arp plays the chord's notes. The ARP chip in the
+  header shows the chord while the arp is off. Chord and voicing are saved with the project and can be automated.
 
 ### GRAINZ (granular effect)
 ![GRAINZ](docs/screenshots/warpline-grainz.png)
@@ -207,6 +232,13 @@ Tap one to use it; the menu closes. CLOSE leaves it as it was. The tables:
 - **PWM:** a pulse that narrows from 50% to 4% along WT POS. **Harmonics:** adds partials one by one, sine to a bright saw.
   **Formant:** a vowel sweep A-E-I-O-U. **Sync:** a hard-synced saw, 1x to 7x.
 
+**Your own wavetables (1.4):** put WAV files in `<drive>/Warpline/Wavetables` (sub-folders are fine, up to 64 files) and restart
+MPC. In each TABLES menu, the **YOUR WAVS** arrows at the top step through them; the name of the picked table shows between them.
+Serum-style wavetables work as they are: back-to-back cycles of 2048 samples (the `clm` marker in the file, if there is one, gives
+the cycle length), up to 256 frames, any bit depth, mono or stereo (the left channel is used). A file under 4096 samples is read as
+one single cycle. Keep the files where they are: a project remembers the pick by its place in the list, so adding or removing files
+can move it to another table. The picture above the oscillator stays empty for your own tables.
+
 The picture above the knobs follows the pick. Loading another patch puts all three back to Patch, except **Init**, which starts
 OSC 1 on Basic Shapes. Picks are saved with the project. Saving a patch from Warpline stores the picked table in it. The tables
 are generated by Warpline (no samples) and take a moment to build, so the sound pauses briefly when you pick one.
@@ -235,6 +267,11 @@ are generated by Warpline (no samples) and take a moment to build, so the sound 
   `My Bass.vital|Trap / Rage,Hip-Hop` (the genre names as above, any capitals). Patches without a line only show under All.
 - **Your own patches:** rows holding a patch from `<drive>/Warpline/Patches` carry a purple **USER** tag, and **SHOW: USER**
   lists only those (1.2).
+- **CPU marks (1.4):** each factory patch has a small meter at the end of its row: one green bar = light, two amber = medium,
+  three red = heavy, measured against the other factory patches. **SHOW: LIGHT** lists only the light ones, the best place to
+  start on a 32-bit MPC. Your own patches are not rated.
+- **RANDOM (1.4):** in the browser and on the PATCH page. Loads a random patch from the list as it is filtered right now (TYPE,
+  GENRE, SHOW and search), never the one already playing.
 - **PATCH page list:** the same list, nine rows at a time, with its own scroll bar and DRAG/TAP switch.
 - The MPC's own double-tap menus show plugin lists without any text, so Warpline does not use them. The arrows, the data wheel
   on the big PATCH box, Q-Link 1 and the MPC's preset list (every patch is a program) also change patches.
@@ -315,6 +352,8 @@ Good to know:
 ## Files
 - `skins/`: the custom screen (built by `tools_build_skin.py`) · `tools_preview_skin.py`: page previews
 - `src/Warpline.cpp`: the MPC plugin (parameters, pages, patch browser, search, favourites, mod matrix, threading)
+- `src/WavTable.h`: reads your own WAV wavetables (1.4) · `src/fast_cores.h`: thread placement for the engine thread (MIT,
+  vendored from open-mpc/mpc-vst-plugins)
 - `src/Arp.h`: the arpeggiator · `src/Granulator.h`: GRAINZ · `src/GrainzClouds.*` + `third_party/mutable/`: GRAINZ's texture
   modes (MIT, vendored, see its README) · `src/VitalCore.*`: drives one Vital engine, loads and saves .vital
 - `src/VitalEngine.cpp`: unity build of the engine · `vital/`: Vital's engine sources (synthesis + the parts of common/ it needs)

@@ -14,3 +14,8 @@ c++ -std=c++17 -O2 $INC -Isrc tools/make_factory.cpp src/VitalCore.cpp src/Vital
 
 Edit the `defs` list in `make_factory.cpp` to change or add patches. Control names are Vital's own (`filter_1_cutoff`, ...),
 and modulation sources and destinations use Vital's names too (`env_2`, `lfo_1`, `macro_control_1`, `velocity`, ...).
+
+Note (1.4): some shipped patches were tuned by hand after generation, so a full `make_factory` run is not a drop-in
+replacement for `Content/Patches`: generate into another folder and copy only the patches you changed (`FACTORY_ONLY`
+builds a subset). After changing patches, run `python3 tools/add_pressure.py` (pad pressure), `python3 tools/genres.py`
+and `python3 tools/cpu_ratings.py ./bench_patches` (CPU marks; build `bench_patches.cpp` like make_factory).

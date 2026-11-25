@@ -20,7 +20,7 @@ Open MPC catalog: https://open-mpc.github.io/ (release rules: https://open-mpc.g
 
 ## Each release
 
-1. Bump the version, then run `BUILD.bat` (makes `build\CLVRKE - VST - Warpline\` with both ARM builds).
+1. Bump the version. If patches changed: `tools/genres.py` and `tools/cpu_ratings.py`. Then run `BUILD.bat` (makes `build\CLVRKE - VST - Warpline\` with both ARM builds).
 2. Test on the MPC: load on a track, play, go through every page and Q-Link, save and reload a project.
 3. Package with Open MPC's tools (repo `open-mpc/mpc-vst-plugins`):
    ```
