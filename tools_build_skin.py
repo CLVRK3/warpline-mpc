@@ -51,6 +51,8 @@ TABLE_NAMES = ["Patch", "Basic Shapes", "Sine", "Triangle", "Saw", "Square", "PW
 TABLE_HINTS = ["the patch's own", "sine to saw", "pure", "soft", "bright", "hollow", "narrowing pulse", "adds partials",
                "vowels A-U", "hard sync"]
 NUM_TABLES = len(TABLE_KINDS)
+MAX_USER_TABLES = 64                       # 1.4: Osc Table choices = the 10 built-in tables + 64 WAV slots
+NUM_TABLE_CHOICES = NUM_TABLES + MAX_USER_TABLES
 def panel_on(k):
     return "IndexedEnabling/%d/%d/Parameter %d" % (k, NUM_PANELS, PI["Panel"])
 PK = {p["name"]: p for p in PARAMS}
@@ -293,8 +295,44 @@ def tables_panel(p):
         x_start = (W - (5 * tw + 4 * gap)) // 2
         for t in range(NUM_TABLES):
             x = x_start + (t % 5) * (tw + gap); y = y0 + 66 + (t // 5) * (th + gap)
-            p.add(comp_button(table_tile_img(tw, th, acc, True, t), table_tile_img(tw, th, acc, False, t), t, NUM_TABLES, tw, th),
+            p.add(comp_button(table_tile_img(tw, th, acc, True, t), table_tile_img(tw, th, acc, False, t), t, NUM_TABLE_CHOICES, tw, th),
                   f"Osc{n} Table", f"{x} {y} {tw} {th}", focusable=False, inv=inv)
+        # 1.4: your own WAVs (<drive>/Warpline/Wavetables): previous / next, and the picked table's name.
+        bx = 520
+        p.add(comp_arrow(True, 44, 38), f"Osc{n} WAV Prev", f"{bx} {y0 + 12} 44 38", focusable=False, inv=inv)
+        p.image_inv(wav_box_img(470, 38, acc), f"{bx + 50} {y0 + 12} 470 38", inv)
+        p.value_label(f"Osc{n} Table", f"{bx + 176} {y0 + 12} 336 38", argb(TEXT), 16.0, "left verticallyCentred", inv=inv, style="Bold")
+        p.add(comp_arrow(False, 44, 38), f"Osc{n} WAV Next", f"{bx + 526} {y0 + 12} 44 38", focusable=False, inv=inv)
+
+
+def wav_box_img(w, h, acc):
+    """1.4: the YOUR WAVS strip in a TABLES menu's header."""
+    name = f"wavbox_{w}x{h}_{acc}.png"
+    if name in ASSETS:
+        return name
+    S = 3
+    im = Image.new("RGBA", (w * S, h * S), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    d.rounded_rectangle((S, S, w * S - S, h * S - S), 10 * S, fill=(19, 22, 26, 255), outline=ACC[acc] + (255,), width=S)
+    spaced(d, (14 * S, h * S / 2 - 7 * S), "YOUR WAVS", font(11 * S, "SemiBold"), ACC[acc], spacing=2 * S)
+    return save(im.resize((w, h), Image.LANCZOS), name)
+
+
+def cpu_dot_img(size, rating):
+    """1.4: a list row's CPU mark: 1 light (mint), 2 medium (amber), 3 heavy (coral)."""
+    name = f"cpudot_{size}_{rating}.png"
+    if name in ASSETS:
+        return name
+    col = {1: ACC["mint"], 2: ACC["amber"], 3: ACC["coral"]}[rating]
+    S = 4
+    im = Image.new("RGBA", (size * S, size * S), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    bars = 3
+    bw = size * S // 4
+    for k in range(bars):   # a little meter: 1, 2 or 3 bars lit
+        hgt = int(size * S * (0.4 + 0.3 * k))
+        x = k * (bw + bw // 2)
+        lit = k < rating
+        d.rounded_rectangle((x, size * S - hgt, x + bw, size * S - 1), bw // 3, fill=(col + (255,)) if lit else (52, 59, 69, 255))
+    return save(im.resize((size, size), Image.LANCZOS), name)
 
 
 def user_chip_img(w, h):
@@ -673,6 +711,12 @@ def patch_list(p, x, y, w, row_h, rows, size, inv=None, drag="List Drag"):
         p.entries.append(G.entry(f"user {r}", "Image", G.obj(("version", 2), ("imageType", "Regular"), ("colour", "0"), ("image", user_chip_img(cw_, ch_))),
                                  f"{x + rw - cw_ - 10} {ry + (row_h - ch_) // 2} {cw_} {ch_}", "No", "Hide", "Always",
                                  invalidating=(inv or []) + ["IndexedEnabling/1/2/Parameter %d" % PI["List User %d" % (r + 1)]]))
+        # 1.4: CPU mark (List CPU N: 1 light .. 3 heavy) at the row's right end; your own patches have none.
+        ds = 16
+        for k in (1, 2, 3):
+            p.entries.append(G.entry(f"cpu {r} {k}", "Image", G.obj(("version", 2), ("imageType", "Regular"), ("colour", "0"), ("image", cpu_dot_img(ds, k))),
+                                     f"{x + rw - ds - 14} {ry + (row_h - ds) // 2} {ds} {ds}", "No", "Hide", "Always",
+                                     invalidating=(inv or []) + ["IndexedEnabling/%d/4/Parameter %d" % (k, PI["List CPU %d" % (r + 1)])]))
         p.add(comp_row(rw, row_h - 2 * gap, argb(TEXT), size), "List %d" % (r + 1), f"{x} {ry + gap} {rw} {row_h - 2 * gap}",
               focusable=False, inv=(inv or []) + [TOUCH_TAP])
         p.entries.append(G.entry("List %d drag" % (r + 1), comp_row_drag(rw, row_h, gap, argb(TEXT), size), G.obj(("version", 1), ("handleName", "Data")),
@@ -787,7 +831,10 @@ def browser_overlay(p):
         p.add(comp_button(key_img(w_, kh, k, True), key_img(w_, kh, k, False), 1, 1, w_, kh), "Key " + k, f"{kx} {ky} {w_} {kh}", focusable=False, inv=inv)
         col += span
     # Favourites view and list touch mode
-    p.seg_inv("Fav Filter", KX, y0 + 438, ["ALL", "FAVS", "USER"], "amber", (KW - 16) // 3, 38, 8, inv)
+    p.seg_inv("Fav Filter", KX, y0 + 438, ["ALL", "FAVS", "USER", "LIGHT"], "amber", (KW - 24) // 4, 38, 8, inv)
+    # 1.4: RANDOM loads a random patch from the list as filtered
+    p.add(comp_button(pill_img(130, 40, "violet", True, "RANDOM"), pill_img(130, 40, "violet", False, "RANDOM"), 1, 1, 130, 40),
+          "Random Patch", f"{W - 700} {y0 + 14} 130 40", focusable=False, inv=inv)
     p.seg_inv("List Touch", KX, y0 + 502, ["DRAG", "TAP"], "mint", (KW - 8) // 2, 34, 8, inv)
 
 
@@ -985,7 +1032,7 @@ class Page:
         r = f"{x0} {y0} {x1 - x0} {y1 - y0}"
         # One picture per Osc Table choice (1.2), so the display matches what plays; Patch keeps the column's art.
         for t, tk in enumerate(TABLE_KINDS):
-            pick = "IndexedEnabling/%d/%d/Parameter %d" % (t, NUM_TABLES, PI[f"Osc{osc} Table"])
+            pick = "IndexedEnabling/%d/%d/Parameter %d" % (t, NUM_TABLE_CHOICES, PI[f"Osc{osc} Table"])
             # Memory: single-frame tables get one picture, the morphing ones 16 (the patch art keeps 48).
             frames = 48 if tk is None else (1 if tk in ("sine", "tri", "sawpure", "square") else 16)
             img = wt_strip(tk or kind, acc, frames)
@@ -1064,9 +1111,10 @@ p.panel((896, 416, 1264, 612))
 spaced(p.d, (908, 428), "MACROS", font(11, "SemiBold"), LABEL, spacing=2)
 p.value_label("Quality", "1090 424 72 18", argb(MUTED), 12.0, "right verticallyCentred", handle="WithSuffix[ MODE]/Parameter %d" % PI["Quality"])
 p.value_label("Max Voices", "1166 424 88 18", argb(MUTED), 12.0, "right verticallyCentred", handle="WithSuffix[ VOICES]/Parameter %d" % PI["Max Voices"])
-for i, (pn, cap) in enumerate([("Macro 1", "TONE"), ("Macro 2", "MOTION"), ("Macro 3", "GRIT"), ("Macro 4", "SPACE")]):
-    p.knob(pn, 908 + i * 86, 458, cap, "white", size=62)
-p.note(1080, 588, "Factory macros: tone · motion · grit · space", MUTED, 10, anchor="c")
+for i in range(4):   # 1.4: the captions are the patch's own macro names
+    p.knob("Macro %d" % (i + 1), 908 + i * 86, 458, "", "white", size=62)
+    p.value_label("Macro %d Name" % (i + 1), f"{908 + i * 86 - 12} {458 + 62 + 1} 86 16", argb(LABEL), 12.0)
+p.note(1080, 588, "Names come from the patch  ·  factory: tone · motion · grit · space", MUTED, 10, anchor="c")
 PAGES.append(p)
 
 # ============================================================================================ F2 OSC
@@ -1157,15 +1205,16 @@ for e, (nm, acc, pre, sub) in enumerate([("ENV 1", "mint", "Amp", "AMP"), ("ENV 
     p.envelope((x0 + 12, PANEL_Y0 + 44, x1 - 12, PANEL_Y0 + 194), nm, acc, [f"{pre} Attack", f"{pre} Decay", f"{pre} Sustain", f"{pre} Release"])
     p.knob_row(x0 + 12, PANEL_Y0 + 208, [(f"{pre} Attack", "ATTACK"), (f"{pre} Decay", "DECAY"), (f"{pre} Sustain", "SUSTAIN"), (f"{pre} Release", "RELEASE")], acc, gidx=e)
 x0, x1 = column(p, 3, "MACROS", "white", "1 – 4")
-for i, (pn, cap) in enumerate([("Macro 1", "MACRO 1"), ("Macro 2", "MACRO 2"), ("Macro 3", "MACRO 3"), ("Macro 4", "MACRO 4")]):
+for i in range(4):   # 1.4: captions = the patch's macro names
     r, c = divmod(i, 2)
-    p.knob(pn, x0 + 40 + c * 142, PANEL_Y0 + 56 + r * 134, cap, "white", size=76, group=(3, i))
+    kw_, _ = p.knob("Macro %d" % (i + 1), x0 + 40 + c * 142, PANEL_Y0 + 56 + r * 134, "", "white", size=76, group=(3, i))
+    p.value_label("Macro %d Name" % (i + 1), f"{x0 + 40 + c * 142 - 20} {PANEL_Y0 + 56 + r * 134 + 76 + 1} {kw_ + 40} 16", argb(LABEL), 12.0)
 # bottom info strip
 p.panel((16, 416, 1264, 612))
 spaced(p.d, (28, 428), "HOW VITAL ENVELOPES WORK HERE", font(11, "SemiBold"), LABEL, spacing=2)
 p.note(28, 456, "ENV 1 always shapes the volume. ENV 2 and ENV 3 move whatever the patch routes them to (its modulation matrix).", TEXT, 13)
 p.note(28, 480, "Drag the handles in the envelope displays, or use the Q-Links: one column per envelope, top to bottom A · D · S · R.", MUTED, 12)
-p.note(28, 512, "Factory patches use the macros as  1 TONE  ·  2 MOTION  ·  3 GRIT  ·  4 SPACE.  Your own .vital patches keep their own macro routings.", MUTED, 12)
+p.note(28, 512, "The macro names come from the patch. Factory patches use  1 TONE  ·  2 MOTION  ·  3 GRIT  ·  4 SPACE;  pad pressure also opens their filter.", MUTED, 12)
 for i, acc in enumerate(["mint", "blue", "amber", "white"]):
     p.d.rounded_rectangle((28 + i * 70, 560, 28 + i * 70 + 56, 564), 2, fill=ACC[acc])
 PAGES.append(p)
@@ -1253,7 +1302,10 @@ p.add(comp_arrow(False, 66, 82), "Next", "819 117 66 82", focusable=False)
 spaced(p.d, (406, 126), "PATCH", font(10, "SemiBold"), MUTED, spacing=2)
 p.add(comp_box(410, 50, "mint", True, 31.0, colour=TEXT), "Patch", "398 142 412 50")
 p.slot("Patch", (0, 0))
-p.note(604, 212, "Data wheel or Q-Link 1 = every patch.  Arrows = next / previous of the chosen TYPE and GENRE.", MUTED, 11, anchor="c")
+p.note(330, 214, "Data wheel or Q-Link 1 = every patch.", MUTED, 10)
+p.note(330, 228, "Arrows = next / previous of the chosen TYPE and GENRE.", MUTED, 10)
+p.add(comp_button(pill_img(104, 30, "violet", True, "RANDOM"), pill_img(104, 30, "violet", False, "RANDOM"), 1, 1, 104, 30),
+      "Random Patch", "782 207 104 30", focusable=False)
 # status
 p.d.rounded_rectangle((322, 248, 600, 330), 10, fill=(17, 20, 24), outline=(38, 43, 51))
 spaced(p.d, (336, 258), "LOAD STATUS", font(10, "SemiBold"), MUTED, spacing=1.5)
@@ -1262,10 +1314,11 @@ p.d.rounded_rectangle((608, 248, 886, 330), 10, fill=(17, 20, 24), outline=(38, 
 spaced(p.d, (622, 258), "QUALITY", font(10, "SemiBold"), MUTED, spacing=1.5)
 p.seg("Quality", 622, 282, ["ECO", "HIGH"], "mint", 120, 36, 10, group=(0, 1))
 p.note(336, 346, "OK = loaded exactly.   n adj = unison / voices / oversampling were reduced to fit the CPU.", MUTED, 11)
-p.note(336, 362, "ECO: no oversampling (default).  HIGH: the patch's 2x oversampling, cleaner, about 2x CPU.", (110, 118, 128), 10)
+p.note(336, 362, "ECO: no oversampling.  HIGH: 2x oversampling, 2x CPU.  THREAD ON: own core, +6 ms.", (110, 118, 128), 10)
 spaced(p.d, (336, 390), "LIVE VIEW", font(10, "SemiBold"), MUTED, spacing=1.5)
 p.seg("Live View", 420, 380, ["OFF", "ON"], "mint", 62, 30, 6, group=(0, 3))
-p.note(574, 395, "ON: pictures follow LFOs and envelopes (beta).", (110, 118, 128), 10)
+spaced(p.d, (580, 390), "ENGINE THREAD", font(10, "SemiBold"), MUTED, spacing=1.5)
+p.seg("Engine Thread", 694, 380, ["OFF", "ON"], "violet", 62, 30, 6)
 # knobs
 p.d.line((322, 420, 886, 420), fill=(38, 43, 51))
 for i, (pn, cap, acc, g) in enumerate([("Volume", "VOLUME", "white", (0, 2)), ("Vel Sens", "VELOCITY", "amber", (1, 2)),
@@ -1364,6 +1417,9 @@ def arp_panel(p):
     acc = "amber"
     toggle_inv(p, "Arp On", 640, y0 + 15, acc, inv, 70, 32, "ON")
     toggle_inv(p, "Arp Latch", 720, y0 + 15, acc, inv, 92, 32, "LATCH")
+    # 1.4: CHORD (each played note becomes a chord, also with the arp off) and its voicing
+    box_inv(p, "Chord", (896, y0 + 15, 104, 32), "violet", inv, size=14.0, colour=ACC["violet"])
+    box_inv(p, "Chord Voicing", (1006, y0 + 15, 100, 32), "violet", inv, size=13.0, colour=TEXT)
     # mode
     p.d  # (header art is in the panel background)
     key, w, h = comp_seg(ARP_MODES, 112, 40, 8, acc)
@@ -1390,6 +1446,9 @@ def arp_panel(p):
 
 
 def arp_art(d, im):
+    spaced(d, (836, 24), "CHORD", font(11, "SemiBold"), ACC["violet"], spacing=2)
+    d.rounded_rectangle((896, 15, 1000, 47), 8, fill=(17, 20, 24), outline=ACC["violet"])
+    d.rounded_rectangle((1006, 15, 1106, 47), 8, fill=(17, 20, 24), outline=(46, 52, 61))
     n = 16; gx0 = 32; gw = W - 64; gap = 8
     cw = (gw - (n - 1) * gap) // n; sy = 300
     spaced(d, (32, 54), "MODE", font(10, "SemiBold"), MUTED, spacing=1.5)
