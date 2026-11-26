@@ -541,12 +541,13 @@ def comp_knob(size, acc, bi):
     return key, W_, H_
 
 
-def comp_box(w, h, acc, menu, size=15.0, colour=None):
-    key = f"box{'M' if menu else 'K'}_{w}x{h}_{acc}_{int(size)}"
+def comp_box(w, h, acc, menu, size=15.0, colour=None, show_value=True):
+    key = f"box{'M' if menu else 'K'}_{w}x{h}_{acc}_{int(size)}" + ("" if show_value else "_blank")
     if key not in DEFS:
-        kid = [focus(acc, w, h),
-               G.entry("value", "Label", lbl("Value", argb(colour or ACC[acc]), size), f"6 0 {w - 12} {h}", "No", "Show", "Always"),
-               slider_bar(w, h)]
+        kid = [focus(acc, w, h)]
+        if show_value:   # 1.4: the PATCH boxes show the Patch Name parameter on top instead
+            kid.append(G.entry("value", "Label", lbl("Value", argb(colour or ACC[acc]), size), f"6 0 {w - 12} {h}", "No", "Show", "Always"))
+        kid.append(slider_bar(w, h))
         # Menu boxes (Patch, Type) open no overlay on double-tap: the MPC's menu shows plugin lists
         # without text, so the PATCH page has its own list instead.
         # Menu boxes (Patch, Type) open no overlay at all (no double-tap, no Enter): the MPC's menu shows
@@ -929,8 +930,9 @@ class Page:
         d.line((cx0 + 124, y0 + 8, cx0 + 124, y1 - 8), fill=(46, 52, 61))
         spaced(d, (cx0 + 134, y0 + 3), "PATCH", font(9, "SemiBold"), MUTED, spacing=2)
         pw = (x1 - 140) - (cx0 + 130)
-        key = comp_box(pw, 30, "white", True, 21.0, colour=TEXT)
+        key = comp_box(pw, 30, "white", True, 21.0, colour=TEXT, show_value=False)
         self.add(key, "Patch", f"{cx0 + 130} {y0 + 15} {pw} 30")
+        self.value_label("Patch Name", f"{cx0 + 136} {y0 + 15} {pw - 12} 30", argb(TEXT), 21.0)
         # Tapping TYPE or PATCH opens the patch browser (invisible buttons over the boxes).
         self.add(comp_button(clear_img(116, 28), clear_img(116, 28), 1, 2, 116, 28), "Browser", f"{cx0} {y0 + 17} 116 28", focusable=False)
         self.add(comp_button(clear_img(pw, 30), clear_img(pw, 30), 1, 2, pw, 30), "Browser", f"{cx0 + 130} {y0 + 15} {pw} 30", focusable=False)
@@ -1301,7 +1303,8 @@ p.d.line((390, 117, 390, 199), fill=(46, 52, 61)); p.d.line((818, 117, 818, 199)
 p.add(comp_arrow(True, 66, 82), "Prev", "323 117 66 82", focusable=False)
 p.add(comp_arrow(False, 66, 82), "Next", "819 117 66 82", focusable=False)
 spaced(p.d, (406, 126), "PATCH", font(10, "SemiBold"), MUTED, spacing=2)
-p.add(comp_box(410, 50, "mint", True, 31.0, colour=TEXT), "Patch", "398 142 412 50")
+p.add(comp_box(410, 50, "mint", True, 31.0, colour=TEXT, show_value=False), "Patch", "398 142 412 50")
+p.value_label("Patch Name", "404 142 400 50", argb(TEXT), 31.0)
 p.slot("Patch", (0, 0))
 p.note(330, 214, "Data wheel or Q-Link 1 = every patch.", MUTED, 10)
 p.note(330, 228, "Arrows = next / previous of the chosen TYPE and GENRE.", MUTED, 10)
@@ -1846,6 +1849,8 @@ for n, comp in [overlay("knob overlay", "KnobOverlay", G.knob_overlay_data(False
 # build without your own patches), so the PATCH box shows names on the first start too, before the plugin's rewrite.
 _names_file = os.path.join(HERE, "tools", "patch_names.json")
 _patch_names = json.load(open(_names_file)) if os.path.exists(_names_file) else ["Init"]
+_patch_names = [n for n in _patch_names if not n.startswith("User ")]   # the empty slots are added below
+_patch_names += ["User %d" % (u + 1) for u in range(1000)]               # kUserPatchSlots in Warpline.cpp
 repl = [G.obj(("key", "Parameter %d" % PI["Patch"]), ("value", _patch_names))]
 for p_ in PARAMS:
     if p_["name"] == "Patch" or p_["name"].startswith("List "):
