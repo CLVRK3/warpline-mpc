@@ -1111,6 +1111,7 @@ p.panel((896, 416, 1264, 612))
 spaced(p.d, (908, 428), "MACROS", font(11, "SemiBold"), LABEL, spacing=2)
 p.value_label("Quality", "1090 424 72 18", argb(MUTED), 12.0, "right verticallyCentred", handle="WithSuffix[ MODE]/Parameter %d" % PI["Quality"])
 p.value_label("Max Voices", "1166 424 88 18", argb(MUTED), 12.0, "right verticallyCentred", handle="WithSuffix[ VOICES]/Parameter %d" % PI["Max Voices"])
+p.value_label("Pressure In", "984 424 104 18", argb(ACC["coral"]), 12.0, "left verticallyCentred")   # 1.4: shows pad pressure arriving
 for i in range(4):   # 1.4: the captions are the patch's own macro names
     p.knob("Macro %d" % (i + 1), 908 + i * 86, 458, "", "white", size=62)
     p.value_label("Macro %d Name" % (i + 1), f"{908 + i * 86 - 12} {458 + 62 + 1} 86 16", argb(LABEL), 12.0)
@@ -1420,6 +1421,9 @@ def arp_panel(p):
     # 1.4: CHORD (each played note becomes a chord, also with the arp off) and its voicing
     box_inv(p, "Chord", (896, y0 + 15, 104, 32), "violet", inv, size=14.0, colour=ACC["violet"])
     box_inv(p, "Chord Voicing", (1006, y0 + 15, 100, 32), "violet", inv, size=13.0, colour=TEXT)
+    # 1.4: strum, under the chord boxes
+    box_inv(p, "Chord Strum", (944, y0 + 55, 100, 30), "violet", inv, size=13.0, colour=ACC["violet"])
+    box_inv(p, "Strum Direction", (1050, y0 + 55, 90, 30), "violet", inv, size=13.0, colour=TEXT)
     # mode
     p.d  # (header art is in the panel background)
     key, w, h = comp_seg(ARP_MODES, 112, 40, 8, acc)
@@ -1447,6 +1451,9 @@ def arp_panel(p):
 
 def arp_art(d, im):
     spaced(d, (836, 24), "CHORD", font(11, "SemiBold"), ACC["violet"], spacing=2)
+    spaced(d, (884, 63), "STRUM", font(11, "SemiBold"), ACC["violet"], spacing=2)
+    d.rounded_rectangle((944, 55, 1044, 85), 8, fill=(17, 20, 24), outline=ACC["violet"])
+    d.rounded_rectangle((1050, 55, 1140, 85), 8, fill=(17, 20, 24), outline=(46, 52, 61))
     d.rounded_rectangle((896, 15, 1000, 47), 8, fill=(17, 20, 24), outline=ACC["violet"])
     d.rounded_rectangle((1006, 15, 1106, 47), 8, fill=(17, 20, 24), outline=(46, 52, 61))
     n = 16; gx0 = 32; gw = W - 64; gap = 8

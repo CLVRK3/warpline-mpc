@@ -11585,6 +11585,284 @@
                     }
                 },
                 {
+                    "key": "boxK_100x30_violet_13",
+                    "value": {
+                        "version": 2,
+                        "actions": [
+                            {
+                                "version": 1,
+                                "onAction": "Mouse Down",
+                                "handler": "Q-Link",
+                                "handleName": "Data",
+                                "additionalData": ""
+                            },
+                            {
+                                "version": 1,
+                                "onAction": "Double Click",
+                                "handler": "Show Overlay",
+                                "handleName": "Data",
+                                "additionalData": "knob overlay"
+                            },
+                            {
+                                "version": 1,
+                                "onAction": "Enter Pressed",
+                                "handler": "Show Overlay",
+                                "handleName": "Data",
+                                "additionalData": "knob overlay"
+                            }
+                        ],
+                        "backgroundData": {
+                            "version": 1,
+                            "focussed": {
+                                "version": 1,
+                                "colour": "00000000",
+                                "image": ""
+                            },
+                            "unfocussed": {
+                                "version": 1,
+                                "colour": "00000000",
+                                "image": ""
+                            }
+                        },
+                        "ignoreMousePresses": false,
+                        "disableCoarseDataWheel": false,
+                        "componentsData": [
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "focus",
+                                    "type": "Focus",
+                                    "data": {
+                                        "version": 1,
+                                        "backgroundColour": "12ffffff",
+                                        "outlineColour": "ffb59cff",
+                                        "backgroundInset": 2.0,
+                                        "outlineThickness": 1.5
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "WhenFocussed",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 100 30"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "value",
+                                    "type": "Label",
+                                    "data": {
+                                        "version": 1,
+                                        "textStyle": {
+                                            "version": 1,
+                                            "font": {
+                                                "version": 1,
+                                                "name": "Titillium Web",
+                                                "style": "SemiBold",
+                                                "height": 13.0
+                                            },
+                                            "colour": "ffb59cff",
+                                            "justification": "horizontallyCentred verticallyCentred",
+                                            "case": "Original"
+                                        },
+                                        "type": "Value",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "6 0 88 30"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_100x30.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 100 30"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "key": "boxK_90x30_violet_13",
+                    "value": {
+                        "version": 2,
+                        "actions": [
+                            {
+                                "version": 1,
+                                "onAction": "Mouse Down",
+                                "handler": "Q-Link",
+                                "handleName": "Data",
+                                "additionalData": ""
+                            },
+                            {
+                                "version": 1,
+                                "onAction": "Double Click",
+                                "handler": "Show Overlay",
+                                "handleName": "Data",
+                                "additionalData": "knob overlay"
+                            },
+                            {
+                                "version": 1,
+                                "onAction": "Enter Pressed",
+                                "handler": "Show Overlay",
+                                "handleName": "Data",
+                                "additionalData": "knob overlay"
+                            }
+                        ],
+                        "backgroundData": {
+                            "version": 1,
+                            "focussed": {
+                                "version": 1,
+                                "colour": "00000000",
+                                "image": ""
+                            },
+                            "unfocussed": {
+                                "version": 1,
+                                "colour": "00000000",
+                                "image": ""
+                            }
+                        },
+                        "ignoreMousePresses": false,
+                        "disableCoarseDataWheel": false,
+                        "componentsData": [
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "focus",
+                                    "type": "Focus",
+                                    "data": {
+                                        "version": 1,
+                                        "backgroundColour": "12ffffff",
+                                        "outlineColour": "ffb59cff",
+                                        "backgroundInset": 2.0,
+                                        "outlineThickness": 1.5
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "WhenFocussed",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 90 30"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "value",
+                                    "type": "Label",
+                                    "data": {
+                                        "version": 1,
+                                        "textStyle": {
+                                            "version": 1,
+                                            "font": {
+                                                "version": 1,
+                                                "name": "Titillium Web",
+                                                "style": "SemiBold",
+                                                "height": 13.0
+                                            },
+                                            "colour": "ffe8ecf1",
+                                            "justification": "horizontallyCentred verticallyCentred",
+                                            "case": "Original"
+                                        },
+                                        "type": "Value",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "6 0 78 30"
+                                }
+                            },
+                            {
+                                "version": 2,
+                                "componentData": {
+                                    "version": 1,
+                                    "name": "drag",
+                                    "type": "Knob",
+                                    "data": {
+                                        "version": 5,
+                                        "knobType": "FilmStrip",
+                                        "filmStrip": "clearstrip_90x30.png",
+                                        "numFrames": 2,
+                                        "invert": false,
+                                        "dragOrientation": "Horizontal",
+                                        "handleName": "Data"
+                                    }
+                                },
+                                "handle remapping": {
+                                    "version": 1,
+                                    "map": []
+                                },
+                                "bounds": {
+                                    "version": 1,
+                                    "acceptsHWFocus": "No",
+                                    "showWhenDataModelInvalid": "Show",
+                                    "whenVisible": "Always",
+                                    "boundsType": "Absolute",
+                                    "bounds": "0 0 90 30"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
                     "key": "seg_amber_112x40_up_down_updn_dnup_rand_played_chord",
                     "value": {
                         "version": 2,
@@ -19790,6 +20068,14 @@
                     "Off",
                     "On"
                 ]
+            },
+            {
+                "key": "Parameter 334",
+                "value": [
+                    "Up",
+                    "Down",
+                    "Alt"
+                ]
             }
         ],
         "info": {
@@ -24028,6 +24314,43 @@
                                 "whenVisible": "Always",
                                 "boundsType": "Absolute",
                                 "bounds": "1166 424 88 18"
+                            }
+                        },
+                        {
+                            "version": 2,
+                            "componentData": {
+                                "version": 1,
+                                "name": "Pressure In text",
+                                "type": "Label",
+                                "data": {
+                                    "version": 1,
+                                    "textStyle": {
+                                        "version": 1,
+                                        "font": {
+                                            "version": 1,
+                                            "name": "Titillium Web",
+                                            "style": "SemiBold",
+                                            "height": 12.0
+                                        },
+                                        "colour": "ffff8a9b",
+                                        "justification": "left verticallyCentred",
+                                        "case": "Original"
+                                    },
+                                    "type": "Value",
+                                    "handleName": "Parameter 335"
+                                }
+                            },
+                            "handle remapping": {
+                                "version": 1,
+                                "map": []
+                            },
+                            "bounds": {
+                                "version": 1,
+                                "acceptsHWFocus": "No",
+                                "showWhenDataModelInvalid": "Hide",
+                                "whenVisible": "Always",
+                                "boundsType": "Absolute",
+                                "bounds": "984 424 104 18"
                             }
                         },
                         {
@@ -29371,6 +29694,70 @@
                                 "whenVisible": "Always",
                                 "boundsType": "Absolute",
                                 "bounds": "1006 79 100 32",
+                                "additionalInvalidatingHandles": [
+                                    "IndexedEnabling/1/11/Parameter 147"
+                                ]
+                            }
+                        },
+                        {
+                            "version": 2,
+                            "componentData": {
+                                "version": 1,
+                                "name": "Chord Strum",
+                                "type": "boxK_100x30_violet_13",
+                                "data": {
+                                    "version": 1,
+                                    "handleName": "Data"
+                                }
+                            },
+                            "handle remapping": {
+                                "version": 1,
+                                "map": [
+                                    {
+                                        "key": "Data",
+                                        "value": "Parameter 333"
+                                    }
+                                ]
+                            },
+                            "bounds": {
+                                "version": 2,
+                                "acceptsHWFocus": "Yes",
+                                "showWhenDataModelInvalid": "Hide",
+                                "whenVisible": "Always",
+                                "boundsType": "Absolute",
+                                "bounds": "944 119 100 30",
+                                "additionalInvalidatingHandles": [
+                                    "IndexedEnabling/1/11/Parameter 147"
+                                ]
+                            }
+                        },
+                        {
+                            "version": 2,
+                            "componentData": {
+                                "version": 1,
+                                "name": "Strum Direction",
+                                "type": "boxK_90x30_violet_13",
+                                "data": {
+                                    "version": 1,
+                                    "handleName": "Data"
+                                }
+                            },
+                            "handle remapping": {
+                                "version": 1,
+                                "map": [
+                                    {
+                                        "key": "Data",
+                                        "value": "Parameter 334"
+                                    }
+                                ]
+                            },
+                            "bounds": {
+                                "version": 2,
+                                "acceptsHWFocus": "Yes",
+                                "showWhenDataModelInvalid": "Hide",
+                                "whenVisible": "Always",
+                                "boundsType": "Absolute",
+                                "bounds": "1050 119 90 30",
                                 "additionalInvalidatingHandles": [
                                     "IndexedEnabling/1/11/Parameter 147"
                                 ]
@@ -48492,6 +48879,70 @@
                             "version": 2,
                             "componentData": {
                                 "version": 1,
+                                "name": "Chord Strum",
+                                "type": "boxK_100x30_violet_13",
+                                "data": {
+                                    "version": 1,
+                                    "handleName": "Data"
+                                }
+                            },
+                            "handle remapping": {
+                                "version": 1,
+                                "map": [
+                                    {
+                                        "key": "Data",
+                                        "value": "Parameter 333"
+                                    }
+                                ]
+                            },
+                            "bounds": {
+                                "version": 2,
+                                "acceptsHWFocus": "Yes",
+                                "showWhenDataModelInvalid": "Hide",
+                                "whenVisible": "Always",
+                                "boundsType": "Absolute",
+                                "bounds": "944 119 100 30",
+                                "additionalInvalidatingHandles": [
+                                    "IndexedEnabling/1/11/Parameter 147"
+                                ]
+                            }
+                        },
+                        {
+                            "version": 2,
+                            "componentData": {
+                                "version": 1,
+                                "name": "Strum Direction",
+                                "type": "boxK_90x30_violet_13",
+                                "data": {
+                                    "version": 1,
+                                    "handleName": "Data"
+                                }
+                            },
+                            "handle remapping": {
+                                "version": 1,
+                                "map": [
+                                    {
+                                        "key": "Data",
+                                        "value": "Parameter 334"
+                                    }
+                                ]
+                            },
+                            "bounds": {
+                                "version": 2,
+                                "acceptsHWFocus": "Yes",
+                                "showWhenDataModelInvalid": "Hide",
+                                "whenVisible": "Always",
+                                "boundsType": "Absolute",
+                                "bounds": "1050 119 90 30",
+                                "additionalInvalidatingHandles": [
+                                    "IndexedEnabling/1/11/Parameter 147"
+                                ]
+                            }
+                        },
+                        {
+                            "version": 2,
+                            "componentData": {
+                                "version": 1,
                                 "name": "Arp Mode",
                                 "type": "seg_amber_112x40_up_down_updn_dnup_rand_played_chord",
                                 "data": {
@@ -66265,6 +66716,70 @@
                             "version": 2,
                             "componentData": {
                                 "version": 1,
+                                "name": "Chord Strum",
+                                "type": "boxK_100x30_violet_13",
+                                "data": {
+                                    "version": 1,
+                                    "handleName": "Data"
+                                }
+                            },
+                            "handle remapping": {
+                                "version": 1,
+                                "map": [
+                                    {
+                                        "key": "Data",
+                                        "value": "Parameter 333"
+                                    }
+                                ]
+                            },
+                            "bounds": {
+                                "version": 2,
+                                "acceptsHWFocus": "Yes",
+                                "showWhenDataModelInvalid": "Hide",
+                                "whenVisible": "Always",
+                                "boundsType": "Absolute",
+                                "bounds": "944 119 100 30",
+                                "additionalInvalidatingHandles": [
+                                    "IndexedEnabling/1/11/Parameter 147"
+                                ]
+                            }
+                        },
+                        {
+                            "version": 2,
+                            "componentData": {
+                                "version": 1,
+                                "name": "Strum Direction",
+                                "type": "boxK_90x30_violet_13",
+                                "data": {
+                                    "version": 1,
+                                    "handleName": "Data"
+                                }
+                            },
+                            "handle remapping": {
+                                "version": 1,
+                                "map": [
+                                    {
+                                        "key": "Data",
+                                        "value": "Parameter 334"
+                                    }
+                                ]
+                            },
+                            "bounds": {
+                                "version": 2,
+                                "acceptsHWFocus": "Yes",
+                                "showWhenDataModelInvalid": "Hide",
+                                "whenVisible": "Always",
+                                "boundsType": "Absolute",
+                                "bounds": "1050 119 90 30",
+                                "additionalInvalidatingHandles": [
+                                    "IndexedEnabling/1/11/Parameter 147"
+                                ]
+                            }
+                        },
+                        {
+                            "version": 2,
+                            "componentData": {
+                                "version": 1,
                                 "name": "Arp Mode",
                                 "type": "seg_amber_112x40_up_down_updn_dnup_rand_played_chord",
                                 "data": {
@@ -83128,6 +83643,70 @@
                             "version": 2,
                             "componentData": {
                                 "version": 1,
+                                "name": "Chord Strum",
+                                "type": "boxK_100x30_violet_13",
+                                "data": {
+                                    "version": 1,
+                                    "handleName": "Data"
+                                }
+                            },
+                            "handle remapping": {
+                                "version": 1,
+                                "map": [
+                                    {
+                                        "key": "Data",
+                                        "value": "Parameter 333"
+                                    }
+                                ]
+                            },
+                            "bounds": {
+                                "version": 2,
+                                "acceptsHWFocus": "Yes",
+                                "showWhenDataModelInvalid": "Hide",
+                                "whenVisible": "Always",
+                                "boundsType": "Absolute",
+                                "bounds": "944 119 100 30",
+                                "additionalInvalidatingHandles": [
+                                    "IndexedEnabling/1/11/Parameter 147"
+                                ]
+                            }
+                        },
+                        {
+                            "version": 2,
+                            "componentData": {
+                                "version": 1,
+                                "name": "Strum Direction",
+                                "type": "boxK_90x30_violet_13",
+                                "data": {
+                                    "version": 1,
+                                    "handleName": "Data"
+                                }
+                            },
+                            "handle remapping": {
+                                "version": 1,
+                                "map": [
+                                    {
+                                        "key": "Data",
+                                        "value": "Parameter 334"
+                                    }
+                                ]
+                            },
+                            "bounds": {
+                                "version": 2,
+                                "acceptsHWFocus": "Yes",
+                                "showWhenDataModelInvalid": "Hide",
+                                "whenVisible": "Always",
+                                "boundsType": "Absolute",
+                                "bounds": "1050 119 90 30",
+                                "additionalInvalidatingHandles": [
+                                    "IndexedEnabling/1/11/Parameter 147"
+                                ]
+                            }
+                        },
+                        {
+                            "version": 2,
+                            "componentData": {
+                                "version": 1,
                                 "name": "Arp Mode",
                                 "type": "seg_amber_112x40_up_down_updn_dnup_rand_played_chord",
                                 "data": {
@@ -99773,6 +100352,70 @@
                                 "whenVisible": "Always",
                                 "boundsType": "Absolute",
                                 "bounds": "1006 79 100 32",
+                                "additionalInvalidatingHandles": [
+                                    "IndexedEnabling/1/11/Parameter 147"
+                                ]
+                            }
+                        },
+                        {
+                            "version": 2,
+                            "componentData": {
+                                "version": 1,
+                                "name": "Chord Strum",
+                                "type": "boxK_100x30_violet_13",
+                                "data": {
+                                    "version": 1,
+                                    "handleName": "Data"
+                                }
+                            },
+                            "handle remapping": {
+                                "version": 1,
+                                "map": [
+                                    {
+                                        "key": "Data",
+                                        "value": "Parameter 333"
+                                    }
+                                ]
+                            },
+                            "bounds": {
+                                "version": 2,
+                                "acceptsHWFocus": "Yes",
+                                "showWhenDataModelInvalid": "Hide",
+                                "whenVisible": "Always",
+                                "boundsType": "Absolute",
+                                "bounds": "944 119 100 30",
+                                "additionalInvalidatingHandles": [
+                                    "IndexedEnabling/1/11/Parameter 147"
+                                ]
+                            }
+                        },
+                        {
+                            "version": 2,
+                            "componentData": {
+                                "version": 1,
+                                "name": "Strum Direction",
+                                "type": "boxK_90x30_violet_13",
+                                "data": {
+                                    "version": 1,
+                                    "handleName": "Data"
+                                }
+                            },
+                            "handle remapping": {
+                                "version": 1,
+                                "map": [
+                                    {
+                                        "key": "Data",
+                                        "value": "Parameter 334"
+                                    }
+                                ]
+                            },
+                            "bounds": {
+                                "version": 2,
+                                "acceptsHWFocus": "Yes",
+                                "showWhenDataModelInvalid": "Hide",
+                                "whenVisible": "Always",
+                                "boundsType": "Absolute",
+                                "bounds": "1050 119 90 30",
                                 "additionalInvalidatingHandles": [
                                     "IndexedEnabling/1/11/Parameter 147"
                                 ]
@@ -118548,6 +119191,70 @@
                                 "whenVisible": "Always",
                                 "boundsType": "Absolute",
                                 "bounds": "1006 79 100 32",
+                                "additionalInvalidatingHandles": [
+                                    "IndexedEnabling/1/11/Parameter 147"
+                                ]
+                            }
+                        },
+                        {
+                            "version": 2,
+                            "componentData": {
+                                "version": 1,
+                                "name": "Chord Strum",
+                                "type": "boxK_100x30_violet_13",
+                                "data": {
+                                    "version": 1,
+                                    "handleName": "Data"
+                                }
+                            },
+                            "handle remapping": {
+                                "version": 1,
+                                "map": [
+                                    {
+                                        "key": "Data",
+                                        "value": "Parameter 333"
+                                    }
+                                ]
+                            },
+                            "bounds": {
+                                "version": 2,
+                                "acceptsHWFocus": "Yes",
+                                "showWhenDataModelInvalid": "Hide",
+                                "whenVisible": "Always",
+                                "boundsType": "Absolute",
+                                "bounds": "944 119 100 30",
+                                "additionalInvalidatingHandles": [
+                                    "IndexedEnabling/1/11/Parameter 147"
+                                ]
+                            }
+                        },
+                        {
+                            "version": 2,
+                            "componentData": {
+                                "version": 1,
+                                "name": "Strum Direction",
+                                "type": "boxK_90x30_violet_13",
+                                "data": {
+                                    "version": 1,
+                                    "handleName": "Data"
+                                }
+                            },
+                            "handle remapping": {
+                                "version": 1,
+                                "map": [
+                                    {
+                                        "key": "Data",
+                                        "value": "Parameter 334"
+                                    }
+                                ]
+                            },
+                            "bounds": {
+                                "version": 2,
+                                "acceptsHWFocus": "Yes",
+                                "showWhenDataModelInvalid": "Hide",
+                                "whenVisible": "Always",
+                                "boundsType": "Absolute",
+                                "bounds": "1050 119 90 30",
                                 "additionalInvalidatingHandles": [
                                     "IndexedEnabling/1/11/Parameter 147"
                                 ]
