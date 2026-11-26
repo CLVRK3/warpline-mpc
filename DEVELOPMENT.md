@@ -212,6 +212,11 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
 - Not done: profile-guided optimisation. The SDK's `tools/build.py` fixes `-O2` and takes no extra compile flags, zig 0.17's
   ARM targets ship no profile runtime (an `-fprofile-instr-generate` .so links without one), and `-O3` measured no faster
   on x86 (2026-11-25).
+- Patch name in the PATCH boxes (1.4, after a device report that the box stayed on Init and the data wheel sometimes picked
+  the wrong patch): the boxes show `Patch Name` (screen, text = the patch `parameterChanged(kPatch)` asked for, set right
+  there) instead of the skin's list, and `Patch` always has Init + factory + `kUserPatchSlots` (1000) choices, so its length
+  equals the skin's list from the first start (a length mismatch made MPC's steps land on the wrong patch). Empty slots
+  ("User n") snap back to the last patch.
 - Skin patch list: the shipped TUI.json carries the factory names (`tools/patch_names.json`, made with
   `state_dump --choices Patch` on a native build) so the PATCH box shows names on the first start; at load the plugin rewrites
   the list with your own patches added (`writeSkinLists`), which MPC shows after its next restart. Before, the shipped list was
@@ -265,6 +270,6 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
 - `<drive>\Warpline\Patches`, where `<drive>` is the parent of the folder holding the plugin: `VST2 Plugins` (hand install)
   or `Synths` (Open MPC installer / Plugin Manager, e.g. `/nvme/Synths` -> `/nvme/Warpline/Patches`). Also the
   WARPLINE_USER_PATCHES env var. The `Synths` case was added in 1.0.0 and still needs a hardware check.
-- Scanned recursively; up to 6000 patches in total.
+- Scanned recursively; up to 1000 of your own (`kUserPatchSlots`, 1.4).
 - Type code from the name's own label (BA, PD, SEQ, PLK...), then Vital's preset_style, then keywords.
 - The plugin writes the full patch list into `Plugin Skins/TUI.json` on load (harmless leftover from the menu attempt).

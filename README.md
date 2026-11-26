@@ -119,7 +119,9 @@ Every patch name starts with a two-letter code for its type, so lists sort and r
   `GS_BASS_Free_Chewer`, `Keys - Riot`, `SEQ`, `SFX`, `DRN` and so on) and shows the name without the pack prefix (`PD Lifeline`). Next it uses the
   patch's Vital style (Bass, Lead, Keys, Pad, Percussion, Sequence, SFX), then keywords in the file or folder name
   (pad, pluck, bass, rhodes, bell, choir and so on). If none of those match, it uses **SY**. Rename a file with a code to override the guess.
-- Up to 6000 patches are listed in total (Init + factory + yours). Names show up to 24 characters.
+- Up to 1000 of your own patches are listed (1.4; was 6000 in total), after Init and the factory set. Names show up to 24
+  characters. The PATCH boxes always show the playing patch's name; MPC's own list of names (the data wheel steps through it)
+  picks up newly added patches of yours after the next MPC restart.
 - The list (Patch control and the MPC preset list) is sorted by type, then name: factory patches first, then yours.
 
 **Filtering:** the **TYPE** box in the patch bar (on every page) and the TYPE FILTER box on the PATCH page choose a type. Picking one jumps to that
