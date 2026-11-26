@@ -12,7 +12,7 @@ Designed for the **MPC Live III / MPC XL** (64-bit). It also builds for the 32-b
 **New in 1.4.0:** **CHORD** mode (one pad plays a whole chord, 13 chord types and 5 voicings, also into the arp), a **RANDOM**
 patch button, a CPU mark on every factory patch with a **LIGHT** list filter for older MPCs, the patch's own **macro names** on the
 macro knobs, **your own WAV wavetables** in the TABLES menus, pad pressure that opens the filter on every factory patch, and an
-optional **ENGINE THREAD** that runs the synth on its own CPU core, off MPC's audio thread.
+**ENGINE THREAD** (on by default) that runs the synth on its own CPU core, off MPC's audio thread. Chords can also be **strummed**.
 
 **New in 1.3.0:** 125 UK garage, drum and bass and 90s jungle patches, and a harder, bigger rage set with supersaw chords,
 sub and coin layers (159 new patches, 519 in all). The GENRE menu gains UK Garage and DnB / Jungle. Lighter on the CPU: Warpline
@@ -93,7 +93,8 @@ Rebuild the skin after changing parameters: `python tools_build_skin.py` (needs 
 - **Engine thread (1.4):** PATCH page, **ENGINE THREAD: ON** renders the synth on a thread of its own, on another CPU core,
   instead of on MPC's audio thread. Warpline then costs MPC's audio engine almost nothing, at the price of 256 samples (about
   6 ms) of extra latency. If the engine thread runs late, those samples play as silence and the latency grows a little; it is logged
-  to the system log (`Warpline: engine thread late ...`). Off by default until it has been tested on more MPCs: try it if you hear pops.
+  to the system log (`Warpline: engine thread late ...`). On by default (it lowered MPC's CPU load a lot on a Live III); turn it off
+  if you need the lowest latency, for example when playing pads live with a very short attack.
 - **Light patches (1.4):** the browser's **SHOW: LIGHT** lists the factory patches that use the least CPU.
 - **Idle (1.3):** after about a second of silence with no notes sounding, the engine is not run until the next note, so an
   instance that is loaded but not playing uses almost no CPU.
@@ -128,7 +129,9 @@ The data wheel and Q-Link 1 on the Patch control still go through the whole list
 ## Pad pressure (1.4)
 Every factory patch opens its filter with pad pressure (aftertouch, polyphonic or channel), on top of the TONE macro. Warpline
 passes polyphonic pressure to each note, and to every note of a chord in CHORD mode. Your own patches use pressure however
-their maker routed it.
+their maker routed it. The MACROS box on F1 MAIN shows **PRESSURE n%** as pressure comes in, so you can see whether your MPC
+sends it: if it stays at 0%, check the pads' aftertouch setting in MPC's preferences, and press harder after the hit (MPC
+pads only send pressure past a threshold).
 
 ## Velocity
 
@@ -176,6 +179,12 @@ Tap a chip to open its full-screen panel and tap **CLOSE** to go back. Only one 
   **Inv 2** (inversions), **Drop 2** (the second-highest note an octave down) and **Spread** (a bass note an octave below, and every
   other note up an octave). It works with the arp off too; with the arp on, the arp plays the chord's notes. The ARP chip in the
   header shows the chord while the arp is off. Chord and voicing are saved with the project and can be automated.
+- **STRUM (1.4):** under the chord boxes. 0-250 ms between one chord note and the next, like a strummed guitar: **Up** plays
+  low to high, **Down** high to low, **Alt** changes direction every chord. Let go before the strum is done and the notes still
+  to come don't play.
+- MPC records the pad you played, not the chord: the piano roll shows one note per chord, and Warpline builds the chord again on
+  playback (a plugin can't write notes into MPC's sequence). If you want every chord note in the piano roll, use MPC's own
+  Chords / Progressions pad mode with CHORD off, or record with CHORD on and later edit the single notes.
 
 ### GRAINZ (granular effect)
 ![GRAINZ](docs/screenshots/warpline-grainz.png)

@@ -181,7 +181,8 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   before the arp. `chord_held_` remembers each key's notes (so a chord change while holding releases the right ones) and
   `chord_note_refs_` counts keys per note (overlapping chords share notes). All-notes-off and `reset()` clear both.
 - Polyphonic pressure (`0xA0`) goes to the note (`VitalCore::polyPressure` -> `SoundEngine::setAftertouch`), and to every
-  note of a chord. Factory patches: `tools/add_pressure.py` added aftertouch -> filter 1 cutoff (0.18) in each patch's first
+  note of a chord. Factory patches: `tools/add_pressure.py` added aftertouch -> filter 1 cutoff (0.35; 0.18 at first was too
+  subtle on a device) in each patch's first
   free slot (everything else unchanged); `make_factory`'s house style has the same routing. A full `make_factory` run is NOT
   a drop-in replacement for Content/Patches any more: 41 patches had been tuned by hand afterwards (volume, levels, drive).
 - CPU ratings: `tools/cpu_ratings.py <bench_patches> [runs]` writes `Content/Cpu.txt` (`<file>|L/M/H`, relative to the median
@@ -194,7 +195,11 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   `Osc1-3 Table` now always has 10 + 64 choices (built-ins, then `<drive>/Warpline/Wavetables` files or "WAV n"
   placeholders), so the skin's `IndexedEnabling` counts and saved values don't depend on the files. Files are read on the
   worker before the audio pause (`cacheUserTables`), parsed once (`user_table_cache_`). `Osc1-3 WAV Prev/Next` step through them.
-- Engine thread (`Engine Thread`, Off by default): `process()` either renders inline (`renderBlock`) or queues the block
+- Strum (`Chord Strum` 0-250 ms, `Strum Direction` Up/Down/Alt, appended): chord notes after the first wait in `pending_`
+  and start from the render loop (`firePending`, which also splits the render at their sample). A key let go before its strum
+  is done drops its pending notes; `chord_note_started_` keeps a note that never started from getting a note-off.
+- `Pressure In` (screen, text): the last pressure value, published by the worker; the MACROS box on MAIN shows it.
+- Engine thread (`Engine Thread`, on by default since the Live III test on 2026-11-26, which showed much lower MPC CPU): `process()` either renders inline (`renderBlock`) or queues the block
   (frames, MIDI, transport) for `engineLoop()` and copies audio rendered earlier from a ring, `kEngineAhead` (2) blocks
   behind. The engine thread pins itself with `fast_cores.h` (Gen 2: the A76s minus core 7; Gen 1: no pin) and asks for
   `SCHED_FIFO` 15, below MPC's audio threads. A late block plays silence for the missing frames and counts in
