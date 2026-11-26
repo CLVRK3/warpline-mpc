@@ -36,8 +36,10 @@
 #include <set>
 #include <string>
 #include <thread>
+#if defined(__linux__)
 #include <pthread.h>
 #include <sched.h>
+#endif
 #include <vector>
 
 #include "Arp.h"
@@ -46,7 +48,9 @@
 #include "GrainzClouds.h"
 #include "VitalCore.h"
 #include "WavTable.h"
-#include "fast_cores.h"
+#if defined(__linux__)
+#include "fast_cores.h"   // MPC is Linux; the desktop test build (Windows, macOS) skips thread placement
+#endif
 #include "synth_constants.h"
 #include "synth_parameters.h"
 
@@ -978,10 +982,12 @@ class Warpline : public mpc::Plugin {
     }
 
     void engineLoop() {
+#if defined(__linux__)
       fastcores::pin_this_thread();
       sched_param sp {};
       sp.sched_priority = fastcores::rt_priority(15);   // below MPC's audio threads (20)
       pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp);   // may fail without permission: then it runs as normal
+#endif
       std::vector<float> l(kEngineRing / 4), r(kEngineRing / 4);
       engine_ready_.store(true);
       while (!engine_quit_.load()) {
