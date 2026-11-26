@@ -303,6 +303,10 @@ const char* const kTypeNames[] = { "Arp", "Bass", "Bell", "Brass", "Dreamy", "FX
 constexpr int kNumTypes = sizeof(kTypeCodes) / sizeof(kTypeCodes[0]);
 constexpr int kOtherType = kNumTypes - 1;
 constexpr size_t kMaxPatches = 6000;   // Init + factory + your own
+// 1.4: the Patch parameter always has (Init + factory) + kUserPatchSlots choices, so its length matches the skin's list
+// from the first start (MPC reads the skin only when it starts). Your own patches fill the first slots; the rest are empty
+// ("User n") and Warpline steps over them. More than this many of your own patches are not listed.
+constexpr size_t kUserPatchSlots = 1000;
 
 int typeFromCode(const std::string& name) {
   if (name.size() < 3 || name[2] != ' ')
@@ -581,10 +585,16 @@ class Warpline : public mpc::Plugin {
     Warpline() : mpc::Plugin(makeInfo()) {
       scanPatches();
 
+      if (patches_.size() > static_cast<size_t>(factory_count_) + kUserPatchSlots) {
+        std::fprintf(stderr, "Warpline: listing the first %zu of your %zu patches\n", kUserPatchSlots, patches_.size() - factory_count_);
+        patches_.resize(static_cast<size_t>(factory_count_) + kUserPatchSlots);
+      }
       std::vector<std::string> names;
-      names.reserve(patches_.size());
+      names.reserve(static_cast<size_t>(factory_count_) + kUserPatchSlots);
       for (const PatchEntry& p : patches_)
         names.push_back(trimName(p.name, 24));
+      for (size_t u = names.size(); u < static_cast<size_t>(factory_count_) + kUserPatchSlots; ++u)
+        names.push_back("User " + std::to_string(u - factory_count_ + 1));   // empty slot
       skin_lists_.push_back({ kPatch, names });   // written to the skin with the table lists, below
 
       // Plugin-own parameters.
@@ -1044,9 +1054,24 @@ class Warpline : public mpc::Plugin {
     // ----- parameters -------------------------------------------------------------------------
     void parameterChanged(int index, float plain) override {
       if (index == kPatch) {
+        if (patch_name_index_ >= 0) {   // 1.4: the PATCH boxes' text follows the patch, right away
+          int shown = std::min(static_cast<int>(std::lround(plain)), static_cast<int>(patches_.size()) - 1);
+          float v = param(kPatch).toNormalised(static_cast<float>(shown));
+          if (std::fabs(v - getNormalised(patch_name_index_)) > 1e-6f) {
+            setNormalised(patch_name_index_, v);
+            notifyHostParameterChanged(patch_name_index_);
+          }
+        }
         if (suppress_patch_trigger_.load())
           return;
-        requested_patch_.store(static_cast<int>(std::lround(plain)));
+        int k = static_cast<int>(std::lround(plain));
+        int last = static_cast<int>(patches_.size()) - 1;
+        if (k > last) {   // an empty slot (1.4): stay on the last patch
+          k = last;
+          set(kPatch, static_cast<float>(k));
+          notifyHostParameterChanged(kPatch);
+        }
+        requested_patch_.store(k);
         last_patch_request_ns_.store(nowNs());
         worker_cv_.notify_all();
         return;
@@ -2196,6 +2221,8 @@ class Warpline : public mpc::Plugin {
       addParam(mpc::choiceParam("strum_direction", "Strum Direction", { "Up", "Down", "Alt" }, 0));
       // 1.4: the last pad pressure that came in (text only, so you can see it arrive).
       pressure_index_ = screen(mpc::floatParam("pressure_in", "Pressure In", 0.0f, 1.0f, 0.0f));
+      // 1.4: the playing patch's name as text, for the PATCH boxes (live, unlike the skin's list, which needs an MPC restart).
+      patch_name_index_ = screen(mpc::floatParam("patch_name", "Patch Name", 0.0f, 1.0f, 0.0f));
       suffix_.resize(numParams());
       suffix_[strum_index_] = " ms";
       signed_.resize(numParams(), false);
@@ -2413,7 +2440,7 @@ class Warpline : public mpc::Plugin {
         return true;
       }
       if (index == chord_index_ + 1 || index == engine_thread_index_ || index == strum_index_ || index == strum_index_ + 1 ||
-          index == pressure_index_)
+          index == pressure_index_ || index == patch_name_index_)
         return true;   // read where they are used
       if (index == random_index_) {
         momentary(index, plain, [this] {
@@ -2588,6 +2615,12 @@ class Warpline : public mpc::Plugin {
     }
 
     bool formatValueV11(int index, float plain, std::string& out) {
+      if (index == patch_name_index_ && patch_name_index_ >= 0) {
+        int count = static_cast<int>(param(kPatch).choices.size());
+        int k = static_cast<int>(std::lround(plain * std::max(1, count - 1)));
+        out = k >= 0 && k < static_cast<int>(patches_.size()) ? patches_[k].name : std::string();
+        return true;
+      }
       if (index == pressure_index_ && pressure_index_ >= 0) {
         out = "PRESSURE " + std::to_string(static_cast<int>(std::lround(plain * 100.0f))) + "%";
         return true;
@@ -3063,7 +3096,7 @@ class Warpline : public mpc::Plugin {
 
     // ----- 1.4 -----
     int list_cpu_first_index_ = -1, chord_index_ = -1, random_index_ = -1, macro_name_first_index_ = -1;
-    int wav_step_first_index_ = -1, engine_thread_index_ = -1, strum_index_ = -1, pressure_index_ = -1;
+    int wav_step_first_index_ = -1, engine_thread_index_ = -1, strum_index_ = -1, pressure_index_ = -1, patch_name_index_ = -1;
     // Strum: chord notes waiting to start (render side).
     struct PendingNote { int note; float velocity; int channel; int root; int64_t wait; };
     static constexpr int kMaxPending = 64;
