@@ -846,10 +846,13 @@ class Warpline : public mpc::Plugin {
       while (pos < ctx.numFrames) {
         while (e < ctx.numMidiEvents && ctx.midi[e].sampleOffset <= pos)
           handleMidi(ctx.midi[e++], send);
+        int64_t strum_wait = pending_count_ > 0 ? firePending(send) : INT64_MAX;
         arp_.fire(send);
         int next = ctx.numFrames;
         if (e < ctx.numMidiEvents)
           next = std::min(next, std::max(pos + 1, ctx.midi[e].sampleOffset));
+        if (strum_wait != INT64_MAX)
+          next = static_cast<int>(std::min<int64_t>(next, pos + std::max<int64_t>(1, strum_wait)));
         next = std::min(next, pos + std::max(1, arp_.samplesToNextEvent()));
         if (gen_on) {   // the Gen sources move on in short steps, so their glides stay smooth
           next = std::min(next, pos + kGenChunk);
@@ -866,6 +869,7 @@ class Warpline : public mpc::Plugin {
         else
           core_->render(left + pos, right + pos, next - pos);
         arp_.advance(next - pos);
+        advancePending(next - pos);
         pos = next;
       }
       while (e < ctx.numMidiEvents)
@@ -874,7 +878,7 @@ class Warpline : public mpc::Plugin {
         float peak = 0.0f;
         for (int i = 0; i < ctx.numFrames; ++i)
           peak = std::max(peak, std::max(std::fabs(left[i]), std::fabs(right[i])));
-        if (peak < kIdlePeak && core_->activeVoices() == 0 && !arp_.running())
+        if (peak < kIdlePeak && core_->activeVoices() == 0 && !arp_.running() && pending_count_ == 0)
           idle_samples_ += ctx.numFrames;
         else
           idle_samples_ = 0;
@@ -1827,14 +1831,27 @@ class Warpline : public mpc::Plugin {
           std::vector<int> notes = chordNotes(root, chord, getInt(chord_index_ + 1));
           if (notes.empty())
             notes.push_back(root);
+          // Strum: Up plays low to high, Down high to low, Alt changes direction every chord.
+          float strum_ms = strum_index_ >= 0 ? get(strum_index_) : 0.0f;
+          int dir = strum_index_ >= 0 ? getInt(strum_index_ + 1) : 0;
+          bool down = dir == 1 || (dir == 2 && strum_alt_down_);
+          if (dir == 2) strum_alt_down_ = !strum_alt_down_;
+          int64_t step = static_cast<int64_t>(strum_ms * 0.001 * sample_rate_);
           int k = 0;
           for (int n : notes) {
             if (k >= 8) break;
             chord_held_[root][k++] = static_cast<int8_t>(n);
-            if (chord_note_refs_[n]++ == 0)
-              noteOnInner(n, velocity, channel, send);
+            chord_note_refs_[n]++;
           }
           chord_held_count_[root] = static_cast<uint8_t>(k);
+          for (int j = 0; j < k; ++j) {
+            int n = chord_held_[root][down ? k - 1 - j : j];
+            int64_t wait = step * j;
+            if (wait <= 0 || pending_count_ >= kMaxPending)
+              startChordNote(n, velocity, channel, send);
+            else
+              pending_[pending_count_++] = { n, velocity, channel, root, wait };
+          }
           return;
         }
         noteOnInner(root, velocity, channel, send);
@@ -1851,6 +1868,7 @@ class Warpline : public mpc::Plugin {
       else if (m.status() == 0xA0) {   // 1.4: polyphonic pressure (MPC pads), to every note the key started
         int root = m.data[1] & 127;
         float v = m.data[2] / 127.0f;
+        pressure_in_.store(v);
         if (chord_held_count_[root] > 0)
           for (int k = 0; k < chord_held_count_[root]; ++k)
             core_->polyPressure(chord_held_[root][k], v, channel);
@@ -1861,8 +1879,10 @@ class Warpline : public mpc::Plugin {
         int bend = (m.data[2] << 7) | m.data[1];
         core_->pitchBend((bend - 8192) / 8192.0f);
       }
-      else if (m.status() == 0xD0)
+      else if (m.status() == 0xD0) {
+        pressure_in_.store(m.data[1] / 127.0f);
         core_->channelPressure(m.data[1] / 127.0f);
+      }
       else if (m.status() == 0xB0) {
         int cc = m.data[1];
         int value = m.data[2];
@@ -1891,9 +1911,16 @@ class Warpline : public mpc::Plugin {
 
     template <typename NoteFn>
     void chordRelease(int root, int channel, NoteFn& send) {
+      // Strummed notes of this key that have not started yet never start.
+      int kept = 0;
+      for (int i = 0; i < pending_count_; ++i)
+        if (pending_[i].root != root)
+          pending_[kept++] = pending_[i];
+      pending_count_ = kept;
       for (int k = 0; k < chord_held_count_[root]; ++k) {
         int n = chord_held_[root][k];
-        if (chord_note_refs_[n] > 0 && --chord_note_refs_[n] == 0) {
+        if (chord_note_refs_[n] > 0 && --chord_note_refs_[n] == 0 && chord_note_started_[n]) {
+          chord_note_started_[n] = false;
           if (!arp_.noteOff(n, send))
             core_->noteOff(n, 0.0f, 0, channel);
         }
@@ -1901,9 +1928,42 @@ class Warpline : public mpc::Plugin {
       chord_held_count_[root] = 0;
     }
 
+    template <typename NoteFn>
+    void startChordNote(int note, float velocity, int channel, NoteFn& send) {
+      if (chord_note_started_[note] || chord_note_refs_[note] == 0)
+        return;
+      chord_note_started_[note] = true;
+      noteOnInner(note, velocity, channel, send);
+    }
+
+    // Starts the strummed notes that are due; returns the samples until the next one (or a large number).
+    template <typename NoteFn>
+    int64_t firePending(NoteFn& send) {
+      int64_t soonest = INT64_MAX;
+      int kept = 0;
+      for (int i = 0; i < pending_count_; ++i) {
+        PendingNote p = pending_[i];
+        if (p.wait <= 0)
+          startChordNote(p.note, p.velocity, p.channel, send);
+        else {
+          soonest = std::min(soonest, p.wait);
+          pending_[kept++] = p;
+        }
+      }
+      pending_count_ = kept;
+      return soonest;
+    }
+
+    void advancePending(int frames) {
+      for (int i = 0; i < pending_count_; ++i)
+        pending_[i].wait -= frames;
+    }
+
     void chordReset() {
       chord_held_count_.fill(0);
       chord_note_refs_.fill(0);
+      chord_note_started_.fill(false);
+      pending_count_ = 0;
     }
 
 
@@ -2112,7 +2172,13 @@ class Warpline : public mpc::Plugin {
       }
       // Engine thread: render one block ahead on a thread of its own (another core), off MPC's audio thread.
       engine_thread_index_ = addParam(mpc::choiceParam("engine_thread", "Engine Thread", { "Off", "On" }, kDefaultEngineThread));
+      // 1.4: chord strum (each chord note this much later than the one before) and its direction.
+      strum_index_ = addParam(mpc::floatParam("chord_strum", "Chord Strum", 0.0f, 250.0f, 0.0f, " ms", 0));
+      addParam(mpc::choiceParam("strum_direction", "Strum Direction", { "Up", "Down", "Alt" }, 0));
+      // 1.4: the last pad pressure that came in (text only, so you can see it arrive).
+      pressure_index_ = screen(mpc::floatParam("pressure_in", "Pressure In", 0.0f, 1.0f, 0.0f));
       suffix_.resize(numParams());
+      suffix_[strum_index_] = " ms";
       signed_.resize(numParams(), false);
       for (int i : { arp_gen_first_index_, arp_gen_first_index_ + 1, gen_first_index_ + 1, gen_first_index_ + 2,
                      gen_first_index_ + 3, gen_first_index_ + 4 })
@@ -2327,7 +2393,8 @@ class Warpline : public mpc::Plugin {
         display_dirty_.store(true);   // the ARP chip shows the chord while the arp is off
         return true;
       }
-      if (index == chord_index_ + 1 || index == engine_thread_index_)
+      if (index == chord_index_ + 1 || index == engine_thread_index_ || index == strum_index_ || index == strum_index_ + 1 ||
+          index == pressure_index_)
         return true;   // read where they are used
       if (index == random_index_) {
         momentary(index, plain, [this] {
@@ -2502,6 +2569,10 @@ class Warpline : public mpc::Plugin {
     }
 
     bool formatValueV11(int index, float plain, std::string& out) {
+      if (index == pressure_index_ && pressure_index_ >= 0) {
+        out = "PRESSURE " + std::to_string(static_cast<int>(std::lround(plain * 100.0f))) + "%";
+        return true;
+      }
       if (macro_name_first_index_ >= 0 && index >= macro_name_first_index_ && index < macro_name_first_index_ + 4) {
         int m = index - macro_name_first_index_;
         std::lock_guard<std::mutex> lock(macro_mutex_);
@@ -2727,6 +2798,13 @@ class Warpline : public mpc::Plugin {
         }
       }
       updateUserMarks();
+      if (pressure_index_ >= 0) {   // 1.4: the pressure readout
+        float v = pressure_in_.load();
+        if (std::fabs(v - getNormalised(pressure_index_)) >= 0.02f || (v == 0.0f && getNormalised(pressure_index_) != 0.0f)) {
+          setNormalised(pressure_index_, v);
+          notifyHostParameterChanged(pressure_index_);
+        }
+      }
       // GEN panel meters, only while it is open.
       for (int o = 0; o < Gen::kNumOutputs; ++o) {
         int index = gen_out_index_[o];
@@ -2966,7 +3044,15 @@ class Warpline : public mpc::Plugin {
 
     // ----- 1.4 -----
     int list_cpu_first_index_ = -1, chord_index_ = -1, random_index_ = -1, macro_name_first_index_ = -1;
-    int wav_step_first_index_ = -1, engine_thread_index_ = -1;
+    int wav_step_first_index_ = -1, engine_thread_index_ = -1, strum_index_ = -1, pressure_index_ = -1;
+    // Strum: chord notes waiting to start (render side).
+    struct PendingNote { int note; float velocity; int channel; int root; int64_t wait; };
+    static constexpr int kMaxPending = 64;
+    std::array<PendingNote, kMaxPending> pending_ {};
+    int pending_count_ = 0;
+    bool strum_alt_down_ = false;
+    std::array<bool, 128> chord_note_started_ {};
+    std::atomic<float> pressure_in_{ 0.0f };
     std::array<int, kListRows> cpu_marks_ { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
     // Chord mode (render side): the notes each played key started, and how many keys hold each note.
     std::array<std::array<int8_t, 8>, 128> chord_held_ {};
@@ -2980,7 +3066,7 @@ class Warpline : public mpc::Plugin {
     std::map<int, wavtable::Table> user_table_cache_;
     std::mutex user_table_mutex_;
     // Engine thread.
-    static constexpr int kDefaultEngineThread = 0;
+    static constexpr int kDefaultEngineThread = 1;   // on everywhere: measured lower MPC CPU on a Live III (2026-11-26)
     std::atomic<bool> reset_request_{ false };
     bool threaded_ = false;                 // audio thread only
     int engine_prefill_ = 0;                // audio thread only

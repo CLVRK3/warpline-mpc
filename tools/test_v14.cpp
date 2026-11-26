@@ -64,7 +64,16 @@ int main(int argc,char**argv){
   printf("same key twice then one off: after release %.6f\n",rms(r3,r3.size()-22050,r3.size()));
   set("Arp On",1); midi(0x90,48,100); auto ar=run(1.0); midi(0x80,48,0); auto ar2=run(2.0); set("Arp On",0);
   printf("chord into arp: onsets %d, after release %.6f\n",onsets(ar),rms(ar2,ar2.size()-22050,ar2.size()));
-  set("Chord",0); wait(20);
+  // Strum: Major, 100 ms, a short press (released before the last note is due) and a long one.
+  set("Chord Voicing",0); set("Arp On",0); set("Chord Strum",0.4f); set("Strum Direction",0); wait(20);
+  midi(0x90,60,100); auto s1=run(0.03); midi(0x80,60,0); auto s2=run(2.5);
+  printf("strum 100 ms, released after 30 ms: after release %.6f\n",rms(s2,s2.size()-22050,s2.size()));
+  midi(0x90,60,100); auto s3=run(0.5); midi(0x80,60,0); auto s4=run(2.5);
+  printf("strum 100 ms, held: rms 0-90 ms %.4f, 210-300 ms %.4f, after release %.6f, display %s / %s\n",rms(s3,0,3969),rms(s3,9261,13230),rms(s4,s4.size()-22050,s4.size()),disp("Chord Strum").c_str(),disp("Strum Direction").c_str());
+  set("Strum Direction",1.0f); midi(0x90,60,100); midi(0x90,67,100); run(0.4); midi(0x80,60,0); midi(0x80,67,0); auto s5=run(2.5);
+  printf("strum down, two overlapping chords: after release %.6f\n",rms(s5,s5.size()-22050,s5.size()));
+  midi(0xD0,90,0); run(0.05); wait(150); printf("pressure readout: %s\n",disp("Pressure In").c_str());
+  set("Chord Strum",0); set("Chord",0); wait(20);
   // Macro names
   printf("macro names (Init): %s | %s\n",disp("Macro 1 Name").c_str(),disp("Macro 4 Name").c_str());
   set("Patch",ch(5,e->numParams>0? 520:1)); wait(400); run(0.1); wait(300);
@@ -86,12 +95,13 @@ int main(int argc,char**argv){
 
   // Engine thread: two fresh instances, Init, same notes; B's output should equal A's 2 blocks later.
   AEffect* a=open1(h); AEffect* b=open1(h);
-  e=b; set("Engine Thread",1); wait(300);
+  e=a; set("Engine Thread",0); e=b; set("Engine Thread",1); wait(300);   // on is the default since 1.4: a is the inline one
   auto render2=[&](AEffect* x, std::vector<float>& out, int blocks, int note_at, int off_at){
     for(int i=0;i<blocks;i++){ e=x; if(i==note_at){ midi(0x90,57,100); midi(0x90,64,90);} if(i==off_at){ midi(0x80,57,0); midi(0x80,64,0);}
       if(!pend.empty()){ std::vector<char> buf(sizeof(VstEvents)+pend.size()*sizeof(void*)); VstEvents* ev=(VstEvents*)buf.data(); ev->numEvents=pend.size(); for(size_t k=0;k<pend.size();k++) ev->events[k]=(VstEvent*)&pend[k]; x->dispatcher(x,effProcessEvents,0,0,ev,0); pend.clear(); }
       x->processReplacing(x,nullptr,outs,B); for(int k=0;k<B;k++) out.push_back(L[k]); } };
   AEffect* c2=open1(h);
+  e=c2; set("Engine Thread",0); wait(100);
   std::vector<float> oa, ob, oc; render2(a,oa,400,20,200); render2(b,ob,400,20,200); render2(c2,oc,400,20,200);
   { double err=0, ref=0; for(size_t i=0;i<oa.size();i++){ double d=oa[i]-oc[i]; err+=d*d; ref+=oa[i]*oa[i]; } printf("  two inline instances, same input: relative error %.3g\n",std::sqrt(err/std::max(ref,1e-12))); }
   // onset of the note in each: first sample above 0.01
