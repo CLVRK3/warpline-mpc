@@ -221,7 +221,9 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   `state_dump --choices Patch` on a native build) so the PATCH box shows names on the first start; at load the plugin rewrites
   the list with your own patches added (`writeSkinLists`), which MPC shows after its next restart. Before, the shipped list was
   only "Init", and a fresh install showed Init in the PATCH box until MPC restarted (reported 2026-11-26). Write failures go
-  to stderr.
+  to stderr. The writer only rewrites the array of a `"key": "Parameter N"` entry: the same string is also a label
+  handle elsewhere, and the first 1.4 test build rewrote the array after one of those, which blanked the MAIN page's
+  TABLE boxes on the device (2026-11-26).
 - `tools/state_dump.cpp`: plays the plugin like the tests, applies `Param=normalised` / `Param~choice text` / `note=` /
   `wait=` steps and prints a state.json for `tools_preview_skin.py` (how the 1.4 screenshots were made).
 

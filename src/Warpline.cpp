@@ -491,7 +491,18 @@ void writeSkinLists(const std::vector<std::pair<int, std::vector<std::string>>>&
   }
   bool changed = false;
   for (const auto& entry : lists) {
-    size_t key = text.find("\"Parameter " + std::to_string(entry.first) + "\"");
+    // The list's own entry: "key": "Parameter N" (the same string also appears as label handles elsewhere in the skin,
+    // and rewriting the array after one of those breaks the skin, as 1.4's first test build did to the TABLE boxes).
+    const std::string want = "\"Parameter " + std::to_string(entry.first) + "\"";
+    size_t key = std::string::npos;
+    for (size_t at = text.find(want); at != std::string::npos; at = text.find(want, at + 1)) {
+      size_t b = at;
+      while (b > 0 && std::isspace(static_cast<unsigned char>(text[b - 1]))) --b;
+      if (b == 0 || text[b - 1] != ':') continue;
+      --b;
+      while (b > 0 && std::isspace(static_cast<unsigned char>(text[b - 1]))) --b;
+      if (b >= 5 && text.compare(b - 5, 5, "\"key\"") == 0) { key = at; break; }
+    }
     if (key == std::string::npos)
       continue;
     size_t open = text.find('[', key);
