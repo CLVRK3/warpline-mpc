@@ -212,6 +212,11 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
 - Not done: profile-guided optimisation. The SDK's `tools/build.py` fixes `-O2` and takes no extra compile flags, zig 0.17's
   ARM targets ship no profile runtime (an `-fprofile-instr-generate` .so links without one), and `-O3` measured no faster
   on x86 (2026-11-25).
+- Skin patch list: the shipped TUI.json carries the factory names (`tools/patch_names.json`, made with
+  `state_dump --choices Patch` on a native build) so the PATCH box shows names on the first start; at load the plugin rewrites
+  the list with your own patches added (`writeSkinLists`), which MPC shows after its next restart. Before, the shipped list was
+  only "Init", and a fresh install showed Init in the PATCH box until MPC restarted (reported 2026-11-26). Write failures go
+  to stderr.
 - `tools/state_dump.cpp`: plays the plugin like the tests, applies `Param=normalised` / `Param~choice text` / `note=` /
   `wait=` steps and prints a state.json for `tools_preview_skin.py` (how the 1.4 screenshots were made).
 
