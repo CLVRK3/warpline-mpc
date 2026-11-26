@@ -44,6 +44,7 @@ std::vector<float> note(double secs){ midi(0x90,48,100); auto a=run(secs); midi(
 // (the first choice whose text matches), applied in order; "note=60" holds a note, "wait=ms" waits and renders.
 //   g++ -std=c++17 -O1 -I<sdk>/framework tools/state_dump.cpp -o state_dump -ldl
 //   ./state_dump build/native/warpline.so "Patch~LD Wavy Saw Lead" "note=57" "wait=500" > state.json
+//   ./state_dump build/native/warpline.so --choices Patch > patch_names.json   (the factory list for the skin, 1.4)
 int main(int argc,char**argv){
   void* h=dlopen(argv[1],RTLD_NOW); if(!h){fprintf(stderr,"%s\n",dlerror());return 1;}
   auto entry=(AEffect*(*)(audioMasterCallback))dlsym(h,"VSTPluginMain"); e=entry(host);
@@ -51,6 +52,9 @@ int main(int argc,char**argv){
   e->dispatcher(e,effMainsChanged,0,1,0,0); e->dispatcher(e,effStartProcess,0,0,0,0);
   for(int i=0;i<e->numParams;i++){ char b[256]={0}; e->dispatcher(e,effGetParamName,i,0,b,0); idx[b]=i; }
   wait(300); run(0.05);
+  if(argc>3 && std::string(argv[2])=="--choices"){   // the display texts of a parameter's choices, in order, as JSON
+    int p=P(argv[3]); std::vector<std::string> seen; for(int k=0;k<=200000;k++){ e->setParameter(e,p,k/200000.0f); char b[256]={0}; e->dispatcher(e,effGetParamDisplay,p,0,b,0); if(seen.empty()||seen.back()!=b) seen.push_back(b); }
+    printf("["); for(size_t i=0;i<seen.size();i++){ std::string d; for(char c: seen[i]){ if(c=='"'||c=='\\') d+='\\'; d+=c; } printf("%s\"%s\"",i?", ":"",d.c_str()); } printf("]\n"); return 0; }
   for(int a=2;a<argc;a++){ std::string s=argv[a]; size_t eq=s.find('='), tl=s.find('~');
     if(s.rfind("note=",0)==0){ midi(0x90,atoi(s.c_str()+5),100); run(0.05); continue; }
     if(s.rfind("wait=",0)==0){ int ms=atoi(s.c_str()+5); for(int t=0;t<ms;t+=20){ wait(20); run(0.02);} continue; }

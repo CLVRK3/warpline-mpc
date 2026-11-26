@@ -1842,7 +1842,11 @@ for n, comp in [overlay("knob overlay", "KnobOverlay", G.knob_overlay_data(False
 
 # Patch list for the double-tap menu: the plugin rewrites this entry with the real list (factory +
 # your own patches) every time it loads, so it only needs to exist here.
-repl = [G.obj(("key", "Parameter %d" % PI["Patch"]), ("value", ["Init"]))]
+# 1.4: the shipped skin carries the factory list (tools/patch_names.json, from `state_dump --choices Patch` on a native
+# build without your own patches), so the PATCH box shows names on the first start too, before the plugin's rewrite.
+_names_file = os.path.join(HERE, "tools", "patch_names.json")
+_patch_names = json.load(open(_names_file)) if os.path.exists(_names_file) else ["Init"]
+repl = [G.obj(("key", "Parameter %d" % PI["Patch"]), ("value", _patch_names))]
 for p_ in PARAMS:
     if p_["name"] == "Patch" or p_["name"].startswith("List "):
         continue
