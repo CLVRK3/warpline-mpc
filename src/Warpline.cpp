@@ -471,53 +471,69 @@ std::string jsonQuote(const std::string& s) {
 // a file. The patch list is only known at run time (your own patches), so the plugin writes it
 // into its skin (Plugin Skins/TUI.json, entry "Parameter 0") when it changed. The MPC reads the
 // skin after loading the plugin; if a copy is cached, the new list shows from the next load.
-void writeSkinPatchList(const std::vector<std::string>& names) {
+// Writes value lists into the skin's replacementStrings (MPC shows a parameter's value from these): "Parameter <index>"
+// -> names. Used for the patch list (factory + your own patches) and, since 1.4, the Osc1-3 Table lists (your own WAVs).
+// MPC reads the skin when it starts, so a changed list shows after the next MPC restart; the shipped skin has the
+// factory patch list already. Failures are logged to stderr.
+void writeSkinLists(const std::vector<std::pair<int, std::vector<std::string>>>& lists) {
   std::error_code ec;
   if (mpc::pluginFolder().empty())
     return;
   fs::path tui = fs::path(mpc::pluginFolder()) / "Plugin Skins" / "TUI.json";
   std::string text;
-  if (!mpc::readTextFile(tui.string(), text))
+  if (!mpc::readTextFile(tui.string(), text)) {
+    std::fprintf(stderr, "Warpline: cannot read %s\n", tui.string().c_str());
     return;
-  size_t key = text.find("\"Parameter 0\"");
-  if (key == std::string::npos)
-    return;
-  size_t open = text.find('[', key);
-  if (open == std::string::npos)
-    return;
-  size_t close = std::string::npos;   // the matching ']', skipping brackets inside strings
-  bool in_string = false;
-  for (size_t i = open + 1; i < text.size(); ++i) {
-    char c = text[i];
-    if (in_string) {
-      if (c == '\\') ++i;
-      else if (c == '"') in_string = false;
-    }
-    else if (c == '"') in_string = true;
-    else if (c == ']') { close = i; break; }
   }
-  if (close == std::string::npos)
+  bool changed = false;
+  for (const auto& entry : lists) {
+    size_t key = text.find("\"Parameter " + std::to_string(entry.first) + "\"");
+    if (key == std::string::npos)
+      continue;
+    size_t open = text.find('[', key);
+    if (open == std::string::npos)
+      continue;
+    size_t close = std::string::npos;   // the matching ']', skipping brackets inside strings
+    bool in_string = false;
+    for (size_t i = open + 1; i < text.size(); ++i) {
+      char c = text[i];
+      if (in_string) {
+        if (c == '\\') ++i;
+        else if (c == '"') in_string = false;
+      }
+      else if (c == '"') in_string = true;
+      else if (c == ']') { close = i; break; }
+    }
+    if (close == std::string::npos)
+      continue;
+    std::string list = "[";
+    for (size_t i = 0; i < entry.second.size(); ++i)
+      list += (i ? ", " : "") + jsonQuote(entry.second[i]);
+    list += "]";
+    if (text.compare(open, close - open + 1, list) == 0)
+      continue;   // already current
+    text.replace(open, close - open + 1, list);
+    changed = true;
+  }
+  if (!changed)
     return;
-  std::string list = "[";
-  for (size_t i = 0; i < names.size(); ++i)
-    list += (i ? ", " : "") + jsonQuote(names[i]);
-  list += "]";
-  if (text.compare(open, close - open + 1, list) == 0)
-    return;   // already current
-  text.replace(open, close - open + 1, list);
   fs::path tmp = tui;
   tmp += ".tmp";
   {
     std::ofstream out(tmp, std::ios::binary | std::ios::trunc);
-    if (!out)
-      return;
     out << text;
-    if (!out)
+    if (!out) {
+      std::fprintf(stderr, "Warpline: cannot write %s\n", tmp.string().c_str());
+      out.close();
+      fs::remove(tmp, ec);
       return;
+    }
   }
   fs::rename(tmp, tui, ec);
-  if (ec)
+  if (ec) {
+    std::fprintf(stderr, "Warpline: cannot replace %s: %s\n", tui.string().c_str(), ec.message().c_str());
     fs::remove(tmp, ec);
+  }
 }
 
 std::string trimName(std::string s, size_t max_len) {
@@ -569,7 +585,7 @@ class Warpline : public mpc::Plugin {
       names.reserve(patches_.size());
       for (const PatchEntry& p : patches_)
         names.push_back(trimName(p.name, 24));
-      writeSkinPatchList(names);
+      skin_lists_.push_back({ kPatch, names });   // written to the skin with the table lists, below
 
       // Plugin-own parameters.
       addParam(mpc::choiceParam("patch", "Patch", names, 0));
@@ -724,6 +740,8 @@ class Warpline : public mpc::Plugin {
       engine_ring_l_.assign(kEngineRing, 0.0f);
       engine_ring_r_.assign(kEngineRing, 0.0f);
       engine_thread_ = std::thread([this] { engineLoop(); });
+      writeSkinLists(skin_lists_);
+      skin_lists_.clear();
     }
 
     ~Warpline() override {
@@ -2121,6 +2139,7 @@ class Warpline : public mpc::Plugin {
         std::string n = std::to_string(o + 1);
         int index = addParam(mpc::choiceParam(("osc_" + n + "_table").c_str(), ("Osc" + n + " Table").c_str(), tables, 0));
         if (o == 0) table_first_index_ = index;
+        skin_lists_.push_back({ index, tables });   // 1.4: your own WAVs' names in the skin
       }
       // Arp: generative chance, déjà vu and loop.
       arp_gen_first_index_ = addParam(mpc::floatParam("arp_chance", "Arp Chance", 0.0f, 100.0f, 100.0f, "", 0));
@@ -3063,6 +3082,7 @@ class Warpline : public mpc::Plugin {
     std::array<std::string, 4> macro_names_;
     // Your own wavetables (WAV): the list, and parsed files (worker / paused).
     std::vector<UserTable> user_tables_;
+    std::vector<std::pair<int, std::vector<std::string>>> skin_lists_;   // constructor only
     std::map<int, wavtable::Table> user_table_cache_;
     std::mutex user_table_mutex_;
     // Engine thread.
