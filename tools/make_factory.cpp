@@ -1580,7 +1580,7 @@ int main(int argc, char** argv) {
     { "macro_control_2", "osc_1_wave_frame", 0.60f, false },
     { "macro_control_3", "distortion_drive", 0.45f, false },
     { "macro_control_4", "reverb_dry_wet", 0.50f, false },
-    { "aftertouch", "filter_1_cutoff", 0.18f, false },   // 1.4: pad pressure opens the filter
+    { "aftertouch", "filter_1_cutoff", 0.35f, false },   // 1.4: pad pressure opens the filter
   };
   const std::vector<std::pair<std::string, float>> kBase = {
     { "distortion_on", 1.0f }, { "distortion_drive", 0.0f }, { "distortion_mix", 1.0f },
