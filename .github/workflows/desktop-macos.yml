@@ -49,6 +49,23 @@ jobs:
           cp desktop/README.md out/README.md
           cd out && ditto -c -k --keepParent . ../Warpline-desktop-macos.zip
 
+      # Copies the zip into a Google Drive folder when the repo has the secrets GDRIVE_TOKEN (rclone's token for the
+      # account, from `rclone authorize "drive"`) and GDRIVE_FOLDER_ID (the folder's id from its URL). Skipped without them.
+      - name: Upload to Google Drive
+        env:
+          GDRIVE_TOKEN: ${{ secrets.GDRIVE_TOKEN }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: |
+          if [ -z "$GDRIVE_TOKEN" ] || [ -z "$GDRIVE_FOLDER_ID" ]; then echo "No Google Drive secrets: skipped."; exit 0; fi
+          brew install rclone >/dev/null
+          VERSION=$(python3 -c "import json;print(json.load(open('plugin.json'))['version'])")
+          NAME="Warpline-${VERSION}-desktop-macos-$(date -u +%Y%m%d)-${GITHUB_SHA::7}.zip"
+          cp Warpline-desktop-macos.zip "$NAME"
+          export RCLONE_CONFIG_GDRIVE_TYPE=drive RCLONE_CONFIG_GDRIVE_SCOPE=drive
+          export RCLONE_CONFIG_GDRIVE_TOKEN="$GDRIVE_TOKEN" RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID="$GDRIVE_FOLDER_ID"
+          rclone copy "$NAME" gdrive: --drive-chunk-size 64M --stats-one-line -v
+          echo "Uploaded $NAME"
+
       - uses: actions/upload-artifact@v4
         with:
           name: Warpline-desktop-macos

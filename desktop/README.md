@@ -33,7 +33,8 @@ drive folders), no installer, no notarisation.
 
 `cmake -S desktop -B build/desktop -G Xcode && cmake --build build/desktop --config Release` (CMake 3.26+, Xcode; JUCE 8.0.15
 is downloaded). The GitHub workflow `.github/workflows/desktop-macos.yml` does the same on a GitHub Mac, signs ad hoc, runs
-Apple's `auval` and attaches the zip to the run. On Linux the same CMake project builds a VST3 (passed pluginval at strictness
+Apple's `auval`, attaches the zip to the run and, when the repo has the secrets `GDRIVE_TOKEN` (from
+`rclone authorize "drive"`) and `GDRIVE_FOLDER_ID`, copies it into that Google Drive folder. On Linux the same CMake project builds a VST3 (passed pluginval at strictness
 5 on 2026-11-27, offline).
 
 Desktop wrapper: `desktop/WarplineDesktop.cpp` (JUCE 8) loads the unchanged MPC plugin, built as
