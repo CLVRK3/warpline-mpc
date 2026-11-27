@@ -7,7 +7,7 @@
 // engine carries its own small stand-in for the bits of JUCE that Vital uses).
 //
 // There is no MPC screen here: DAWs show their own list of Warpline's parameters. Beta, for testing.
-// Part of Warpline. GPLv3 (see LICENSE). JUCE 7 is used under the GPLv3.
+// Part of Warpline. GPLv3 (see LICENSE). Built with JUCE 8 under the AGPLv3, so the desktop binaries are AGPLv3.
 
 #include <JuceHeader.h>
 

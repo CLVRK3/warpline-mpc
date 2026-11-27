@@ -31,11 +31,16 @@ drive folders), no installer, no notarisation.
 
 ## Building it yourself
 
-`cmake -S desktop -B build/desktop -G Xcode && cmake --build build/desktop --config Release` (CMake 3.26+, Xcode; JUCE 7.0.12
+`cmake -S desktop -B build/desktop -G Xcode && cmake --build build/desktop --config Release` (CMake 3.26+, Xcode; JUCE 8.0.15
 is downloaded). The GitHub workflow `.github/workflows/desktop-macos.yml` does the same on a GitHub Mac, signs ad hoc, runs
 Apple's `auval` and attaches the zip to the run. On Linux the same CMake project builds a VST3 (passed pluginval at strictness
 5 on 2026-11-27, offline).
 
-Desktop wrapper: `desktop/WarplineDesktop.cpp` (JUCE 7, GPLv3) loads the unchanged MPC plugin, built as
+Desktop wrapper: `desktop/WarplineDesktop.cpp` (JUCE 8) loads the unchanged MPC plugin, built as
 `Contents/Resources/VST/warpline.dylib`, and drives it through the VST2 calls MPC uses. `desktop/sdk/` holds the MIT-licensed
 MPC plugin SDK headers it is built with.
+
+## Licence
+
+The desktop binaries combine Warpline (GPLv3) with JUCE 8, which is licensed under the AGPLv3, so they are distributed under
+the AGPLv3; the full source is this repository. The MPC plugin does not use JUCE and stays GPLv3.

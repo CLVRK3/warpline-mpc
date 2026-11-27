@@ -230,12 +230,13 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
 ## Desktop beta (2026-11-27)
 
 - `desktop/CMakeLists.txt`: `warpline_engine` is the MPC plugin (src/, vital/, shim/) as a library with `VSTPluginMain`;
-  `Warpline` (JUCE 7.0.12, GPLv3) is an AU/VST3 that loads it from its bundle's `Contents/Resources/VST` and drives it through
+  `Warpline` (JUCE 8.0.15, AGPLv3; JUCE 7, GPLv3, no longer builds with the Xcode 26 on GitHub's Macs) is an AU/VST3 that loads it from its bundle's `Contents/Resources/VST` and drives it through
   the VST2 dispatcher (`desktop/WarplineDesktop.cpp`): parameters, MIDI, processReplacing, chunks, the transport via
   `audioMasterGetTime`. The engine keeps its own JUCE stand-in (shim/), so the two are separate binaries and never share
   symbols. `Content/` and `plugin.json` go into `Contents/Resources`, where `mpc_resources.h` finds them on every OS.
 - `desktop/sdk/`: the SDK headers (`mpc_plugin.h`, `mpc_resources.h`, `mpc_vst2_abi.h`, MIT), vendored so the desktop build
   does not need the MPC SDK checkout.
+- The desktop binaries are AGPLv3 (Warpline GPLv3 + JUCE 8 AGPLv3, GPLv3 section 13); the MPC plugin stays GPLv3.
 - Offline (Linux, 2026-11-27): the VST3 passes pluginval at strictness 5, plays a note (rms 0.17 held, silent tail) and round-
   trips its state in a JUCE test host. macOS: `src/` compiles for aarch64-macos with zig (Vital's FFT needs Accelerate, which
   only a real Mac has); the full AU build and `auval` run in `.github/workflows/desktop-macos.yml` on a GitHub Mac.

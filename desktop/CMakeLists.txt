@@ -3,8 +3,11 @@
 #   cmake -S desktop -B build/desktop -DCMAKE_BUILD_TYPE=Release [-DJUCE_DIR=<a JUCE 7 checkout>]
 #   cmake --build build/desktop --config Release
 #
+# The desktop binaries combine Warpline (GPLv3) with JUCE (AGPLv3), which GPLv3 section 13 allows; they are
+# distributed under the AGPLv3 (the source is this repository). The MPC plugin does not use JUCE and stays GPLv3.
+#
 # Two targets: warpline_engine is the unchanged MPC plugin (src/, vital/, shim/) as a library with the VST2 entry point,
-# and Warpline (JUCE) is the AU/VST3 that loads it from its bundle's Contents/Resources/VST. Content/ and plugin.json go
+# and Warpline (JUCE 8) is the AU/VST3 that loads it from its bundle's Contents/Resources/VST. Content/ and plugin.json go
 # into Contents/Resources too, where the engine finds them (desktop/sdk/mpc_resources.h). See desktop/README.md.
 # Part of Warpline. GPLv3 (see LICENSE).
 
@@ -20,13 +23,13 @@ endif()
 
 set(ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
-# ----- JUCE 7 (GPLv3) -----
-set(JUCE_DIR "" CACHE PATH "A JUCE 7 checkout (empty: download JUCE 7.0.12)")
+# ----- JUCE 8 (AGPLv3; JUCE 7, which was GPLv3, no longer builds with current Xcode) -----
+set(JUCE_DIR "" CACHE PATH "A JUCE 8 checkout (empty: download JUCE 8.0.15)")
 if(JUCE_DIR)
   add_subdirectory(${JUCE_DIR} juce)
 else()
   include(FetchContent)
-  FetchContent_Declare(juce GIT_REPOSITORY https://github.com/juce-framework/JUCE.git GIT_TAG 7.0.12 GIT_SHALLOW TRUE)
+  FetchContent_Declare(juce GIT_REPOSITORY https://github.com/juce-framework/JUCE.git GIT_TAG 8.0.15 GIT_SHALLOW TRUE)
   FetchContent_MakeAvailable(juce)
 endif()
 
