@@ -484,6 +484,8 @@ void writeSkinLists(const std::vector<std::pair<int, std::vector<std::string>>>&
   if (mpc::pluginFolder().empty())
     return;
   fs::path tui = fs::path(mpc::pluginFolder()) / "Plugin Skins" / "TUI.json";
+  if (!fs::exists(tui, ec))
+    return;   // no skin here (desktop builds, tests)
   std::string text;
   if (!mpc::readTextFile(tui.string(), text)) {
     std::fprintf(stderr, "Warpline: cannot read %s\n", tui.string().c_str());
