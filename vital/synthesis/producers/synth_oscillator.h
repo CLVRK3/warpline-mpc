@@ -315,6 +315,29 @@ namespace vital {
       std::shared_ptr<Output> phase_inc_buffer_;
       std::shared_ptr<PhaseBuffer> phase_buffer_;
 
+      // MPC edition: skip waveform rebuilds that would change nothing. Every kWavetableFadeTime the oscillator
+      // rebuilds each lane's waveform (an inverse FFT) and crossfades to it. When everything the rebuild reads
+      // is the same as last time, the new waveform would equal the current one, so the lane keeps its buffer
+      // and the crossfade runs between two identical buffers. Only the timed rebuilds are skipped; note starts
+      // and retriggers always rebuild.
+      struct RebuildKey {
+        const void* data = nullptr;   // wavetable data block
+        int serial = -1;              // Wavetable::contentSerial()
+        int table_index = -1;
+        float shift = 0.0f;
+        int last_harmonic = -1;
+        int morph = -1;
+        bool formant_shift = false;
+        bool valid = false;
+        bool matches(const RebuildKey& o) const {
+          return valid && o.valid && data == o.data && serial == o.serial && table_index == o.table_index &&
+                 shift == o.shift && last_harmonic == o.last_harmonic && morph == o.morph &&
+                 formant_shift == o.formant_shift;
+        }
+      };
+      RebuildKey rebuild_keys_[kNumBuffers];
+      bool reuse_unchanged_waveforms_ = false;
+
       JUCE_LEAK_DETECTOR(SynthOscillator)
   };
 } // namespace vital

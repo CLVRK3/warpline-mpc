@@ -85,14 +85,17 @@ namespace vital {
     current_data_ = data_.get();
     while (active_audio_data_.load())
       std::this_thread::yield(); // Wait for audio thread to finish using old_data.
+    contentChanged();
   }
 
   void Wavetable::setFrequencyRatio(float frequency_ratio) {
     current_data_->frequency_ratio = frequency_ratio;
+    contentChanged();
   }
 
   void Wavetable::setSampleRate(float rate) {
     current_data_->sample_rate = rate;
+    contentChanged();
   }
 
   void Wavetable::loadWaveFrame(const WaveFrame* wave_frame) {
@@ -106,6 +109,7 @@ namespace vital {
     loadFrequencyAmplitudes(wave_frame->frequency_domain, to_index);
     loadNormalizedFrequencies(wave_frame->frequency_domain, to_index);
     memcpy(current_data_->wave_data[to_index], wave_frame->time_domain, kWaveformSize * sizeof(mono_float));
+    contentChanged();
   }
 
   void Wavetable::postProcess(float max_span) {
@@ -155,6 +159,7 @@ namespace vital {
       for (int frame = last_min_amp_frame + 1; frame < current_data_->num_frames; ++frame)
         ((std::complex<float>*)current_data_->normalized_frequencies[frame])[i] = last_normalized_frequency;
     }
+    contentChanged();
   }
 
   void Wavetable::loadFrequencyAmplitudes(const std::complex<float>* frequencies, int to_index) {
@@ -164,6 +169,7 @@ namespace vital {
       amplitudes[2 * i] = amplitude;
       amplitudes[2 * i + 1] = amplitude;
     }
+    contentChanged();
   }
 
   void Wavetable::loadNormalizedFrequencies(const std::complex<float>* frequencies, int to_index) {
@@ -175,5 +181,6 @@ namespace vital {
       phases[2 * i] = arg;
       phases[2 * i + 1] = arg;
     }
+    contentChanged();
   }
 } // namespace vital

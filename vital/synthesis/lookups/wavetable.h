@@ -131,6 +131,10 @@ namespace vital {
       force_inline void markUsed() { active_audio_data_ = current_data_; }
       force_inline void markUnused() { active_audio_data_ = nullptr; }
 
+      // MPC edition: bumped whenever the frame data the oscillators read changes, so an oscillator can tell
+      // that a waveform it built earlier is still current (SynthOscillator skips rebuilds that change nothing).
+      force_inline int contentSerial() const { return content_serial_.load(std::memory_order_acquire); }
+
       force_inline void setShepardTable(bool shepard) { shepard_table_ = shepard; }
       force_inline bool isShepardTable() { return shepard_table_; }
 
@@ -151,6 +155,8 @@ namespace vital {
       bool shepard_table_;
 
       mono_float fft_data_[2 * kWaveformSize];
+      std::atomic<int> content_serial_ { 0 };   // MPC edition, see contentSerial()
+      void contentChanged() { content_serial_.fetch_add(1, std::memory_order_release); }   // after the write
 
       JUCE_LEAK_DETECTOR(Wavetable)
   };

@@ -17,6 +17,15 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
   - `kMaxPolyphony` is 17 (was 33), to save memory.
   - `poly_values.h` defines `NEON_ARM32` on 32-bit ARM.
   - (1.2) `SynthVoiceHandler` registers two idle mono `cr::Value` mod sources, `gen_1` and `gen_2`. `VitalCore::setGenValue` sets them.
+  - `fourier_transform.h`: the real inverse transform is `FastRealInverse`, a SIMD (NEON / SSE / scalar) version
+    of what desktop Vital's IPP and Accelerate backends compute. It reads bins 0..N/2-1 and the Nyquist bin at
+    `data[N]`, and nothing else. The kissfft forward transform leaves desktop Vital's layout too (Nyquist kept).
+    `-DWARPLINE_KISSFFT_INVERSE=1` builds the old kissfft inverse.
+  - `synth_oscillator.*`: the timed waveform rebuilds (every 7 ms) skip a lane when everything the rebuild reads is
+    unchanged (`RebuildKey`). Note starts and retriggers always rebuild. Shepard Tone never skips.
+    `-DWARPLINE_REUSE_WAVEFORMS=0` rebuilds every time.
+  - `wavetable.*`: a content serial (`contentSerial()`) goes up after every change to the frame data, so an edited
+    wavetable always forces a rebuild.
 - `shim/JuceHeader.h`: the few JUCE pieces the engine needs (no JUCE dependency).
 - `src/VitalEngine.cpp`: unity build of the engine files.
 - `src/VitalCore.*`: engine wrapper. It handles patch loading (JSON, version upgrade, modulations, wavetables, LFOs),
@@ -271,6 +280,10 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
 
 - Native build: `python tools/build.py plugins/Warpline --target native --toolchain gcc` (on the PC, `BUILD.bat`
   builds both ARM targets with zig).
+  - With an SDK whose `tools/build.py` doesn't read `build-extra.json`, use `python tools/build_mpc.py [project]
+    [build.py options]` instead. It adds those include folders and link flags, then runs the SDK script.
+- FFT test: `tools/fft_test.cpp` (build line at the top) checks the inverse and forward transforms against direct
+  formulas and a round trip, and times the inverse against kissfft. Build it for ARM too and run it under qemu.
 - Host checks: `.sdk-tools/host_sim <so> test --notes 60,64,67 --block 32|128|512`.
   - Expect PASS.
   - At block 512 the parameter sweep sometimes warns about denormals inside Vital's engine; that warning is harmless.

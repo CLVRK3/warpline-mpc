@@ -23,6 +23,11 @@
 
 #include <climits>
 
+// MPC edition: build with -DWARPLINE_REUSE_WAVEFORMS=0 to rebuild every waveform as upstream does.
+#ifndef WARPLINE_REUSE_WAVEFORMS
+#define WARPLINE_REUSE_WAVEFORMS 1
+#endif
+
 namespace vital {
   namespace {
     constexpr int kNumVoicesPerProcess = poly_float::kSize / 2;
@@ -790,13 +795,31 @@ namespace vital {
       int last_harmonic = std::max<int>(0, WaveFrame::kWaveformSize * futils::exp2(-bin_shift));
       last_harmonic = std::min(last_harmonic, WaveFrame::kWaveformSize / 2);
 
-      spectralMorph(wavetable_data, table_index, fourier_buffer,
-                    fourier_transform_.get(), shift, last_harmonic, RandomValues::instance()->buffer());
-      wave_buffers_[buffer_index] = ((mono_float*)fourier_buffer) + poly_float::kSize - 1;
+      RebuildKey key;
+      key.data = wavetable_data;
+      key.serial = wavetable_->contentSerial();
+      key.table_index = table_index;
+      key.shift = shift;
+      key.last_harmonic = last_harmonic;
+      key.morph = static_cast<int>(voice_block_.spectral_morph);
+      key.formant_shift = formant_shift;
+      // Not for Shepard: its rebuilds also move the phases.
+      key.valid = voice_block_.spectral_morph != kShepardTone;
+      const mono_float* own1 = ((mono_float*)fourier_frames1_[buffer_index]) + poly_float::kSize - 1;
+      const mono_float* own2 = ((mono_float*)fourier_frames2_[buffer_index]) + poly_float::kSize - 1;
+      bool holds_own = wave_buffers_[buffer_index] == own1 || wave_buffers_[buffer_index] == own2;
+
+      if (!(reuse_unchanged_waveforms_ && holds_own && key.matches(rebuild_keys_[buffer_index]))) {
+        spectralMorph(wavetable_data, table_index, fourier_buffer,
+                      fourier_transform_.get(), shift, last_harmonic, RandomValues::instance()->buffer());
+        wave_buffers_[buffer_index] = ((mono_float*)fourier_buffer) + poly_float::kSize - 1;
+        rebuild_keys_[buffer_index] = key;
+      }
 
       if (i == index && morph_amount[i] == morph_amount[i + 1] && wave_index[i] == wave_index[i + 1]) {
         last_buffers_[buffer_index + 1] = wave_buffers_[buffer_index + 1];
         wave_buffers_[buffer_index + 1] = wave_buffers_[buffer_index];
+        rebuild_keys_[buffer_index + 1].valid = false;   // shares the first lane's buffer
         return;
       }
     }
@@ -1284,6 +1307,22 @@ namespace vital {
   }
 
   force_inline void SynthOscillator::setActiveOscillators(int new_active_oscillators) {
+    // MPC edition: a lane that comes back on fades from wherever its last_buffers_ points. That is usually one
+    // of another lane's two FFT frames. Upstream rebuilds both frames in turn, so either one holds that lane's
+    // current waveform; with rebuild skipping the frame not in use can be old. Point it at the owner's current
+    // buffer instead, which is what upstream played.
+    for (int i = active_oscillators_; i < new_active_oscillators; ++i) {
+      for (int k = 2 * i; k < 2 * i + 2; ++k) {
+        for (int b = 0; b < kNumBuffers; ++b) {
+          const mono_float* own1 = ((mono_float*)fourier_frames1_[b]) + poly_float::kSize - 1;
+          const mono_float* own2 = ((mono_float*)fourier_frames2_[b]) + poly_float::kSize - 1;
+          if (last_buffers_[k] == own1 || last_buffers_[k] == own2) {
+            last_buffers_[k] = wave_buffers_[b];
+            break;
+          }
+        }
+      }
+    }
     for (int i = active_oscillators_; i < new_active_oscillators; ++i) {
       wave_buffers_[2 * i] = Wavetable::null_waveform();
       wave_buffers_[2 * i + 1] = Wavetable::null_waveform();
@@ -1422,10 +1461,12 @@ namespace vital {
       if (shepard && new_buffer_mask.anyMask())
         doShepardWrap(new_buffer_mask, transpose_quantize_);
 
+      reuse_unchanged_waveforms_ = WARPLINE_REUSE_WAVEFORMS;
       if (new_buffer_mask[0])
         setWaveBuffers(buffer_phase_inc, 0);
       if (new_buffer_mask[2])
         setWaveBuffers(buffer_phase_inc, 2);
+      reuse_unchanged_waveforms_ = false;
 
       VITAL_ASSERT((int)voice_block_.current_buffer_sample[0] < voice_block_.num_buffer_samples);
       VITAL_ASSERT((int)voice_block_.current_buffer_sample[2] < voice_block_.num_buffer_samples);
