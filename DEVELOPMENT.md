@@ -227,6 +227,20 @@ builds still load. Your own patch folder moved from `<drive>\Vitalium\Patches` t
 - `tools/state_dump.cpp`: plays the plugin like the tests, applies `Param=normalised` / `Param~choice text` / `note=` /
   `wait=` steps and prints a state.json for `tools_preview_skin.py` (how the 1.4 screenshots were made).
 
+## Desktop beta (2026-11-27)
+
+- `desktop/CMakeLists.txt`: `warpline_engine` is the MPC plugin (src/, vital/, shim/) as a library with `VSTPluginMain`;
+  `Warpline` (JUCE 7.0.12, GPLv3) is an AU/VST3 that loads it from its bundle's `Contents/Resources/VST` and drives it through
+  the VST2 dispatcher (`desktop/WarplineDesktop.cpp`): parameters, MIDI, processReplacing, chunks, the transport via
+  `audioMasterGetTime`. The engine keeps its own JUCE stand-in (shim/), so the two are separate binaries and never share
+  symbols. `Content/` and `plugin.json` go into `Contents/Resources`, where `mpc_resources.h` finds them on every OS.
+- `desktop/sdk/`: the SDK headers (`mpc_plugin.h`, `mpc_resources.h`, `mpc_vst2_abi.h`, MIT), vendored so the desktop build
+  does not need the MPC SDK checkout.
+- Offline (Linux, 2026-11-27): the VST3 passes pluginval at strictness 5, plays a note (rms 0.17 held, silent tail) and round-
+  trips its state in a JUCE test host. macOS: `src/` compiles for aarch64-macos with zig (Vital's FFT needs Accelerate, which
+  only a real Mac has); the full AU build and `auval` run in `.github/workflows/desktop-macos.yml` on a GitHub Mac.
+- Without a skin folder the plugin's skin-list writer does nothing.
+
 ## Rules that must not break
 
 - Never change the uid `CvVm`, the .so names or parameter ids. Only add new parameters at the END of the list (older ones

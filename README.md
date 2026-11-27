@@ -377,6 +377,11 @@ patch upgrader was split out of `load_save.cpp`, kissfft is included outside the
 32-bit ARM Vital's existing NEON_ARM32 fallbacks are switched on automatically, and (1.2) the voice handler has two extra mono
 mod sources, `gen_1` and `gen_2`, that Warpline sets. The VitalFX effects engine is not included.
 
+## Desktop beta (macOS AU / VST3)
+`desktop/` builds the same engine as an Audio Unit and VST3 for testing in a desktop DAW (no MPC screen there: the DAW
+shows Warpline's parameters). A GitHub workflow builds it on macOS and checks the AU with Apple's `auval`. See
+[desktop/README.md](desktop/README.md).
+
 ## Status / honest notes
 - Tested here: the native build passes every SDK host-simulator check at 32-, 128- and 512-frame blocks (state save/restore, parameter sweep, all-notes-off).
   150 real-world .vital patches loaded and played with no errors, no NaNs and none silent. Fast patch switching was stress-tested under ThreadSanitizer with no data races.
