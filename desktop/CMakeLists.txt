@@ -1,6 +1,6 @@
 # Warpline desktop build (beta): an Audio Unit and VST3 on macOS, a VST3 on Linux and Windows.
 #
-#   cmake -S desktop -B build/desktop -DCMAKE_BUILD_TYPE=Release [-DJUCE_DIR=<a JUCE 7 checkout>]
+#   cmake -S desktop -B build/desktop -DCMAKE_BUILD_TYPE=Release [-DJUCE_DIR=<a JUCE 8 checkout>]
 #   cmake --build build/desktop --config Release
 #
 # The desktop binaries combine Warpline (GPLv3) with JUCE (AGPLv3), which GPLv3 section 13 allows; they are

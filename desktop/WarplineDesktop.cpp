@@ -76,7 +76,10 @@ public:
   juce::String getText(float value, int maxLength) const override;
   float getValueForText(const juce::String& text) const override { return juce::jlimit(0.0f, 1.0f, text.getFloatValue()); }
   void setDefault(float v) { default_ = v; }
+  void setMeta(bool m) { meta_ = m; }
+  bool isMetaParameter() const override { return meta_; }
 private:
+  bool meta_ = false;
   WarplineProcessor& owner_;
   int index_;
   juce::String name_;
@@ -220,7 +223,7 @@ private:
       case audioMasterGetTime: return self ? reinterpret_cast<VstIntPtr>(&self->time_) : 0;
       case audioMasterGetSampleRate: return self ? static_cast<VstIntPtr>(self->sample_rate_) : 44100;
       case audioMasterAutomate:
-        if (self && index >= 0 && index < static_cast<int>(self->params_.size()))
+        if (self && index >= 0 && index < static_cast<int>(self->params_.size()) && self->params_[static_cast<size_t>(index)])
           self->params_[static_cast<size_t>(index)]->sendValueChangedMessageToListeners(opt);
         return 0;
       case audioMasterUpdateDisplay:
@@ -255,12 +258,17 @@ private:
     if (!effect_) return;
     effect_->user = this;
     effect_->dispatcher(effect_, effOpen, 0, 0, nullptr, 0.0f);
+    // Only the automatable ones: the rest are MPC screen state (list rows, menus, readouts) that the engine sets itself.
+    params_.assign(static_cast<size_t>(effect_->numParams), nullptr);
     for (int i = 0; i < effect_->numParams; ++i) {
+      if (effect_->dispatcher(effect_, effCanBeAutomated, i, 0, nullptr, 0.0f) == 0)
+        continue;
       char name[256] = {};
       effect_->dispatcher(effect_, effGetParamName, i, 0, name, 0.0f);
       auto* p = new EngineParameter(*this, i, juce::String::fromUTF8(name));
       p->setDefault(effect_->getParameter(effect_, i));
-      params_.push_back(p);
+      p->setMeta(i == 0);   // Patch: loading one sets many other parameters
+      params_[static_cast<size_t>(i)] = p;
       addParameter(p);
     }
   }
@@ -294,7 +302,7 @@ private:
   static inline thread_local WarplineProcessor* current_ = nullptr;   // during VSTPluginMain, before effect->user is set
   void* library_ = nullptr;
   AEffect* effect_ = nullptr;
-  std::vector<EngineParameter*> params_;
+  std::vector<EngineParameter*> params_;   // by engine index; nullptr for the ones not shown to the host
   double sample_rate_ = 44100.0;
   VstTimeInfo time_ {};
   std::vector<VstMidiEvent> events_;
